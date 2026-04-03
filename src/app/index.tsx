@@ -1,3 +1,4 @@
+import { Button } from "heroui-native";
 import { Text, View } from "react-native";
 
 export default function Index() {
@@ -6,6 +7,9 @@ export default function Index() {
       <Text className="text-red-500">
         Edit src/app/index.tsx to edit this screen.
       </Text>
+      <Button variant="primary" onPress={() => alert("Button pressed")}>
+        Click me
+      </Button>
     </View>
   );
 }
