@@ -1,3 +1,4 @@
+import BottomSheetComponent from "@/components/BottomSheet";
 import { Button } from "heroui-native";
 import { Text, View } from "react-native";
 
@@ -10,6 +11,7 @@ export default function Index() {
       <Button variant="primary" onPress={() => alert("Button pressed")}>
         Click me
       </Button>
+      <BottomSheetComponent />
     </View>
   );
 }
