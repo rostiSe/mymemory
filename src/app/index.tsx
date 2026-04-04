@@ -1,17 +1,20 @@
-import BottomSheetComponent from "@/components/BottomSheet";
-import { Button } from "heroui-native";
-import { Text, View } from "react-native";
+import { useEffect } from "react";
+import { router } from "expo-router";
+import { useAuthStore } from "@/stores/providers/auth-provider";
 
-export default function Index() {
-  return (
-    <View className="flex-1 items-center justify-center">
-      <Text className="text-red-500">
-        Edit src/app/index.tsx to edit this screen.
-      </Text>
-      <Button variant="primary" onPress={() => alert("Button pressed")}>
-        Click me
-      </Button>
-      <BottomSheetComponent />
-    </View>
-  );
+export default function IndexRedirect() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (isAuthenticated) {
+      router.replace("/(tabs)");
+    } else {
+      router.replace("/(auth)/login");
+    }
+  }, [isAuthenticated, isLoading]);
+
+  return null;
 }
