@@ -51,6 +51,11 @@
       "sourceType": "github",
       "computedHash": "1127a1ab326935169ecf92ffda2d9fc04dc1450a7eecfbafd5157fa9c0126d31"
     },
+    "powersync": {
+      "source": "powersync-ja/agent-skills",
+      "sourceType": "github",
+      "computedHash": "fd8b902f5d90dab6e22e31f02696228c232b50fdc4c21e380a9d2a22bcd28872"
+    },
     "prisma-cli": {
       "source": "prisma/skills",
       "sourceType": "github",
