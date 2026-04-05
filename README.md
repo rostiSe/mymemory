@@ -1,56 +1,131 @@
-# Welcome to your Expo app 👋
+# Expo + Uniwind + HeroUI Native — app template
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This repository is an **Expo SDK 55** mobile (and web) starter structured for real products: file-based routing, Supabase auth with secure storage, TanStack Query, Zustand + MMKV, Tailwind CSS v4 via **Uniwind**, and **HeroUI Native** for components.
 
-## Get started
+Use it as a **checkpoint template**: copy or fork the repo when you start a new app, then rename identifiers and environment values (see [Using this repo as a template](#using-this-repo-as-a-template)).
 
-1. Install dependencies
+---
+
+## What you get
+
+| Area | Choice |
+|------|--------|
+| Framework | [Expo](https://expo.dev) ~55, [Expo Router](https://docs.expo.dev/router/introduction/) |
+| UI | [HeroUI Native](https://github.com/heroui-inc/heroui-native), [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) |
+| Styling | [Tailwind CSS v4](https://tailwindcss.com) + [Uniwind](https://github.com/uniwind/uniwind) (`className` on RN views) |
+| Auth | [Supabase Auth](https://supabase.com/docs/guides/auth) with [expo-secure-store](https://docs.expo.dev/versions/latest/sdk/securestore/) session persistence |
+| Server state | [TanStack Query](https://tanstack.com/query) |
+| Client state | [Zustand](https://zustand-demo.pmnd.rs/) (vanilla stores + React providers); theme/search UI state persisted with [MMKV](https://github.com/mrousavy/react-native-mmkv) |
+| Validation | [Zod](https://zod.dev) |
+| AI (optional slice) | Vercel [AI SDK](https://sdk.vercel.ai/docs) + `@ai-sdk/openai` — see `src/modules/ai/README.md` |
+
+For **folder conventions** (routes vs modules vs components), see [`CLAUDE.md`](./CLAUDE.md) and [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
+
+---
+
+## Prerequisites
+
+- **Node.js** (LTS recommended)
+- **pnpm** (lockfile is `pnpm-lock.yaml`; npm/yarn work if you regenerate the lockfile)
+- For native modules (MMKV, Secure Store, Reanimated, etc.), use a [**development build**](https://docs.expo.dev/develop/development-builds/introduction/) — Expo Go is not sufficient for everything in this stack.
+
+---
+
+## Quick start
+
+1. **Install dependencies**
 
    ```bash
-   npm install
+   pnpm install
    ```
 
-2. Start the app
+2. **Environment**
 
    ```bash
-   npx expo start
+   cp .env.example .env
    ```
 
-In the output, you'll find options to open the app in a
+   Set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (Supabase **anon** public key). The app reads these in `src/lib/supabase.ts` and throws at startup if they are missing.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+3. **Start Metro**
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   ```bash
+   pnpm start
+   ```
 
-## Get a fresh project
+   Then open iOS simulator, Android emulator, or a dev client build. For web:
 
-When you're ready, run:
+   ```bash
+   pnpm web
+   ```
 
-```bash
-npm run reset-project
+4. **Native run** (after `expo prebuild` or with a configured dev client)
+
+   ```bash
+   pnpm ios
+   pnpm android
+   ```
+
+---
+
+## Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `pnpm start` | Expo dev server |
+| `pnpm ios` / `pnpm android` | Run native apps |
+| `pnpm web` | Web target |
+| `pnpm lint` | `expo lint` |
+
+---
+
+## Using this repo as a template
+
+When you spin up a **new** project from this checkpoint:
+
+1. **Clone or copy** the tree into a new folder and initialize git as needed.
+2. **Rename the app** in:
+   - `package.json` → `name`
+   - `app.json` → `expo.name`, `expo.slug`, `expo.scheme`, `expo.android.package` (and iOS bundle id if you add it)
+3. **Replace Supabase** project URL and anon key in `.env` (or point auth at another backend and adjust `src/lib/supabase.ts` + `src/stores/auth.store.ts`).
+4. **Search/replace** branding strings only where you care (e.g. comments in `src/global.css`, `src/theme/tokens.ts`).
+5. **Optional:** trim feature-specific UI store fields in `src/stores/ui.store.ts` if you do not need them.
+
+`CLAUDE.md` describes the intended **source layout** so new code stays consistent across apps you scaffold from here.
+
+---
+
+## Project layout (short)
+
+```
+src/
+  app/           # Expo Router: screens and navigators only
+  components/    # Shared UI (primitives under components/ui/)
+  modules/       # Vertical slices (feature code, schemas, hooks)
+  lib/           # Singleton clients (Supabase, QueryClient, MMKV)
+  stores/        # Zustand stores + React providers
+  hooks/         # Shared hooks
+  theme/         # Imperative tokens; CSS theme lives in global.css
+  global.css     # Tailwind + Uniwind + HeroUI + design tokens
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Metro is configured for Uniwind in `metro.config.js` (`cssEntryFile: ./src/global.css`, typings in `src/uniwind-types.d.ts`).
 
-### Other setup steps
+---
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Documentation index
+
+| Doc | Contents |
+|-----|----------|
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Layers, providers, auth flow, where to add features |
+| [`docs/DESIGN_SYSTEM.md`](./docs/DESIGN_SYSTEM.md) | Colors, tokens, HeroUI variables |
+| [`docs/AI_PIPELINE_PLAN.md`](./docs/AI_PIPELINE_PLAN.md) | Planned AI pipeline notes |
+| [`CLAUDE.md`](./CLAUDE.md) | Directory contract for agents and humans |
+| [`src/modules/ai/README.md`](./src/modules/ai/README.md) | AI module folder intent |
+
+---
 
 ## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [Expo documentation](https://docs.expo.dev/)
+- [Expo Router](https://docs.expo.dev/router/introduction/)
