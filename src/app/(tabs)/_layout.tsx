@@ -1,17 +1,34 @@
-import { colors } from "@/theme/tokens";
-import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { Tabs } from "expo-router";
+import { useThemeColor } from "heroui-native";
+import { FloatingTabBar } from "@/components/floating-tab-bar";
 
 export default function TabsLayout() {
+  const backgroundColor = useThemeColor("background");
+  const foregroundColor = useThemeColor("foreground");
+
   return (
-    <NativeTabs rippleColor={colors.primary[500]}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Feed</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="house.fill" md="home" />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="settings">
-        <NativeTabs.Trigger.Label>Settings</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="gear" md="settings" />
-      </NativeTabs.Trigger>
-    </NativeTabs>
+    <Tabs
+      tabBar={(props) => <FloatingTabBar {...props} />}
+      screenOptions={{
+        headerStyle: { backgroundColor },
+        headerTintColor: foregroundColor,
+        headerShadowVisible: false,
+        headerTitleStyle: { fontWeight: "600" },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Feed",
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+        }}
+      />
+    </Tabs>
   );
 }

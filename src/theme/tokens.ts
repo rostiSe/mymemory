@@ -1,31 +1,41 @@
+/**
+ * MyMemory Design Tokens
+ *
+ * Programmatic design tokens for use where Tailwind classes are insufficient
+ * (e.g., StatusBar, programmatic styling, charts, native components).
+ *
+ * The CSS theme variables in global.css are the source of truth for colors.
+ * These tokens mirror the Stitch reference palette for imperative usage.
+ *
+ * @see global.css for the CSS variable definitions
+ * @see docs/DESIGN_SYSTEM.md for full documentation
+ */
+
 export const colors = {
-  primary: {
-    50: "#E6F1FE",
-    100: "#CCE3FD",
-    200: "#99C7FB",
-    300: "#66AAF9",
-    400: "#338EF7",
-    500: "#006FEE",
-    600: "#005BC4",
-    700: "#004493",
-    800: "#002E62",
-    900: "#001731",
+  light: {
+    background: "#F9F9F9",
+    foreground: "#1A1C1C",
+    muted: "#73787B",
+    surface: "#FFFFFF",
+    surfaceSecondary: "#F3F3F3",
+    surfaceTertiary: "#EEEEEE",
+    accent: "#334550",
+    accentForeground: "#FFFFFF",
+    border: "#C3C7CB",
+    danger: "#BA1A1A",
   },
-  neutral: {
-    50: "#F8FAFC",
-    100: "#F1F5F9",
-    200: "#E2E8F0",
-    300: "#CBD5E1",
-    400: "#94A3B8",
-    500: "#64748B",
-    600: "#475569",
-    700: "#334155",
-    800: "#1E293B",
-    900: "#0F172A",
+  dark: {
+    background: "#121212",
+    foreground: "#F3F3F3",
+    muted: "#9E9E9E",
+    surface: "#1E1E1E",
+    surfaceSecondary: "#1A1A1A",
+    surfaceTertiary: "#252525",
+    accent: "#90A4AE",
+    accentForeground: "#121212",
+    border: "#2E2E2E",
+    danger: "#CF6679",
   },
-  success: "#17C964",
-  warning: "#F5A524",
-  danger: "#F31260",
 } as const;
 
 export const spacing = {
@@ -53,4 +63,13 @@ export const borderRadius = {
   lg: 12,
   xl: 16,
   full: 9999,
+} as const;
+
+/** Tab bar constants for the custom floating tab bar */
+export const tabBar = {
+  height: 64,
+  bottomOffset: 24,
+  horizontalMargin: 20,
+  borderRadius: 9999,
+  iconSize: 24,
 } as const;

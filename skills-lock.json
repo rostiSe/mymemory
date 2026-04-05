@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "ai-sdk": {
+      "source": "vercel/ai",
+      "sourceType": "github",
+      "computedHash": "41d91eb9151ce967ee7b27d62d560cd48131af438d5cfb667b24eeed46bce25d"
+    },
     "building-native-ui": {
       "source": "expo/skills",
       "sourceType": "github",
