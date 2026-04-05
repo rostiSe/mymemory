@@ -1,6 +1,7 @@
 import { createStore } from "zustand/vanilla";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { zustandMMKVStorage } from "@/lib/mmkv";
+import { Uniwind } from "uniwind";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -41,7 +42,10 @@ export const createUIStore = () =>
         draftNote: "",
         shareIntentData: null,
 
-        setTheme: (theme) => set({ theme }),
+        setTheme: (theme) => {
+          Uniwind.setTheme(theme);
+          set({ theme });
+        },
         setSearchFilters: (searchFilters) => set({ searchFilters }),
         setActiveTab: (activeTab) => set({ activeTab }),
         setFeedScrollPosition: (feedScrollPosition) =>

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node scripts/get_theme.mjs)",
+      "Bash(find /c/Dev/mymemory-expo-sdk55/mymemory/node_modules/@react-navigation/bottom-tabs -name *.d.ts)",
+      "Bash(curl -sL \"https://heroui.com/docs/native/getting-started/theming.mdx\")",
+      "Bash(python3:*)"
+    ]
+  }
+}

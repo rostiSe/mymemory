@@ -1,15 +1,16 @@
-import { useState } from "react";
-import { KeyboardAvoidingView, Platform, View } from "react-native";
+import { useAppToast } from "@/hooks/useAppToast";
+import { useAuthStore } from "@/stores/providers/auth-provider";
 import { Link, router } from "expo-router";
 import {
   Button,
   Card,
-  TextField,
+  FieldError,
   Input,
   Label,
-  FieldError,
+  TextField,
 } from "heroui-native";
-import { useAuthStore } from "@/stores/providers/auth-provider";
+import { useState } from "react";
+import { KeyboardAvoidingView, Platform, View } from "react-native";
 
 export default function SignupScreen() {
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ export default function SignupScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const signUp = useAuthStore((s) => s.signUp);
+  const toast = useAppToast();
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -33,9 +35,12 @@ export default function SignupScreen() {
     setLoading(true);
     try {
       await signUp(email, password);
+      toast.success("Account created", "Welcome to MyMemory!");
       router.replace("/(tabs)");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Sign up failed.");
+      const message = e instanceof Error ? e.message : "Sign up failed.";
+      setError(message);
+      toast.error("Sign up failed", message);
     } finally {
       setLoading(false);
     }
@@ -89,7 +94,7 @@ export default function SignupScreen() {
           </TextField>
         </Card.Body>
 
-        <Card.Footer className="flex-col gap-3">
+        <Card.Footer className="flex-col gap-3 py-2">
           <Button
             variant="primary"
             className="w-full"
@@ -100,7 +105,7 @@ export default function SignupScreen() {
           </Button>
 
           <View className="flex-row items-center justify-center gap-1">
-            <Link href="/(auth)/login" className="text-primary-500">
+            <Link href="/(auth)/login" className="text-accent">
               Already have an account? Sign in
             </Link>
           </View>
