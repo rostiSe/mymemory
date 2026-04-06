@@ -6,19 +6,19 @@ export const aiContract = oc.router({
   ingest: oc
     .input(
       z.object({
-        entryId: z.string().uuid(),
-      })
+        entryId: z.uuid(),
+      }),
     )
     .output(
       z.object({
         success: z.boolean(),
         data: entrySchema,
-      })
+      }),
     ),
   demo: oc
     .input(
       z.object({
-        url: z.string().url().optional(),
+        url: z.url().optional(),
         text: z.string().optional(),
       }),
     )

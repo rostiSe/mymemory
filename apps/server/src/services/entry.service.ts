@@ -49,7 +49,8 @@ export const entryService = {
     userId: string,
     input: { url?: string; title?: string; content?: string; type?: "url" | "note" }
   ): Promise<Entry> {
-    const { url, title, type = "url", content = "" } = input;
+    console.log('[entry.service.ts] create input:', input);
+    const { url, title, type = "url", content = "" } = input || {};
 
     const [newEntry] = await database
       .insert(entries)
@@ -62,6 +63,11 @@ export const entryService = {
         processedStatus: "pending",
       })
       .returning();
+
+    // Trigger ingest pipeline asynchronously (fire-and-forget for serverless/API route limits)
+    import("../modules/ai/pipelines/ingest.js").then(({ processEntry }) => {
+      processEntry(newEntry.id, userId).catch(console.error);
+    });
 
     return {
       ...newEntry,

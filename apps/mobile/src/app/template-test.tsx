@@ -4,7 +4,7 @@ import { Button, Card, TextField, Input, Label } from 'heroui-native';
 import { useAppStore } from '@/stores/providers/app-provider';
 import { Stack } from 'expo-router';
 import { useAppToast } from '@/hooks/useAppToast';
-import Constants from 'expo-constants';
+import { orpcClient } from '@/lib/orpc';
 
 export default function TemplateTestScreen() {
   const toast = useAppToast();
@@ -31,27 +31,13 @@ export default function TemplateTestScreen() {
     setAiResult(null);
 
     try {
-      // Determine the API base URL depending on dev/prod environment
-      // Expo API routes run locally alongside the bundler
-      const hostUri = Constants?.expoConfig?.hostUri;
-      const baseUrl = hostUri ? `http://${hostUri}` : 'http://localhost:8081';
-      
-      const res = await fetch(`${baseUrl}/api/ai/demo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Server error');
-      }
-
+      // Uses the same RPCLink URL as the rest of the app (Hono on :8787, not Metro :8081).
+      const data = await orpcClient.ai.demo({ url });
       setAiResult(data);
       toast.success('Pipeline Complete!', 'Content successfully processed through all AI stages.');
-    } catch (error: any) {
-      toast.error('AI Pipeline Failed', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error('AI Pipeline Failed', message);
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +75,7 @@ export default function TemplateTestScreen() {
           <View>
             <Text className="text-foreground font-bold text-lg">2. AI Ingest Pipeline</Text>
             <Text className="text-muted text-sm">
-              Tests Expo API Routes by chaining Jina URL extraction, OpenAI summarization, and OpenAI embeddings in a single request.
+              Calls the Hono oRPC server (apps/server, port 8787 in dev) for Jina extraction, summarization, and embeddings.
             </Text>
           </View>
 

@@ -1,18 +1,26 @@
+import { spaceContract, spaceSchema } from "@mymemory/shared/contracts";
 import { implement } from "@orpc/server";
-import { base, authed } from "../orpc.js";
-import { spaceContract } from "@mymemory/shared/contracts";
+import { z } from "zod";
+import type { ORPCContext } from "../context.js";
+import { authed } from "../orpc.js";
 import { spaceService } from "../services/space.service.js";
 
-const router = base.router({
-  list: authed.handler(async ({ context }) => {
-    return spaceService.list(context.db, context.user!.id);
-  }),
-  getById: authed.handler(async ({ input, context }) => {
-    return spaceService.getById(context.db, context.user!.id, input as { id: string });
-  }),
-  create: authed.handler(async ({ input, context }) => {
-    return spaceService.create(context.db, context.user!.id, input as { name: string; description?: string });
-  }),
-});
-
-export const spaceRouter = implement(spaceContract).router(router as any);
+export const spaceRouter = implement(spaceContract)
+  .$context<ORPCContext>()
+  .router({
+    list: authed.output(z.array(spaceSchema)).handler(async ({ context }) => {
+      return spaceService.list(context.db, context.user!.id);
+    }),
+    getById: authed
+      .input(z.object({ id: z.uuid() }))
+      .output(spaceSchema.nullable())
+      .handler(async ({ input, context }) => {
+        return spaceService.getById(context.db, context.user!.id, input);
+      }),
+    create: authed
+      .input(z.object({ name: z.string(), description: z.string().optional() }))
+      .output(spaceSchema)
+      .handler(async ({ input, context }) => {
+        return spaceService.create(context.db, context.user!.id, input);
+      }),
+  });

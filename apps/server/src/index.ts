@@ -23,11 +23,30 @@ const rpcHandler = new RPCHandler(appRouter, {
   ]
 });
 
-app.all("/api/*", async (c) => {
+const BODY_PARSER_METHODS = new Set([
+  "arrayBuffer",
+  "blob",
+  "formData",
+  "json",
+  "text",
+] as const);
+
+type BodyParserMethod = typeof BODY_PARSER_METHODS extends Set<infer T> ? T : never;
+
+app.all("/api/*", async (c, next) => {
   // In a real app, parse the auth token from headers here.
   const userId = "00000000-0000-0000-0000-000000000000";
 
-  const { matched, response } = await rpcHandler.handle(c.req.raw, {
+  const request = new Proxy(c.req.raw, {
+    get(target, prop) {
+      if (BODY_PARSER_METHODS.has(prop as BodyParserMethod)) {
+        return () => c.req[prop as BodyParserMethod]();
+      }
+      return Reflect.get(target, prop, target);
+    },
+  });
+
+  const { matched, response } = await rpcHandler.handle(request, {
     prefix: "/api",
     context: { 
       db,
@@ -38,7 +57,7 @@ app.all("/api/*", async (c) => {
   if (matched && response) {
     return response;
   }
-  return c.notFound();
+  return await next();
 });
 
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8787;

@@ -44,7 +44,7 @@ export const spaceService = {
     userId: string,
     input: { name: string; description?: string }
   ): Promise<Space> {
-    const { name, description } = input;
+    const { name, description } = input || {};
 
     const [newSpace] = await database
       .insert(spaces)
