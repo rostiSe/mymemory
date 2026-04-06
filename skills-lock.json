@@ -86,6 +86,11 @@
       "sourceType": "github",
       "computedHash": "e3ba3d760c5f4cc43b02a91fb8924f726c7818f95cc35d79d0a606ca622b72f5"
     },
+    "turborepo": {
+      "source": "vercel/turborepo",
+      "sourceType": "github",
+      "computedHash": "389bcde8d33f1bd06d756a27f2e4db26a0434691af9dbc2ed8e278d464bb9b88"
+    },
     "upgrading-expo": {
       "source": "expo/skills",
       "sourceType": "github",

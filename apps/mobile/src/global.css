@@ -1,0 +1,130 @@
+@import "tailwindcss";
+@import "uniwind";
+@import "heroui-native/styles";
+
+/* Scan app source (className in your screens/components) */
+@source ".";
+
+/*
+ * HeroUI: tailwind-variants() class strings live under heroui-native/lib.
+ * pnpm hoists deps to the workspace root, so ../node_modules from src/ is wrong
+ * (apps/mobile/node_modules has almost no packages). Scan the real install path.
+ */
+@source "../../../node_modules/heroui-native/lib";
+
+/* ============================================================
+   MyMemory Design System — Color Overrides
+   Based on Material Design 3 palette from Stitch reference.
+   Overrides HeroUI Native defaults using the same variable names.
+
+   Naming convention (from HeroUI):
+     --background       → page background
+     --foreground        → primary text on background
+     --muted             → secondary/hint text
+     --surface           → card/elevated surface
+     --surface-secondary → slightly tinted surface
+     --surface-tertiary  → more tinted surface
+     --accent            → brand/interactive color
+     --default           → neutral chip/badge background
+     --border            → dividers and borders
+     --field-*           → form input tokens
+   ============================================================ */
+
+@layer theme {
+  @variant light {
+    /* ── Base ── */
+    --background: oklch(0.98 0 0);           /* #F9F9F9 */
+    --foreground: oklch(0.18 0.005 200);     /* #1A1C1C */
+    --muted: oklch(0.55 0.008 250);          /* #73787B outline */
+
+    /* ── Surfaces ── */
+    --surface: oklch(1.0 0 0);              /* #FFFFFF */
+    --surface-foreground: oklch(0.18 0.005 200);
+    --surface-secondary: oklch(0.96 0 0);   /* #F3F3F3 */
+    --surface-secondary-foreground: oklch(0.18 0.005 200);
+    --surface-tertiary: oklch(0.94 0 0);    /* #EEEEEE */
+    --surface-tertiary-foreground: oklch(0.18 0.005 200);
+
+    /* ── Accent (deep blue-slate from Stitch primary-container) ── */
+    --accent: oklch(0.35 0.03 230);         /* #334550 */
+    --accent-foreground: oklch(1.0 0 0);    /* white */
+
+    /* ── Neutral default ── */
+    --default: oklch(0.91 0 0);             /* #E2E2E2 surface-variant */
+    --default-foreground: oklch(0.18 0.005 200);
+
+    /* ── Status ── */
+    --success: oklch(0.72 0.19 150);
+    --success-foreground: oklch(0.18 0.005 200);
+    --warning: oklch(0.78 0.16 72);
+    --warning-foreground: oklch(0.18 0.005 200);
+    --danger: oklch(0.55 0.23 27);          /* #BA1A1A */
+    --danger-foreground: oklch(1.0 0 0);
+
+    /* ── Borders ── */
+    --border: oklch(0.82 0.005 250);        /* #C3C7CB outline-variant */
+
+    /* ── Form fields ── */
+    --field-background: oklch(1.0 0 0);
+    --field-foreground: oklch(0.18 0.005 200);
+    --field-placeholder: oklch(0.55 0.008 250);
+    --field-border: oklch(0.82 0.005 250);
+
+    /* ── Overlay ── */
+    --overlay: oklch(1.0 0 0);
+    --overlay-foreground: oklch(0.18 0.005 200);
+  }
+
+  @variant dark {
+    /* ── Base ── */
+    --background: oklch(0.14 0 0);           /* #121212 */
+    --foreground: oklch(0.96 0 0);           /* #F3F3F3 */
+    --muted: oklch(0.65 0.008 250);          /* lighter gray for dark */
+
+    /* ── Surfaces ── */
+    --surface: oklch(0.20 0 0);             /* #1E1E1E */
+    --surface-foreground: oklch(0.96 0 0);
+    --surface-secondary: oklch(0.17 0 0);   /* #1A1A1A */
+    --surface-secondary-foreground: oklch(0.96 0 0);
+    --surface-tertiary: oklch(0.22 0 0);
+    --surface-tertiary-foreground: oklch(0.96 0 0);
+
+    /* ── Accent (lighter blue-slate for dark mode) ── */
+    --accent: oklch(0.70 0.035 220);        /* #90A4AE-ish */
+    --accent-foreground: oklch(0.14 0 0);   /* dark text on light accent */
+
+    /* ── Neutral default ── */
+    --default: oklch(0.25 0.005 250);
+    --default-foreground: oklch(0.96 0 0);
+
+    /* ── Status ── */
+    --success: oklch(0.72 0.19 150);
+    --success-foreground: oklch(0.14 0 0);
+    --warning: oklch(0.82 0.14 76);
+    --warning-foreground: oklch(0.14 0 0);
+    --danger: oklch(0.60 0.20 25);
+    --danger-foreground: oklch(0.96 0 0);
+
+    /* ── Borders ── */
+    --border: oklch(0.28 0.005 250);
+
+    /* ── Form fields ── */
+    --field-background: oklch(0.20 0 0);
+    --field-foreground: oklch(0.96 0 0);
+    --field-placeholder: oklch(0.55 0.008 250);
+    --field-border: oklch(0.28 0.005 250);
+
+    /* ── Overlay ── */
+    --overlay: oklch(0.20 0 0);
+    --overlay-foreground: oklch(0.96 0 0);
+  }
+}
+
+/* ── Custom semantic colors for app-specific use ── */
+@theme inline {
+  --color-tab-bar: var(--surface);
+  --color-tab-bar-active: var(--accent);
+  --color-tab-bar-inactive: var(--muted);
+  --color-header: var(--background);
+  --color-header-foreground: var(--foreground);
+}

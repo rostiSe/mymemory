@@ -1,0 +1,25 @@
+{
+  "name": "@mymemory/server",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.50",
+    "@hono/node-server": "^1.19.12",
+    "@mymemory/db": "workspace:*",
+    "@mymemory/shared": "workspace:*",
+    "@orpc/server": "^1.13.13",
+    "ai": "^6.0.146",
+    "dotenv": "^16.4.5",
+    "hono": "^4.12.11"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "tsx": "^4.7.1",
+    "typescript": "^5.8.3"
+  }
+}
