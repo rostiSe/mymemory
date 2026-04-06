@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
-import { Stack } from "expo-router";
-import Constants from "expo-constants";
-import { Button, Card, Separator } from "heroui-native";
+import { useAppToast } from "@/hooks/useAppToast";
+import { storage } from "@/lib/mmkv";
 import { useAuthStore } from "@/stores/providers/auth-provider";
 import { useUIStore } from "@/stores/providers/ui-provider";
-import { storage } from "@/lib/mmkv";
-import { useAppToast } from "@/hooks/use-app-toast";
+import Constants from "expo-constants";
+import { router, Stack } from "expo-router";
+import { Button, Card, Separator } from "heroui-native";
+import { useState } from "react";
+import { ScrollView, Text, View } from "react-native";
 
 function Section({
   title,
@@ -50,6 +50,14 @@ function CrashButton() {
   );
 }
 
+function TemplateTestButton() {
+  return (
+    <Button variant="primary" onPress={() => router.push("/template-test")}>
+      Template Test
+    </Button>
+  );
+}
+
 export default function DebugScreen() {
   const session = useAuthStore((s) => s.session);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -64,9 +72,7 @@ export default function DebugScreen() {
 
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "not set";
   const maskedUrl =
-    supabaseUrl.length > 20
-      ? supabaseUrl.slice(0, 20) + "..."
-      : supabaseUrl;
+    supabaseUrl.length > 20 ? supabaseUrl.slice(0, 20) + "..." : supabaseUrl;
 
   const mmkvKeys = storage.getAllKeys();
 
@@ -109,10 +115,7 @@ export default function DebugScreen() {
           <Section title="UI Store">
             <Row label="Theme" value={theme} />
             <Row label="Active Tab" value={activeTab} />
-            <Row
-              label="Search Filters"
-              value={JSON.stringify(searchFilters)}
-            />
+            <Row label="Search Filters" value={JSON.stringify(searchFilters)} />
           </Section>
 
           {/* MMKV Storage */}
@@ -155,6 +158,7 @@ export default function DebugScreen() {
                 Sign Out
               </Button>
               <CrashButton />
+              <TemplateTestButton />
             </View>
           </Section>
         </View>

@@ -1,11 +1,11 @@
-import { ScrollView, Text, View } from "react-native";
-import { router } from "expo-router";
-import Constants from "expo-constants";
-import { Button, ListGroup } from "heroui-native";
+import { useAppToast } from "@/hooks/useAppToast";
 import { useAuthStore } from "@/stores/providers/auth-provider";
 import { useUIStore } from "@/stores/providers/ui-provider";
-import { useAppToast } from "@/hooks/use-app-toast";
 import type { ThemeMode } from "@/stores/ui.store";
+import Constants from "expo-constants";
+import { router } from "expo-router";
+import { Button, ListGroup } from "heroui-native";
+import { ScrollView, Text, View } from "react-native";
 
 const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
   { label: "Light", value: "light" },
@@ -27,7 +27,7 @@ export default function SettingsScreen() {
     } catch (e) {
       toast.error(
         "Sign out failed",
-        e instanceof Error ? e.message : "Unknown error"
+        e instanceof Error ? e.message : "Unknown error",
       );
     }
   };

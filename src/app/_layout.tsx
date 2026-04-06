@@ -7,6 +7,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { queryClient } from "@/lib/query-client";
 import { AuthStoreProvider } from "@/stores/providers/auth-provider";
 import { UIStoreProvider } from "@/stores/providers/ui-provider";
+import { AppStoreProvider } from "@/stores/providers/app-provider";
 import { useAuthStore } from "@/stores/providers/auth-provider";
 import { useUIStore } from "@/stores/providers/ui-provider";
 import { Uniwind } from "uniwind";
@@ -68,17 +69,19 @@ function AppShell() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthStoreProvider>
-        <UIStoreProvider>
-          <QueryClientProvider client={queryClient}>
-            <HeroUINativeProvider>
-              <ErrorBoundary>
-                <AppShell />
-              </ErrorBoundary>
-            </HeroUINativeProvider>
-          </QueryClientProvider>
-        </UIStoreProvider>
-      </AuthStoreProvider>
+      <AppStoreProvider>
+        <AuthStoreProvider>
+          <UIStoreProvider>
+            <QueryClientProvider client={queryClient}>
+              <HeroUINativeProvider>
+                <ErrorBoundary>
+                  <AppShell />
+                </ErrorBoundary>
+              </HeroUINativeProvider>
+            </QueryClientProvider>
+          </UIStoreProvider>
+        </AuthStoreProvider>
+      </AppStoreProvider>
     </GestureHandlerRootView>
   );
 }
