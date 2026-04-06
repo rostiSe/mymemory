@@ -12,7 +12,6 @@ export const entryRouter = base.router({
       return entryService.getById(context.db, context.user!.id, input);
     }),
   create: authed.input(z.any()).handler(async ({ input, context }) => {
-    console.log("RAW INPUT:", input);
     return entryService.create(context.db, context.user!.id, input as any);
   }),
 });

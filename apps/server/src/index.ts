@@ -1,10 +1,10 @@
-import "dotenv/config";
-import { Hono } from "hono";
 import { serve } from "@hono/node-server";
+import { db } from "@mymemory/db";
+import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { CORSPlugin } from "@orpc/server/plugins";
-import { onError } from "@orpc/server";
-import { db } from "@mymemory/db";
+import "dotenv/config";
+import { Hono } from "hono";
 import { appRouter } from "./router/index.js";
 
 const app = new Hono();
@@ -14,13 +14,13 @@ const rpcHandler = new RPCHandler(appRouter, {
     new CORSPlugin({
       origin: () => "*",
       allowMethods: ["GET", "HEAD", "PUT", "POST", "DELETE", "PATCH"],
-    })
+    }),
   ],
   interceptors: [
     onError((error) => {
       console.error("[orpc server error]", error);
-    })
-  ]
+    }),
+  ],
 });
 
 const BODY_PARSER_METHODS = new Set([
@@ -31,7 +31,8 @@ const BODY_PARSER_METHODS = new Set([
   "text",
 ] as const);
 
-type BodyParserMethod = typeof BODY_PARSER_METHODS extends Set<infer T> ? T : never;
+type BodyParserMethod =
+  typeof BODY_PARSER_METHODS extends Set<infer T> ? T : never;
 
 app.all("/api/*", async (c, next) => {
   // In a real app, parse the auth token from headers here.
@@ -48,12 +49,12 @@ app.all("/api/*", async (c, next) => {
 
   const { matched, response } = await rpcHandler.handle(request, {
     prefix: "/api",
-    context: { 
+    context: {
       db,
-      user: { id: userId }
+      user: { id: userId },
     },
   });
-  
+
   if (matched && response) {
     return response;
   }
@@ -62,12 +63,15 @@ app.all("/api/*", async (c, next) => {
 
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 8787;
 
-serve({
-  fetch: app.fetch,
-  port,
-  hostname: "0.0.0.0",
-}, (info) => {
-  console.log(`Server is running on http://${info.address}:${info.port}`);
-});
+serve(
+  {
+    fetch: app.fetch,
+    port,
+    hostname: "0.0.0.0",
+  },
+  (info) => {
+    console.log(`Server is running on http://${info.address}:${info.port}`);
+  },
+);
 
 export default app;
