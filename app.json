@@ -21,7 +21,7 @@
       "package": "com.rostise.mymemory"
     },
     "web": {
-      "output": "static",
+      "output": "server",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [

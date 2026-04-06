@@ -74,7 +74,7 @@ Order (outer → inner):
 
 ## Authentication
 
-- **Client:** `src/lib/supabase.ts` creates a single Supabase client. Session tokens are stored with **Expo Secure Store** (custom storage adapter), not AsyncStorage.
+- **Client:** `src/lib/supabase.ts` creates a single Supabase client. Session persistence uses **Expo Secure Store** on native and **`localStorage` on web**; during **SSR** (no `window`), storage no-ops so the server bundle does not call Secure Store APIs.
 - **State:** `src/stores/auth.store.ts` (vanilla Zustand) holds `session`, `isAuthenticated`, `isLoading`, and actions `signIn`, `signUp`, `signOut`, `initialize`.
 - **Initialization:** `getSession()` runs once; `onAuthStateChange` keeps the store in sync afterward.
 
@@ -95,7 +95,11 @@ New apps should keep the Supabase project and keys in `.env` (see `.env.example`
 - **TanStack Query** is configured in `src/lib/query-client.ts` (stale time, garbage collection, retries).
 - Feature screens should use `useQuery` / `useMutation` (or shared hooks) rather than ad hoc `fetch` in components when you need caching and loading states.
 
-There is **no** in-repo Hono/tRPC/Drizzle server in this checkpoint; `CLAUDE.md` lists those as the **intended** layout when you add a backend. Until then, Supabase (and optional Edge Functions) is the natural API boundary.
+**Server API (this branch):** [Expo Router API routes](https://docs.expo.dev/router/reference/api-routes/) under `src/app/api/**/*+api.ts` implement REST-style JSON handlers. They may import **`@/db`** (Drizzle + `postgres`) and **`@/modules/ai`** for ingest. The app requires **`expo.web.output`: `"server"`** in `app.json` so API routes run with the web server; native clients call the Metro host for `/api/...` via `getApiBaseUrl()` in `src/lib/api/client.ts`.
+
+**Client boundary:** Shared Zod response validation lives in `src/lib/api/contracts.ts` (with **date coercion** for ISO strings from JSON). Hooks in `src/hooks/` wrap `fetchApi`.
+
+Full feature reference: [`MEMORY_FEATURES.md`](./MEMORY_FEATURES.md).
 
 ---
 
@@ -119,9 +123,9 @@ This keeps routes dumb and makes it easy to delete or reuse a feature in another
 
 ---
 
-## AI module (optional)
+## AI module
 
-`src/modules/ai/` is a **placeholder slice** for Vercel AI SDK workflows (tools, pipelines, agents). See `src/modules/ai/README.md`. Wire it from routes or tab screens as your product needs.
+`src/modules/ai/` holds **tools** (`tools/*.ts`) and the **ingest pipeline** (`pipelines/ingest.ts`): Jina Reader and optional Firecrawl for Medium URLs, OpenAI summarize/tags/topics/embeddings, pgvector similarity. API routes trigger ingest from the server. See [`MEMORY_FEATURES.md`](./MEMORY_FEATURES.md) and [`src/modules/ai/README.md`](../src/modules/ai/README.md).
 
 ---
 
@@ -141,5 +145,7 @@ This keeps routes dumb and makes it easy to delete or reuse a feature in another
 ## Related docs
 
 - [`../CLAUDE.md`](../CLAUDE.md) — canonical directory layout
+- [`MEMORY_FEATURES.md`](./MEMORY_FEATURES.md) — feed, API routes, ingest, Firecrawl, DB schema reference
 - [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) — tokens and CSS variables
+- [`AI_PIPELINE_PLAN.md`](./AI_PIPELINE_PLAN.md) — original phased plan (may differ from file paths)
 - [`../README.md`](../README.md) — setup and template usage

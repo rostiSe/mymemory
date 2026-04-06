@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, ScrollView } from 'react-native';
-import { Button, Card, TextField } from 'heroui-native';
+import { Button, Card, TextField, Input, Label } from 'heroui-native';
 import { useAppStore } from '@/stores/providers/app-provider';
 import { Stack } from 'expo-router';
 import { useAppToast } from '@/hooks/useAppToast';
@@ -93,13 +93,14 @@ export default function TemplateTestScreen() {
             </Text>
           </View>
 
-          <TextField
-            label="URL to Ingest"
-            placeholder="https://..."
-            value={url}
-            onChangeText={setUrl}
-            isDisabled={isLoading}
-          />
+          <TextField isDisabled={isLoading}>
+            <Label>URL to Ingest</Label>
+            <Input
+              placeholder="https://..."
+              value={url}
+              onChangeText={setUrl}
+            />
+          </TextField>
 
           <Button 
             onPress={runAIPipeline} 

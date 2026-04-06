@@ -1,4 +1,8 @@
 import { extractContentFromUrl } from '@/modules/ai/tools/extract-content';
+import {
+  extractMediumArticleWithFirecrawl,
+  isMediumArticleUrl,
+} from '@/modules/ai/tools/extract-content-medium-firecrawl';
 import { summarizeText } from '@/modules/ai/tools/summarize';
 import { generateEmbedding } from '@/modules/ai/tools/generate-embedding';
 
@@ -6,7 +10,19 @@ export async function POST(request: Request) {
   try {
     const { url, text } = await request.json();
 
-    if (!process.env.JINA_API_KEY) {
+    const urlStr = typeof url === 'string' ? url : '';
+    const useMediumFirecrawl = Boolean(urlStr && isMediumArticleUrl(urlStr));
+
+    if (useMediumFirecrawl && !process.env.FIRECRAWL_API_KEY?.trim()) {
+      return Response.json(
+        {
+          error:
+            'This URL looks like Medium; set FIRECRAWL_API_KEY and optional FIRECRAWL_MEDIUM_COOKIE or FIRECRAWL_MEDIUM_PROFILE for member content.',
+        },
+        { status: 500 },
+      );
+    }
+    if (!useMediumFirecrawl && !process.env.JINA_API_KEY) {
       return Response.json({ error: 'JINA_API_KEY is not set in environment variables. Please add it to your .env file.' }, { status: 500 });
     }
     if (!process.env.OPENAI_API_KEY) {
@@ -15,9 +31,11 @@ export async function POST(request: Request) {
 
     let extractedText = text || '';
 
-    // Step 1: Jina Reader Extraction
-    if (url) {
-      extractedText = await extractContentFromUrl(url);
+    // Step 1: Medium → Firecrawl; otherwise Jina Reader
+    if (urlStr) {
+      extractedText = useMediumFirecrawl
+        ? await extractMediumArticleWithFirecrawl(urlStr)
+        : await extractContentFromUrl(urlStr);
     }
 
     if (!extractedText) {

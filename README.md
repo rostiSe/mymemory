@@ -18,6 +18,7 @@ Use it as a **checkpoint template**: copy or fork the repo when you start a new 
 | Client state | [Zustand](https://zustand-demo.pmnd.rs/) (vanilla stores + React providers); theme/search UI state persisted with [MMKV](https://github.com/mrousavy/react-native-mmkv) |
 | Validation | [Zod](https://zod.dev) |
 | AI (optional slice) | Vercel [AI SDK](https://sdk.vercel.ai/docs) + `@ai-sdk/openai` — see `src/modules/ai/README.md` |
+| Memory / ingest (this branch) | Expo [API routes](https://docs.expo.dev/router/reference/api-routes/), Drizzle + Postgres + pgvector, Jina Reader + optional Firecrawl for Medium — see [`docs/MEMORY_FEATURES.md`](./docs/MEMORY_FEATURES.md) |
 
 For **folder conventions** (routes vs modules vs components), see [`CLAUDE.md`](./CLAUDE.md) and [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
 
@@ -118,8 +119,9 @@ Metro is configured for Uniwind in `metro.config.js` (`cssEntryFile: ./src/globa
 | Doc | Contents |
 |-----|----------|
 | [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Layers, providers, auth flow, where to add features |
+| [`docs/MEMORY_FEATURES.md`](./docs/MEMORY_FEATURES.md) | Feed, Expo API routes, ingest pipeline, Jina/Firecrawl, Drizzle/pgvector, client contracts |
 | [`docs/DESIGN_SYSTEM.md`](./docs/DESIGN_SYSTEM.md) | Colors, tokens, HeroUI variables |
-| [`docs/AI_PIPELINE_PLAN.md`](./docs/AI_PIPELINE_PLAN.md) | Planned AI pipeline notes |
+| [`docs/AI_PIPELINE_PLAN.md`](./docs/AI_PIPELINE_PLAN.md) | Original phased AI/DB plan (see MEMORY_FEATURES for implemented shape) |
 | [`CLAUDE.md`](./CLAUDE.md) | Directory contract for agents and humans |
 | [`src/modules/ai/README.md`](./src/modules/ai/README.md) | AI module folder intent |
 

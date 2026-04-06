@@ -1,7 +1,9 @@
 # MyMemory AI Pipeline — 4-Phase Implementation Plan
 
+> **Status:** Much of this plan is now implemented on the memory branch (Expo API routes, Drizzle schema, ingest pipeline, Jina + Firecrawl paths). For a **file-accurate** description of what exists today, read [`MEMORY_FEATURES.md`](./MEMORY_FEATURES.md). This document remains useful for historical decisions and remaining phases.
+
 ## Context
-The app has a working auth flow, UI shell (tabs, settings, debug), and state management (Zustand + MMKV + TanStack Query). There is NO database schema, NO server/API layer, and NO AI integration. This plan adds AI-powered ingest/digest pipelines using Vercel AI SDK v6 + OpenAI via Expo API Routes, with Drizzle ORM for Supabase Postgres.
+The app has a working auth flow, UI shell (tabs, settings, debug), and state management (Zustand + MMKV + TanStack Query). This plan added AI-powered ingest/digest pipelines using Vercel AI SDK + OpenAI via Expo API Routes, with Drizzle ORM for Supabase Postgres. **Implemented pieces** include schema under `src/db/schema/`, routes under `src/app/api/`, and tools under `src/modules/ai/tools/` (paths may differ from the tables below).
 
 **Architecture decisions (confirmed):**
 - Server: Expo API Routes (`app/api/...+api.ts`) → EAS Hosting (Cloudflare Workers)
