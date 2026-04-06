@@ -1,5 +1,5 @@
 import { pgTable, timestamp, uuid, real, primaryKey } from 'drizzle-orm/pg-core';
-import { entries } from './entries';
+import { entries } from './entries.js';
 
 export const entryRelations = pgTable('entry_relations', {
   sourceEntryId: uuid('source_entry_id').references(() => entries.id, { onDelete: 'cascade' }).notNull(),

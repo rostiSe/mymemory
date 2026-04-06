@@ -1,6 +1,6 @@
 import { pgTable, text, timestamp, uuid, varchar, customType, primaryKey } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { entries } from './entries';
+import { entries } from './entries.js';
 
 const vector = customType<{ data: number[]; driverData: string }>({
   dataType() {

@@ -1,5 +1,5 @@
 import { pgTable, timestamp, uuid, varchar, text } from 'drizzle-orm/pg-core';
-import { entries } from './entries';
+import { entries } from './entries.js';
 
 export const spaceSuggestions = pgTable('space_suggestions', {
   id: uuid('id').defaultRandom().primaryKey(),

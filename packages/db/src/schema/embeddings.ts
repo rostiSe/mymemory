@@ -1,5 +1,5 @@
 import { pgTable, timestamp, uuid, customType } from 'drizzle-orm/pg-core';
-import { entries } from './entries';
+import { entries } from './entries.js';
 
 const vector = customType<{ data: number[]; driverData: string }>({
   dataType() {

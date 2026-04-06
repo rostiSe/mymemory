@@ -1,0 +1,4 @@
+
+> @mymemory/server@ typecheck C:\Dev\mymemory-expo-sdk55\mymemory\apps\server
+> tsc --noEmit
+

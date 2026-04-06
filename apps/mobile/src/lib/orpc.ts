@@ -5,8 +5,9 @@ import type { ContractRouterClient } from "@orpc/contract";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import Constants from "expo-constants";
 
-let rpcUrl =
-  `${process.env.EXPO_PUBLIC_API_URL}/api` || "http://localhost:8787/api";
+let rpcUrl = process.env.EXPO_PUBLIC_API_URL
+  ? `${process.env.EXPO_PUBLIC_API_URL}/api`
+  : "http://localhost:8787/api";
 
 // In development, if the URL is localhost, replace it with the actual host IP
 // so that physical devices and Android emulators can reach the Hono server.

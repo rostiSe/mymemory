@@ -144,10 +144,10 @@ export async function processEntry(entryId: string, userId: string) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Pipeline failed for entry ${entryId}:`, error);
     await db.update(entries)
-      .set({ processedStatus: 'failed', error: error.message })
+      .set({ processedStatus: 'failed', error: error instanceof Error ? error.message : 'Unknown error' })
       .where(eq(entries.id, entryId));
   }
 }
