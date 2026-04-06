@@ -1,0 +1,22 @@
+{
+  "cli": {
+    "version": ">= 14.7.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://mymemory-server-rosti.vercel.app",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://xfhguzsocefxuxjaasxz.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_w93m6YEDPHo48SC-etbZ0Q_TFhGdToJ"
+      }
+    },
+    "production": {}
+  },
+  "submit": {
+    "production": {}
+  }
+}

@@ -2,9 +2,9 @@
   "name": "@mymemory/server",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch src/dev-server.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/dev-server.js",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },
@@ -16,6 +16,7 @@
     "@orpc/server": "^1.13.13",
     "ai": "^6.0.146",
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.45.2",
     "hono": "^4.12.11"
   },
   "devDependencies": {
