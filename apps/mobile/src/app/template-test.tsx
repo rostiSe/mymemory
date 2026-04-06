@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, TextInput } from 'react-native';
-import { Button, Card } from 'heroui-native';
+import { View, Text, ScrollView } from 'react-native';
+import { Button, Card, TextField, Input, Label } from 'heroui-native';
 import { useAppStore } from '@/stores/providers/app-provider';
 import { Stack } from 'expo-router';
 import { useAppToast } from '@/hooks/useAppToast';
-import { orpc } from '@/lib/orpc';
-import { useMutation } from '@tanstack/react-query';
+import { orpcClient } from '@/lib/orpc';
 
 export default function TemplateTestScreen() {
   const toast = useAppToast();
@@ -14,24 +13,34 @@ export default function TemplateTestScreen() {
 
   // Form State
   const [url, setUrl] = useState('https://jina.ai');
+  const [isLoading, setIsLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<{
+    extractedText?: string;
+    summary?: string;
+    embeddingPreview?: number[];
+    embeddingLength?: number;
+  } | null>(null);
 
-  const { mutate, isPending, data: aiResult } = useMutation(
-    orpc.ai.ingest.mutationOptions({
-      onSuccess: () => {
-        toast.success('Pipeline Complete!', 'Content successfully processed through all AI stages.');
-      },
-      onError: (error: Error) => {
-        toast.error('AI Pipeline Failed', error.message || 'Server error');
-      }
-    })
-  );
-
-  const runAIPipeline = () => {
+  const runAIPipeline = async () => {
     if (!url) {
       toast.warning('Input Required', 'Please provide a URL to ingest');
       return;
     }
-    mutate({ url });
+
+    setIsLoading(true);
+    setAiResult(null);
+
+    try {
+      // Uses the same RPCLink URL as the rest of the app (Hono on :8787, not Metro :8081).
+      const data = await orpcClient.ai.demo({ url });
+      setAiResult(data);
+      toast.success('Pipeline Complete!', 'Content successfully processed through all AI stages.');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error('AI Pipeline Failed', message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -66,28 +75,25 @@ export default function TemplateTestScreen() {
           <View>
             <Text className="text-foreground font-bold text-lg">2. AI Ingest Pipeline</Text>
             <Text className="text-muted text-sm">
-              Tests Expo API Routes by chaining Jina URL extraction, OpenAI summarization, and OpenAI embeddings in a single request.
+              Calls the Hono oRPC server (apps/server, port 8787 in dev) for Jina extraction, summarization, and embeddings.
             </Text>
           </View>
 
-          <View className="mb-2">
-            <Text className="text-foreground font-medium mb-1">URL to Ingest</Text>
-            <TextInput
-              className="bg-surface-secondary border border-border rounded-lg p-3 text-foreground"
+          <TextField isDisabled={isLoading}>
+            <Label>URL to Ingest</Label>
+            <Input
               placeholder="https://..."
-              placeholderTextColor="#888"
               value={url}
               onChangeText={setUrl}
-              editable={!isPending}
             />
-          </View>
+          </TextField>
 
           <Button 
             onPress={runAIPipeline} 
-            isDisabled={isPending}
+            isDisabled={isLoading}
             variant="primary"
           >
-            {isPending ? 'Running AI Pipeline...' : 'Run Pipeline'}
+            {isLoading ? 'Running AI Pipeline...' : 'Run Pipeline'}
           </Button>
 
           {aiResult && (
@@ -106,7 +112,7 @@ export default function TemplateTestScreen() {
                 <Text className="text-foreground font-bold mb-1 text-sm">Embedding (via text-embedding-3-small)</Text>
                 <Text className="text-muted text-xs font-mono">
                   Vector Length: {aiResult.embeddingLength}
-                  {'\n'}Preview: [{aiResult.embeddingPreview?.map((n: number) => n.toFixed(3)).join(', ')}, ...]
+                  {'\n'}Preview: [{aiResult.embeddingPreview?.map(n => n.toFixed(3)).join(', ')}, ...]
                 </Text>
               </View>
             </View>

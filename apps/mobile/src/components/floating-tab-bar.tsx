@@ -89,6 +89,12 @@ function getIconName(
   switch (routeName) {
     case "index":
       return "home";
+    case "search":
+      return "search";
+    case "spaces":
+      return "folder";
+    case "digestion":
+      return "auto-awesome";
     case "settings":
       return "settings";
     default:

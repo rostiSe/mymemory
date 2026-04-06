@@ -2,9 +2,20 @@
   "name": "@mymemory/db",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./schema": {
+      "types": "./src/schema/index.ts",
+      "import": "./src/schema/index.ts",
+      "default": "./src/schema/index.ts"
+    }
   },
   "scripts": {
     "generate": "drizzle-kit generate",

@@ -24,6 +24,24 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="search"
+        options={{
+          title: "Search",
+        }}
+      />
+      <Tabs.Screen
+        name="spaces"
+        options={{
+          title: "Spaces",
+        }}
+      />
+      <Tabs.Screen
+        name="digestion"
+        options={{
+          title: "Digestion",
+        }}
+      />
+      <Tabs.Screen
         name="settings"
         options={{
           title: "Settings",

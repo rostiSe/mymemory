@@ -1,0 +1,92 @@
+
+> mymemory@1.0.0 lint C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile
+> expo lint
+
+env: load .env
+env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_SUPABASE_KEY EXPO_PUBLIC_SUPABASE_URL
+No ESLint config found. Configuring automatically.
+ESLint is required to lint your project. Installing eslint@^9.0.0,
+eslint-config-expo@~55.0.0
+
+- Installing eslint@^9.0.0, eslint-config-expo@~55.0.0
+env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_SUPABASE_KEY EXPO_PUBLIC_SUPABASE_URL
+- Installing eslint@^9.0.0, eslint-config-expo@~55.0.0
+› Installing 2 other packages using pnpm
+- Installing eslint@^9.0.0, eslint-config-expo@~55.0.0
+› Using ~55.0.0 instead of ~55.0.0 for eslint-config-expo because this version was explicitly provided. Packages excluded from dependency validation should be listed in expo.install.exclude in package.json. Learn more: https://docs.expo.dev/more/expo-cli/#configuring-dependency-validation
+- Installing eslint@^9.0.0, eslint-config-expo@~55.0.0
+> pnpm add --save-dev eslint@^9.0.0 eslint-config-expo@~55.0.0
+- Installing eslint@^9.0.0, eslint-config-expo@~55.0.0
+../..                                    | Progress: resolved 1, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 35, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 58, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 114, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 151, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 205, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 278, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 332, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 386, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 463, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 529, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 633, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 718, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 794, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 890, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 1013, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 1078, reused 0, downloaded 0, added 0
+ WARN  5 deprecated subdependencies found: @esbuild-kit/core-utils@3.3.2, @esbuild-kit/esm-loader@2.6.5, glob@7.2.3, inflight@1.0.6, rimraf@3.0.2
+
+devDependencies:
++ eslint ^9.0.0
++ eslint-config-expo ~55.0.0
+
+../..                                    | Progress: resolved 1080, reused 0, downloaded 0, added 0
+../..                                    | Progress: resolved 1080, reused 94, downloaded 0, added 0
+../..                                    | +220 -121 +++++++++++++++++----------
+../..                                    | Progress: resolved 1080, reused 204, downloaded 0, added 0
+../..                                    | Progress: resolved 1080, reused 330, downloaded 1, added 12
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 70
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 108
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 165
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 190
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 212
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 217
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 218
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 219
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 220
+../..                                    | Progress: resolved 1080, reused 331, downloaded 1, added 220, done
+Done in 40.7s
+✔ Installed eslint@^9.0.0, eslint-config-expo@~55.0.0
+
+ESLint has been configured 🎉
+
+
+C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\app\(auth)\login.tsx
+  92:18  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\app\(tabs)\digestion.tsx
+  2:10  warning  'Stack' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\app\(tabs)\search.tsx
+  2:10  warning  'Stack' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\app\(tabs)\spaces.tsx
+  2:10  warning  'Stack' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\app\_layout.tsx
+   8:35  warning  'C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\stores\providers\auth-provider.tsx' imported multiple times  import/no-duplicates
+   9:33  warning  'C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\stores\providers\ui-provider.tsx' imported multiple times    import/no-duplicates
+  11:30  warning  'C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\stores\providers\auth-provider.tsx' imported multiple times  import/no-duplicates
+  12:28  warning  'C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\stores\providers\ui-provider.tsx' imported multiple times    import/no-duplicates
+
+C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\components\entry\entry-card.tsx
+  2:30  warning  'C:\Dev\mymemory-expo-sdk55\mymemory\node_modules\heroui-native\lib\module\index.js' imported multiple times  import/no-duplicates
+  4:31  warning  'C:\Dev\mymemory-expo-sdk55\mymemory\node_modules\heroui-native\lib\module\index.js' imported multiple times  import/no-duplicates
+
+C:\Dev\mymemory-expo-sdk55\mymemory\apps\mobile\src\components\floating-tab-bar.tsx
+  27:9  warning  'accentColor' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 11 problems (1 error, 10 warnings)
+  0 errors and 3 warnings potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.

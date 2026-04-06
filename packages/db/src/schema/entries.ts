@@ -4,25 +4,9 @@ import {
   timestamp,
   uuid,
   varchar,
-  customType,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-
-// Define pgvector custom type
-// Drizzle supports vector natively in later versions, but this customType approach
-// is guaranteed to work across any Drizzle setup.
-const vector = customType<{ data: number[]; driverData: string }>({
-  dataType() {
-    return 'vector(1536)'; // Assuming OpenAI text-embedding-3-small
-  },
-  toDriver(value: number[]): string {
-    return `[${value.join(',')}]`;
-  },
-  fromDriver(value: string): number[] {
-    // pgvector returns a string like "[0.1, 0.2, ...]"
-    return JSON.parse(value);
-  },
-});
+import { processedStatusEnum, entryTypeEnum } from './enums.js';
 
 export const entries = pgTable('entries', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -31,17 +15,11 @@ export const entries = pgTable('entries', {
   content: text('content').notNull(), // Raw markdown
   summary: text('summary'), // AI-generated summary
   url: text('url'), // Original URL if it's a bookmark
+  type: entryTypeEnum('type').notNull().default('url'),
+  processedStatus: processedStatusEnum('processed_status').notNull().default('pending'),
+  error: text('error'), // For storing failure reasons
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
-
-export const embeddings = pgTable('embeddings', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  entryId: uuid('entry_id')
-    .references(() => entries.id, { onDelete: 'cascade' })
-    .notNull(),
-  vector: vector('vector').notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // Zod schemas for easy API validation

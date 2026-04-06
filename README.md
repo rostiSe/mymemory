@@ -1,131 +1,105 @@
-# Expo + Uniwind + HeroUI Native — app template
+# 🚀 Full-Stack Expo + Hono + oRPC Monorepo Template
 
-This repository is an **Expo SDK 55** mobile (and web) starter structured for real products: file-based routing, Supabase auth with secure storage, TanStack Query, Zustand + MMKV, Tailwind CSS v4 via **Uniwind**, and **HeroUI Native** for components.
+This repository is a production-ready **Turborepo monorepo** starter. It provides a complete, end-to-end type-safe architecture featuring a React Native mobile app (Expo) and an Edge-ready backend API (Hono), seamlessly connected via contract-first RPC (oRPC).
 
-Use it as a **checkpoint template**: copy or fork the repo when you start a new app, then rename identifiers and environment values (see [Using this repo as a template](#using-this-repo-as-a-template)).
-
----
-
-## What you get
-
-| Area | Choice |
-|------|--------|
-| Framework | [Expo](https://expo.dev) ~55, [Expo Router](https://docs.expo.dev/router/introduction/) |
-| UI | [HeroUI Native](https://github.com/heroui-inc/heroui-native), [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) |
-| Styling | [Tailwind CSS v4](https://tailwindcss.com) + [Uniwind](https://github.com/uniwind/uniwind) (`className` on RN views) |
-| Auth | [Supabase Auth](https://supabase.com/docs/guides/auth) with [expo-secure-store](https://docs.expo.dev/versions/latest/sdk/securestore/) session persistence |
-| Server state | [TanStack Query](https://tanstack.com/query) |
-| Client state | [Zustand](https://zustand-demo.pmnd.rs/) (vanilla stores + React providers); theme/search UI state persisted with [MMKV](https://github.com/mrousavy/react-native-mmkv) |
-| Validation | [Zod](https://zod.dev) |
-| AI (optional slice) | Vercel [AI SDK](https://sdk.vercel.ai/docs) + `@ai-sdk/openai` — see `src/modules/ai/README.md` |
-
-For **folder conventions** (routes vs modules vs components), see [`CLAUDE.md`](./CLAUDE.md) and [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md).
+Use this as a **checkpoint template**: fork or copy this repository when you want to start a new highly-scalable, type-safe full-stack application.
 
 ---
 
-## Prerequisites
+## 🌟 What's in the Box?
 
-- **Node.js** (LTS recommended)
-- **pnpm** (lockfile is `pnpm-lock.yaml`; npm/yarn work if you regenerate the lockfile)
-- For native modules (MMKV, Secure Store, Reanimated, etc.), use a [**development build**](https://docs.expo.dev/develop/development-builds/introduction/) — Expo Go is not sufficient for everything in this stack.
-
----
-
-## Quick start
-
-1. **Install dependencies**
-
-   ```bash
-   pnpm install
-   ```
-
-2. **Environment**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Set `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_KEY` (Supabase **anon** public key). The app reads these in `src/lib/supabase.ts` and throws at startup if they are missing.
-
-3. **Start Metro**
-
-   ```bash
-   pnpm start
-   ```
-
-   Then open iOS simulator, Android emulator, or a dev client build. For web:
-
-   ```bash
-   pnpm web
-   ```
-
-4. **Native run** (after `expo prebuild` or with a configured dev client)
-
-   ```bash
-   pnpm ios
-   pnpm android
-   ```
+| Layer | Technology |
+|-------|------------|
+| **Monorepo** | [Turborepo](https://turbo.build) + [pnpm workspaces](https://pnpm.io/workspaces) |
+| **Frontend (Mobile)** | [Expo](https://expo.dev) SDK 55, [Expo Router](https://docs.expo.dev/router/introduction/) |
+| **Backend (API)** | [Hono](https://hono.dev/) (Edge/Node), [oRPC Server](https://orpc.dev/) |
+| **API Contract** | [oRPC Contract](https://orpc.dev/), [Zod](https://zod.dev/) |
+| **Client Data Fetching** | [oRPC Client](https://orpc.dev/) + [TanStack Query](https://tanstack.com/query) |
+| **Database ORM** | [Drizzle ORM](https://orm.drizzle.team/) |
+| **UI & Styling** | [HeroUI Native](https://github.com/heroui-inc/heroui-native), [Tailwind CSS v4](https://tailwindcss.com) + [Uniwind](https://github.com/uniwind/uniwind) |
+| **Auth & DB Hosting** | [Supabase](https://supabase.com/) |
 
 ---
 
-## Scripts
+## 📚 Documentation
 
-| Script | Purpose |
-|--------|---------|
-| `pnpm start` | Expo dev server |
-| `pnpm ios` / `pnpm android` | Run native apps |
-| `pnpm web` | Web target |
-| `pnpm lint` | `expo lint` |
+For a comprehensive guide on how this architecture works, how to build new features, and how to deploy to production, please read the **Architectural Guide**:
+
+👉 **[Read the Full Architecture & Template Guide](./docs/ARCHITECTURE.md)** 👈
 
 ---
 
-## Using this repo as a template
+## 📂 Monorepo Structure
 
-When you spin up a **new** project from this checkpoint:
-
-1. **Clone or copy** the tree into a new folder and initialize git as needed.
-2. **Rename the app** in:
-   - `package.json` → `name`
-   - `app.json` → `expo.name`, `expo.slug`, `expo.scheme`, `expo.android.package` (and iOS bundle id if you add it)
-3. **Replace Supabase** project URL and anon key in `.env` (or point auth at another backend and adjust `src/lib/supabase.ts` + `src/stores/auth.store.ts`).
-4. **Search/replace** branding strings only where you care (e.g. comments in `src/global.css`, `src/theme/tokens.ts`).
-5. **Optional:** trim feature-specific UI store fields in `src/stores/ui.store.ts` if you do not need them.
-
-`CLAUDE.md` describes the intended **source layout** so new code stays consistent across apps you scaffold from here.
-
----
-
-## Project layout (short)
-
-```
-src/
-  app/           # Expo Router: screens and navigators only
-  components/    # Shared UI (primitives under components/ui/)
-  modules/       # Vertical slices (feature code, schemas, hooks)
-  lib/           # Singleton clients (Supabase, QueryClient, MMKV)
-  stores/        # Zustand stores + React providers
-  hooks/         # Shared hooks
-  theme/         # Imperative tokens; CSS theme lives in global.css
-  global.css     # Tailwind + Uniwind + HeroUI + design tokens
+```text
+/
+├── apps/
+│   ├── mobile/         # 📱 The Expo React Native app
+│   └── server/         # ⚙️ The Hono backend server
+│
+├── packages/
+│   ├── shared/         # 🤝 The Single Source of Truth (oRPC Contracts & Zod schemas)
+│   └── db/             # 🗄️ Drizzle schemas, migrations, and database connection
+│
+├── turbo.json          # Turborepo task configuration (build, dev, lint)
+├── pnpm-workspace.yaml # Defines the workspaces
+└── eas.json            # Expo deployment configuration
 ```
 
-Metro is configured for Uniwind in `metro.config.js` (`cssEntryFile: ./src/global.css`, typings in `src/uniwind-types.d.ts`).
+---
+
+## 🚦 Quick Start
+
+### 1. Prerequisites
+- **Node.js** (v20+ recommended for native `--env-file` support)
+- **pnpm** (Required for the workspace lockfile)
+
+### 2. Install Dependencies
+Always use `pnpm install` at the root of the project. If you experience lockfile issues when adding packages, use the `--no-frozen-lockfile` flag.
+```bash
+pnpm install
+```
+
+### 3. Environment Variables
+You need two environment files: one for the mobile app (public keys) and one for the server (secret keys).
+
+**For the Mobile App:**
+Create `apps/mobile/.env` and add your public variables:
+```bash
+EXPO_PUBLIC_SUPABASE_URL="your-supabase-url"
+EXPO_PUBLIC_SUPABASE_KEY="your-anon-key"
+# Leave this undefined locally to automatically resolve to your computer's IP
+# EXPO_PUBLIC_API_URL="http://your-production-api.com"
+```
+
+**For the Backend API:**
+Create `apps/server/.env` and add your secret variables:
+```bash
+DATABASE_URL="postgresql://..."
+JINA_API_KEY="..."
+OPENAI_API_KEY="..."
+```
+
+### 4. Start the Development Servers
+Run the following command from the **root** of the monorepo:
+```bash
+pnpm dev
+```
+Turborepo will concurrently start both the Hono backend server (on port `8787`) and the Expo Metro Bundler (on port `8081`). 
+
+Open your iOS Simulator, Android Emulator, or scan the QR code with the Expo Go / Dev Client app to begin!
 
 ---
 
-## Documentation index
+## 📝 Using this Repo as a Template
 
-| Doc | Contents |
-|-----|----------|
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | Layers, providers, auth flow, where to add features |
-| [`docs/DESIGN_SYSTEM.md`](./docs/DESIGN_SYSTEM.md) | Colors, tokens, HeroUI variables |
-| [`docs/AI_PIPELINE_PLAN.md`](./docs/AI_PIPELINE_PLAN.md) | Planned AI pipeline notes |
-| [`CLAUDE.md`](./CLAUDE.md) | Directory contract for agents and humans |
-| [`src/modules/ai/README.md`](./src/modules/ai/README.md) | AI module folder intent |
+When spinning up a new project from this template:
 
----
+1. **Clone or Copy**: Duplicate the tree into a new folder.
+2. **Rename the Apps**: 
+   - Update `"name"` in `apps/mobile/package.json` and `apps/server/package.json`.
+   - Update the Expo config in `apps/mobile/app.json` (`expo.name`, `expo.slug`, `expo.scheme`, `expo.android.package`, `expo.ios.bundleIdentifier`).
+3. **Reset Database/Auth**: Point the `.env` files to your new Supabase instance or custom database.
+4. **Define Your API**: Open `packages/shared/src/index.ts` and replace the placeholder API contract with your own domain logic!
 
-## Learn more
-
-- [Expo documentation](https://docs.expo.dev/)
-- [Expo Router](https://docs.expo.dev/router/introduction/)
+Happy building! 🚀
