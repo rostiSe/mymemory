@@ -1,65 +1,17 @@
 {
-  "name": "mymemory",
-  "main": "expo-router/entry",
+  "name": "mymemory-monorepo",
   "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo run:android",
-    "ios": "expo run:ios",
-    "web": "expo start --web",
-    "lint": "expo lint"
-  },
-  "dependencies": {
-    "@ai-sdk/openai": "^3.0.50",
-    "@gorhom/bottom-sheet": "^5.2.8",
-    "@react-navigation/bottom-tabs": "^7.15.5",
-    "@react-navigation/elements": "^2.9.10",
-    "@react-navigation/native": "^7.1.33",
-    "@supabase/supabase-js": "^2.101.1",
-    "@tanstack/react-query": "^5.96.2",
-    "ai": "^6.0.146",
-    "drizzle-orm": "^0.45.2",
-    "drizzle-zod": "^0.8.3",
-    "expo": "~55.0.11",
-    "expo-constants": "~55.0.11",
-    "expo-dev-client": "~55.0.22",
-    "expo-device": "~55.0.12",
-    "expo-font": "~55.0.6",
-    "expo-glass-effect": "~55.0.10",
-    "expo-image": "~55.0.8",
-    "expo-linking": "~55.0.11",
-    "expo-router": "~55.0.10",
-    "expo-secure-store": "~55.0.11",
-    "expo-splash-screen": "~55.0.15",
-    "expo-status-bar": "~55.0.5",
-    "expo-symbols": "~55.0.7",
-    "expo-system-ui": "~55.0.13",
-    "expo-web-browser": "~55.0.12",
-    "heroui-native": "^1.0.1",
-    "postgres": "^3.4.9",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
-    "react-native": "0.83.4",
-    "react-native-gesture-handler": "~2.30.1",
-    "react-native-mmkv": "^4.3.0",
-    "react-native-nitro-modules": "^0.35.3",
-    "react-native-reanimated": "4.2.1",
-    "react-native-safe-area-context": "~5.6.2",
-    "react-native-screens": "~4.23.0",
-    "react-native-svg": "^15.15.4",
-    "react-native-web": "~0.21.0",
-    "react-native-worklets": "~0.7.2",
-    "tailwind-merge": "^3.5.0",
-    "tailwind-variants": "^3.2.2",
-    "tailwindcss": "^4.2.2",
-    "uniwind": "^1.6.1",
-    "zod": "^4.3.6",
-    "zustand": "^5.0.12"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint"
   },
   "devDependencies": {
-    "@types/react": "~19.2.2",
-    "typescript": "~5.9.2"
+    "turbo": "^2.0.0"
   },
-  "private": true
+  "engines": {
+    "node": ">=18"
+  },
+  "packageManager": "pnpm@9.0.0"
 }
