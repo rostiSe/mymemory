@@ -2,6 +2,9 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 
+export * from 'drizzle-orm';
+export { schema };
+
 // This file should ONLY be imported in server environments (API Routes, Workers, etc.)
 // Never import this directly into Expo components!
 

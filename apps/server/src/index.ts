@@ -5,16 +5,114 @@ import { CORSPlugin } from "@orpc/server/plugins";
 import { appContract } from "@mymemory/shared";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
+
+// Handlers
 import { extractContentFromUrl } from "./modules/ai/tools/extract-content.js";
 import { summarizeText } from "./modules/ai/tools/summarize.js";
 import { generateEmbedding } from "./modules/ai/tools/generate-embedding.js";
+import { processEntry } from "./modules/ai/pipelines/ingest.js";
+
+import { db, eq, desc, and } from "@mymemory/db";
+import { entries, spaces } from "@mymemory/db/schema";
 
 const os = implement(appContract);
 
+function requireAuth() {
+  return "00000000-0000-0000-0000-000000000000";
+}
+
 const router = os.router({
   ping: os.ping.handler(() => "pong"),
+  
+  entries: {
+    list: os.entries.list.handler(async () => {
+      const userId = requireAuth();
+      const userEntries = await db.select()
+        .from(entries)
+        .where(eq(entries.userId, userId))
+        .orderBy(desc(entries.createdAt));
+
+      // Map to contract types (converting Date to string if needed, though they are returned directly)
+      return userEntries as any; 
+    }),
+    getById: os.entries.getById.handler(async ({ input }) => {
+      const userId = requireAuth();
+      const [row] = await db
+        .select()
+        .from(entries)
+        .where(and(eq(entries.id, input.id), eq(entries.userId, userId)))
+        .limit(1);
+
+      return (row as any) || null;
+    }),
+    create: os.entries.create.handler(async ({ input }) => {
+      const userId = requireAuth();
+      const { url, title, type = 'url', content = '' } = input;
+
+      const [newEntry] = await db.insert(entries).values({
+        userId,
+        url: url || null,
+        title: title || null,
+        type,
+        content,
+        processedStatus: 'pending',
+      }).returning();
+
+      // Trigger ingest pipeline asynchronously
+      processEntry(newEntry.id, userId).catch(console.error);
+
+      return newEntry as any;
+    }),
+  },
+
+  spaces: {
+    list: os.spaces.list.handler(async () => {
+      const userId = requireAuth();
+      const userSpaces = await db.select()
+        .from(spaces)
+        .where(eq(spaces.userId, userId));
+
+      return userSpaces as any;
+    }),
+    getById: os.spaces.getById.handler(async ({ input }) => {
+      const userId = requireAuth();
+      const [row] = await db
+        .select()
+        .from(spaces)
+        .where(and(eq(spaces.id, input.id), eq(spaces.userId, userId)))
+        .limit(1);
+
+      return (row as any) || null;
+    }),
+    create: os.spaces.create.handler(async ({ input }) => {
+      const userId = requireAuth();
+      const { name, description } = input;
+
+      const [newSpace] = await db.insert(spaces).values({
+        userId,
+        name,
+        description: description || null,
+      }).returning();
+
+      return newSpace as any;
+    }),
+  },
+
   ai: {
     ingest: os.ai.ingest.handler(async ({ input }) => {
+      const userId = requireAuth();
+      const { entryId } = input;
+
+      await processEntry(entryId, userId);
+
+      const [updatedEntry] = await db.select().from(entries).where(eq(entries.id, entryId));
+
+      return {
+        success: true,
+        data: updatedEntry as any,
+      };
+    }),
+    demo: os.ai.demo.handler(async ({ input }) => {
       const { url, text } = input;
 
       if (!process.env.JINA_API_KEY || !process.env.OPENAI_API_KEY) {
