@@ -1,15 +1,15 @@
 # Deployment & Release Runbook
 
-This project uses a branch-based Gitflow-style deployment for the backend via Vercel and a manual release process for the mobile app (APK) via GitHub Actions + Expo EAS.
+This project uses manual GitHub Actions deployments for the backend via Vercel and a manual release process for the mobile app (APK) via GitHub Actions + Expo EAS.
 
 ## 🌿 Branching & Environment Strategy
 
 - **`develop` branch**: Default working branch.
-  - **Backend Deploy**: Automatically deployed to the staging environment (`mymemory-server-stage.vercel.app`) on push.
+  - **Backend Deploy**: Trigger the manual backend workflow and choose `stage`.
   - **Mobile App**: Local development (`pnpm dev`, `expo run:android`) automatically targets the staging backend url.
   
 - **`main` branch**: Production branch.
-  - **Backend Deploy**: Automatically deployed to the production environment (`mymemory-server-rosti.vercel.app`) on push.
+  - **Backend Deploy**: Trigger the manual backend workflow and choose `prod`.
   - **Mobile App**: Production EAS builds target the production backend url.
 
 ## 🚀 Workflows
@@ -17,10 +17,20 @@ This project uses a branch-based Gitflow-style deployment for the backend via Ve
 ### 1. Backend Deploy (Vercel)
 **File**: `.github/workflows/backend-deploy.yml`
 
-This workflow triggers on pushes to `develop` and `main`, but *only* if backend or shared code changes (`apps/server/**`, `packages/**`, etc.).
+This workflow is **manual only** (via `workflow_dispatch`) and can run from any branch.
 - It uses a single fast job with the Vercel CLI (`vercel pull`, `vercel build`, `vercel deploy`).
-- It determines the target Vercel project based on the branch.
-- Concurrent runs on the same branch are automatically canceled to save CI time.
+- It deploys to a single Vercel project (`VERCEL_PROJECT_ID_SERVER`), with environment selected by input:
+  - `stage` -> Vercel `preview`
+  - `prod` -> Vercel `production` (`--prod`)
+- Concurrent runs for the same branch + environment are automatically canceled to save CI time.
+
+**How to deploy backend manually:**
+1. Go to the **Actions** tab in GitHub.
+2. Select **Backend Deploy**.
+3. Click **Run workflow**.
+4. Choose the branch to deploy from.
+5. Choose environment: `stage` or `prod`.
+6. Click **Run workflow**.
 
 ### 2. Mobile APK Release (Expo EAS)
 **File**: `.github/workflows/mobile-release.yml`
@@ -49,8 +59,7 @@ To make these workflows function, the repository must have the following secrets
 |---|---|
 | `VERCEL_TOKEN` | Vercel personal access token for CLI deployment. |
 | `VERCEL_ORG_ID` | Your Vercel Organization ID or Team ID. |
-| `VERCEL_PROJECT_ID_SERVER_STAGE` | The Vercel Project ID for the Staging backend application. |
-| `VERCEL_PROJECT_ID_SERVER_PROD` | The Vercel Project ID for the Production backend application. |
+| `VERCEL_PROJECT_ID_SERVER` | The Vercel Project ID for the backend application (single project for preview + production). |
 | `EXPO_TOKEN` | Expo access token for EAS CLI authentication. |
 | `GITHUB_TOKEN` | Automatically provided by GitHub Actions (ensure it has Read/Write repository permissions for releases). |
 

@@ -1,23 +1,23 @@
 name: Backend Deploy
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'apps/server/**'
-      - 'packages/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deploy target environment"
+        required: true
+        type: choice
+        options:
+          - stage
+          - prod
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.environment }}
   cancel-in-progress: true
 
 jobs:
   deploy:
-    name: Deploy to Vercel
+    name: Deploy to Vercel (${{ inputs.environment }})
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -25,41 +25,48 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Get Vercel Project ID
-        id: vercel-project
+      - name: Validate Required Secrets
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_SERVER_PROD }}" >> $GITHUB_OUTPUT
-            echo "ENV_FLAG=--prod" >> $GITHUB_OUTPUT
+          missing=0
+          for key in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID_SERVER; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing required secret: $key"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID_SERVER: ${{ secrets.VERCEL_PROJECT_ID_SERVER }}
+
+      - name: Resolve Vercel Deploy Mode
+        id: deploy-mode
+        run: |
+          if [[ "${{ inputs.environment }}" == "prod" ]]; then
+            echo "VERCEL_ENV=production" >> "$GITHUB_OUTPUT"
+            echo "DEPLOY_FLAG=--prod" >> "$GITHUB_OUTPUT"
           else
-            echo "PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID_SERVER_STAGE }}" >> $GITHUB_OUTPUT
-            echo "ENV_FLAG=" >> $GITHUB_OUTPUT
+            echo "VERCEL_ENV=preview" >> "$GITHUB_OUTPUT"
+            echo "DEPLOY_FLAG=" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Pull Vercel Environment Information
-        run: npx vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel pull --yes --environment=${{ steps.deploy-mode.outputs.VERCEL_ENV }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_SERVER }}
 
       - name: Build Project Artifacts
-        run: npx vercel build ${{ steps.vercel-project.outputs.ENV_FLAG }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel build ${{ steps.deploy-mode.outputs.DEPLOY_FLAG }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_SERVER }}
 
       - name: Deploy Project Artifacts to Vercel
-        run: npx vercel deploy --prebuilt ${{ steps.vercel-project.outputs.ENV_FLAG }} --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx vercel deploy --prebuilt ${{ steps.deploy-mode.outputs.DEPLOY_FLAG }} --token=${{ secrets.VERCEL_TOKEN }}
         env:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.PROJECT_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_SERVER }}
