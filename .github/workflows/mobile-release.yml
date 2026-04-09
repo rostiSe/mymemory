@@ -12,6 +12,8 @@ jobs:
   build-and-release:
     name: Build & Release APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -38,10 +40,21 @@ jobs:
         run: pnpm install
 
       - name: Build Android APK (Production)
+        id: build_apk
         working-directory: apps/mobile
         run: eas build --platform android --profile production --local --output=../../app-release.apk
 
+      - name: Upload APK Artifact
+        if: ${{ always() && hashFiles('app-release.apk') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ github.run_number }}
+          path: app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Create GitHub Release
+        if: ${{ hashFiles('app-release.apk') != '' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag }}

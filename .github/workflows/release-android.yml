@@ -48,7 +48,17 @@ jobs:
         run: eas build --platform android --profile preview --non-interactive --wait --output ./app-release.apk
         working-directory: apps/mobile
 
+      - name: Upload APK Artifact
+        if: ${{ always() && hashFiles('apps/mobile/app-release.apk') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-${{ inputs.tag }}
+          path: apps/mobile/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Create GitHub Release
+        if: ${{ hashFiles('apps/mobile/app-release.apk') != '' }}
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
