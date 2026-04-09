@@ -4,7 +4,7 @@
     "appVersionSource": "remote"
   },
   "build": {
-    "preview": {
+    "production": {
       "android": {
         "buildType": "apk"
       },
@@ -13,8 +13,7 @@
         "EXPO_PUBLIC_SUPABASE_URL": "https://xfhguzsocefxuxjaasxz.supabase.co",
         "EXPO_PUBLIC_SUPABASE_KEY": "sb_publishable_w93m6YEDPHo48SC-etbZ0Q_TFhGdToJ"
       }
-    },
-    "production": {}
+    }
   },
   "submit": {
     "production": {}
