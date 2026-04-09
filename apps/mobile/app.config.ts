@@ -32,9 +32,8 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       ...config.android,
       adaptiveIcon: {
-        backgroundColor: "#E6F4FE",
+        backgroundColor: "#F5F7FA",
         foregroundImage: "./assets/images/android-icon-foreground.png",
-        backgroundImage: "./assets/images/android-icon-background.png",
         monochromeImage: "./assets/images/android-icon-monochrome.png",
       },
       predictiveBackGestureEnabled: false,
@@ -49,10 +48,14 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         "expo-splash-screen",
         {
-          backgroundColor: "#208AEF",
+          backgroundColor: "#F5F7FA",
           android: {
-            image: "./assets/images/splash-icon.png",
-            imageWidth: 76,
+            image: "./assets/images/splash-logo-light.png",
+            imageWidth: 120,
+          },
+          dark: {
+            backgroundColor: "#172945",
+            image: "./assets/images/splash-logo-dark.png",
           },
         },
       ],
