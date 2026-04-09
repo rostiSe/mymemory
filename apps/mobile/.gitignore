@@ -4,3 +4,13 @@
 
 expo-env.d.ts
 # @end expo-cli
+android/
+ios/
+web-build/
+dist/
+.expo/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local

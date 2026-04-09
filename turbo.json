@@ -1,11 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalEnv": [
-    "FIRECRAWL_API_KEY",
-    "JINA_API_KEY",
-    "OPENAI_API_KEY",
+    "DATABASE_DIRECT_URL",
     "DATABASE_URL",
-    "EXPO_PUBLIC_API_URL"
+    "EXPO_PUBLIC_API_URL",
+    "FIRECRAWL_API_KEY",
+    "FIRECRAWL_MEDIUM_PROFILE",
+    "JINA_API_KEY",
+    "OPENAI_API_KEY"
   ],
   "tasks": {
     "build": {
