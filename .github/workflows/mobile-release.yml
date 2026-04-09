@@ -38,7 +38,8 @@ jobs:
         run: pnpm install
 
       - name: Build Android APK (Production)
-        run: eas build --platform android --profile production --local --output=./app-release.apk
+        working-directory: apps/mobile
+        run: eas build --platform android --profile production --local --output=../../app-release.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
