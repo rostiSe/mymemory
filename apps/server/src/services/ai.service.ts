@@ -1,8 +1,8 @@
 import type { db } from "@mymemory/db";
 import { entries } from "@mymemory/db/schema";
-import type { entrySchema } from "@mymemory/shared/contracts";
+import { entrySchema } from "@mymemory/shared/contracts";
 import { eq } from "drizzle-orm";
-import type { z } from "zod";
+import { z } from "zod";
 
 // Tools
 import { processEntry } from "../modules/ai/pipelines/ingest.js";
@@ -43,7 +43,7 @@ export const aiService = {
         summary: updatedEntry.summary ?? undefined,
         url: updatedEntry.url ?? undefined,
         error: updatedEntry.error ?? undefined,
-      },
+      } as Entry,
     };
   },
 
