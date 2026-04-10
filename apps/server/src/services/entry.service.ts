@@ -1,26 +1,101 @@
 import type { db } from "@mymemory/db";
 import { entries } from "@mymemory/db/schema";
-import type { entrySchema } from "@mymemory/shared/contracts";
-import { and, desc, eq } from "drizzle-orm";
-import type { z } from "zod";
+import { entrySchema } from "@mymemory/shared/contracts";
+import { ORPCError } from "@orpc/server";
+import { and, desc, eq, lt, or } from "drizzle-orm";
+import { z } from "zod";
 
 type Entry = z.infer<typeof entrySchema>;
+type EntryRow = typeof entries.$inferSelect;
+
+const cursorPayloadSchema = z.object({
+  createdAt: z.string(),
+  id: z.guid(),
+});
+
+function toEntry(row: EntryRow): Entry {
+  return {
+    ...row,
+    title: row.title ?? undefined,
+    summary: row.summary ?? undefined,
+    url: row.url ?? undefined,
+    error: row.error ?? undefined,
+  } as Entry;
+}
+
+function encodeCursor(row: { createdAt: Date; id: string }): string {
+  const payload = {
+    createdAt: row.createdAt.toISOString(),
+    id: row.id,
+  };
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+}
+
+function decodeCursor(cursor: string): { createdAt: Date; id: string } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
+  } catch {
+    throw new ORPCError("BAD_REQUEST", { message: "Invalid cursor" });
+  }
+  const result = cursorPayloadSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new ORPCError("BAD_REQUEST", { message: "Invalid cursor" });
+  }
+  return {
+    createdAt: new Date(result.data.createdAt),
+    id: result.data.id,
+  };
+}
 
 export const entryService = {
-  async list(database: typeof db, userId: string): Promise<Entry[]> {
-    const userEntries = await database
+  async listPaginated(
+    database: typeof db,
+    userId: string,
+    input: { limit: number; cursor?: string | null },
+  ): Promise<{ items: Entry[]; nextCursor: string | null }> {
+    const limit = Math.min(Math.max(Number(input.limit ?? 20), 1), 50);
+    const take = limit + 1;
+
+    let cursor: { createdAt: Date; id: string } | undefined;
+    if (input.cursor?.length) {
+      cursor = decodeCursor(input.cursor);
+    }
+
+    const whereClause = cursor
+      ? and(
+          eq(entries.userId, userId),
+          or(
+            lt(entries.createdAt, cursor.createdAt),
+            and(
+              eq(entries.createdAt, cursor.createdAt),
+              lt(entries.id, cursor.id),
+            ),
+          ),
+        )
+      : eq(entries.userId, userId);
+
+    const rows = await database
       .select()
       .from(entries)
-      .where(eq(entries.userId, userId))
-      .orderBy(desc(entries.createdAt));
+      .where(whereClause)
+      .orderBy(desc(entries.createdAt), desc(entries.id))
+      .limit(take);
 
-    return userEntries.map((e) => ({
-      ...e,
-      title: e.title ?? undefined,
-      summary: e.summary ?? undefined,
-      url: e.url ?? undefined,
-      error: e.error ?? undefined,
-    }));
+    const hasMore = rows.length > limit;
+    const slice = hasMore ? rows.slice(0, limit) : rows;
+    const items = slice.map(toEntry);
+
+    const last = slice[slice.length - 1];
+    const nextCursor =
+      hasMore && last
+        ? encodeCursor({
+            createdAt: last.createdAt,
+            id: last.id,
+          })
+        : null;
+
+    return { items, nextCursor };
   },
 
   async getById(
@@ -35,13 +110,7 @@ export const entryService = {
       .limit(1);
 
     if (!row) return null;
-    return {
-      ...row,
-      title: row.title ?? undefined,
-      summary: row.summary ?? undefined,
-      url: row.url ?? undefined,
-      error: row.error ?? undefined,
-    };
+    return toEntry(row);
   },
 
   async create(
@@ -68,12 +137,6 @@ export const entryService = {
         processedStatus: "pending",
       })
       .returning();
-    return {
-      ...newEntry,
-      title: newEntry.title ?? undefined,
-      summary: newEntry.summary ?? undefined,
-      url: newEntry.url ?? undefined,
-      error: newEntry.error ?? undefined,
-    };
+    return toEntry(newEntry);
   },
 };

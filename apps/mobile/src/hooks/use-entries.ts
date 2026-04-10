@@ -1,8 +1,24 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { orpc, orpcClient } from "@/lib/orpc";
 
-export function useEntries() {
-  return useQuery(orpc.entries.list.queryOptions({ input: undefined }));
+export const FEED_PAGE_SIZE = 20;
+
+export function useFeedEntries() {
+  return useInfiniteQuery(
+    orpc.entries.list.infiniteOptions({
+      input: (pageParam: string | undefined) => ({
+        limit: FEED_PAGE_SIZE,
+        cursor: pageParam,
+      }),
+      initialPageParam: undefined as string | undefined,
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    }),
+  );
 }
 
 export function useCreateEntry() {
@@ -16,7 +32,9 @@ export function useCreateEntry() {
       void orpcClient.ai
         .ingest({ entryId: entry.id })
         .then(() => {
-          void queryClient.invalidateQueries();
+          void queryClient.invalidateQueries({
+            queryKey: orpc.entries.list.key(),
+          });
         })
         .catch((err: unknown) => {
           console.error("[ai.ingest]", err);
@@ -24,7 +42,9 @@ export function useCreateEntry() {
       return entry;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      void queryClient.invalidateQueries({
+        queryKey: orpc.entries.list.key(),
+      });
     },
   });
 }

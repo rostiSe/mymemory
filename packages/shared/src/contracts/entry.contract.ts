@@ -4,8 +4,9 @@ import { z } from "zod";
 const dateSchema = z.string().or(z.date());
 
 export const entrySchema = z.object({
-  id: z.uuid(),
-  userId: z.uuid(),
+  /** Postgres / gen_random_uuid may not satisfy RFC variant bits; use guid not strict uuid */
+  id: z.guid(),
+  userId: z.guid(),
   title: z.string().nullable().optional(),
   content: z.string(),
   summary: z.string().nullable().optional(),
@@ -19,9 +20,19 @@ export const entrySchema = z.object({
   updatedAt: dateSchema,
 });
 
+export const entryListInputSchema = z.object({
+  limit: z.number().int().min(1).max(50).default(20),
+  cursor: z.string().nullish(),
+});
+
+export const entryListOutputSchema = z.object({
+  items: z.array(entrySchema),
+  nextCursor: z.string().nullable(),
+});
+
 export const entryContract = oc.router({
-  list: oc.output(z.array(entrySchema)),
-  getById: oc.input(z.object({ id: z.uuid() })).output(entrySchema.nullable()),
+  list: oc.input(entryListInputSchema).output(entryListOutputSchema),
+  getById: oc.input(z.object({ id: z.guid() })).output(entrySchema.nullable()),
   create: oc
     .input(
       z.object({
