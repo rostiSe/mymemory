@@ -63,6 +63,19 @@ function AppShell() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="debug" options={{ title: "Debug" }} />
+      <Stack.Screen
+        name="entry/[id]"
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerTitle: "",
+          headerTintColor: foregroundColor,
+          headerStyle: { backgroundColor: "transparent" },
+          headerShadowVisible: false,
+          animation: "slide_from_right",
+          contentStyle: { backgroundColor },
+        }}
+      />
     </Stack>
   );
 }
