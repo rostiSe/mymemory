@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/providers/auth-provider";
 import { Text, View } from "react-native";
-import { CaptureComposer } from "../CaptureComposer";
+import { CaptureComposer } from "../../../../components/CaptureComposer";
 
 /**
  * Feed title and account context (no capture UI).
