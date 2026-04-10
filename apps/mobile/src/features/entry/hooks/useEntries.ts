@@ -1,12 +1,12 @@
+import { orpc, orpcClient } from "@/lib/orpc";
 import {
   useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { orpc, orpcClient } from "@/lib/orpc";
 
-export const FEED_PAGE_SIZE = 20;
+export const FEED_PAGE_SIZE = 10;
 
 export function useFeedEntries() {
   return useInfiniteQuery(
@@ -62,6 +62,6 @@ export function useEntryById(id: string | string[] | undefined) {
 
   return useQuery({
     ...orpc.entries.getById.queryOptions({ input: { id: entryId as string } }),
-    enabled
+    enabled,
   });
 }

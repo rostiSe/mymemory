@@ -1,0 +1,162 @@
+import { ScreenInset } from "@/components/layout/ScreenInset";
+import { ScrollEdgeFade } from "@/components/layout/ScrollEdgeFade";
+import { FeedHeader } from "@/features/entry/components/FeedHeader";
+import { FeedListItem } from "@/features/entry/components/FeedListItem";
+import { useFeedEntries } from "@/features/entry/hooks/useEntries";
+import { entrySchema } from "@mymemory/shared/contracts";
+import { router } from "expo-router";
+import { Button } from "heroui-native";
+import { useCallback, useMemo } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  Text,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { z } from "zod";
+
+type Entry = z.infer<typeof entrySchema>;
+
+export default function FeedScreen() {
+  const insets = useSafeAreaInsets();
+  const {
+    data,
+    isPending,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useFeedEntries();
+
+  const entries = useMemo(
+    () => data?.pages.flatMap((page) => page.items) ?? [],
+    [data],
+  );
+
+  const isInitialLoading = isPending && entries.length === 0;
+
+  const handleEndReached = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const onPressEntry = useCallback((id: string) => {
+    router.push({ pathname: "/entry/[id]", params: { id } });
+  }, []);
+
+  const keyExtractor = useCallback((item: Entry) => item.id, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Entry }) => (
+      <FeedListItem
+        entryId={item.id}
+        title={item.title || item.url || "Untitled"}
+        summary={item.summary ?? ""}
+        type={item.type}
+        processedStatus={item.processedStatus}
+        error={item.error}
+        createdAt={item.createdAt}
+        onPressEntry={onPressEntry}
+      />
+    ),
+    [onPressEntry],
+  );
+
+  const refreshControl = useMemo(
+    () => (
+      <RefreshControl
+        refreshing={isRefetching && !isFetchingNextPage}
+        onRefresh={() => void refetch()}
+      />
+    ),
+    [isRefetching, isFetchingNextPage, refetch],
+  );
+
+  const listFooter = useMemo(() => {
+    if (isFetchingNextPage) {
+      return (
+        <View className="py-4 items-center">
+          <ActivityIndicator size="small" />
+        </View>
+      );
+    }
+    if (entries.length > 0 && hasNextPage === false) {
+      return (
+        <View className="items-center pt-6 pb-2">
+          <View className="mb-3 h-px w-16 bg-border" />
+          <Text className="text-xs text-muted">End of feed</Text>
+        </View>
+      );
+    }
+    return null;
+  }, [isFetchingNextPage, hasNextPage, entries.length]);
+
+  const listEmpty = useMemo(() => {
+    if (isInitialLoading) {
+      return (
+        <View className="mt-10 items-center">
+          <ActivityIndicator size="large" />
+        </View>
+      );
+    }
+    return (
+      <View className="items-center mt-10">
+        <Text className="text-muted">Your feed is empty.</Text>
+        <Text className="mt-2 px-(--spacing-screen) text-center text-xs text-muted">
+          Add a URL above. Entries are stored for user scope used by the API
+          (dev template).
+        </Text>
+      </View>
+    );
+  }, [isInitialLoading]);
+
+  if (isError) {
+    return (
+      <ScreenInset className="flex-1 bg-background">
+        <View className="flex-1 px-(--spacing-screen) pt-(--spacing-md)">
+          <FeedHeader />
+          <View className="gap-3 rounded-lg border border-border bg-surface-secondary p-4">
+            <Text className="text-foreground font-semibold">
+              Could not load feed
+            </Text>
+            <Text className="text-sm text-muted">
+              {error instanceof Error ? error.message : "Request failed"}
+            </Text>
+            <Text className="text-xs text-muted">
+              Use the same machine for Expo and the app; on web use `expo start`
+              (server mode). Ensure Supabase has the Drizzle migrations applied.
+            </Text>
+            <Button variant="secondary" onPress={() => void refetch()}>
+              Retry
+            </Button>
+          </View>
+        </View>
+      </ScreenInset>
+    );
+  }
+
+  return (
+    <ScreenInset edges={["top"]} className="flex-1 bg-background">
+      <FeedHeader />
+      <ScrollEdgeFade className="flex-1 bg-background">
+        <FlatList
+          className="flex-1 bg-background px-screen"
+          data={entries}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          ListFooterComponent={listFooter}
+          ListEmptyComponent={listEmpty}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.35}
+          refreshControl={refreshControl}
+        />
+      </ScrollEdgeFade>
+    </ScreenInset>
+  );
+}

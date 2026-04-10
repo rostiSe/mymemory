@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { useThemeColor } from "heroui-native";
-import { FloatingTabBar } from "@/components/floating-tab-bar";
+import FloatingTabBar from "@/components/layout/FloatingTabBar";
 
 export default function TabsLayout() {
   const backgroundColor = useThemeColor("background");

@@ -1,14 +1,11 @@
 /**
- * MyMemory Design Tokens
+ * Imperative color mirrors for APIs that cannot use CSS (StatusBar, charts, etc.).
  *
- * Programmatic design tokens for use where Tailwind classes are insufficient
- * (e.g., StatusBar, programmatic styling, charts, native components).
+ * Spacing, typography, radii, and layout live in `global.css` (@theme inline).
+ * Numeric mirrors for StyleSheet-only APIs: `@/theme/layout-imperative`.
  *
- * The CSS theme variables in global.css are the source of truth for colors.
- * These tokens mirror the Stitch reference palette for imperative usage.
- *
- * @see global.css for the CSS variable definitions
- * @see docs/DESIGN_SYSTEM.md for full documentation
+ * @see global.css
+ * @see docs/DESIGN_SYSTEM.md
  */
 
 export const colors = {
@@ -36,40 +33,4 @@ export const colors = {
     border: "#2E2E2E",
     danger: "#CF6679",
   },
-} as const;
-
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  "2xl": 48,
-} as const;
-
-export const fontSize = {
-  xs: 12,
-  sm: 14,
-  md: 16,
-  lg: 18,
-  xl: 20,
-  "2xl": 24,
-  "3xl": 30,
-} as const;
-
-export const borderRadius = {
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  full: 9999,
-} as const;
-
-/** Tab bar constants for the custom floating tab bar */
-export const tabBar = {
-  height: 64,
-  bottomOffset: 24,
-  horizontalMargin: 20,
-  borderRadius: 9999,
-  iconSize: 24,
 } as const;
