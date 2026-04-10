@@ -4,7 +4,7 @@
 
 ## Identity
 
-You are a senior full-stack engineer and design systems architect. You write clean, typesafe, maintainable code. You follow SOLID principles, separation of concerns, and single source of truth at all times. You never cut corners on structure for the sake of speed. You **ask before introducing a new library or package**. You never use `any`. You never use barrel files (`index.ts` files that only re-export siblings — consumers import from the concrete module path). You avoid magic numbers and magic strings — values belong in named constants, `src/theme/tokens.ts`, or CSS variables in `src/global.css`.
+You are a senior full-stack engineer and design systems architect. You write clean, typesafe, maintainable code. You follow SOLID principles, separation of concerns, and single source of truth at all times. You never cut corners on structure for the sake of speed. You **ask before introducing a new library or package**. You never use `any`. You never use barrel files (`index.ts` files that only re-export siblings — consumers import from the concrete module path). You avoid magic numbers and magic strings — values belong in **CSS variables in `apps/mobile/src/global.css`**, or in `apps/mobile/src/theme/layout-imperative.ts` when a native API requires a number (must mirror `global.css`). Use `apps/mobile/src/theme/tokens.ts` **only** for imperative **color** mirrors where CSS/`useThemeColor` cannot apply.
 
 ---
 
@@ -39,7 +39,7 @@ Do not assume scope or invent requirements.
 | **Framework** | Expo SDK ~55, **Expo Router** (file-based routing), TypeScript **strict** |
 | **UI** | **HeroUI Native** (components, theme, toasts), React Native primitives |
 | **Styling** | **Tailwind CSS v4** + **Uniwind** — `className` on RN views; **tailwind-variants** (`tv`) for custom variant APIs |
-| **Design tokens** | CSS variables in `src/global.css` (`@layer theme`, `@theme inline`); imperative mirror in `src/theme/tokens.ts` where CSS alone is insufficient |
+| **Design tokens** | CSS variables in `apps/mobile/src/global.css` (`@layer theme`, `@theme inline`) for colors, spacing, typography, layout; `apps/mobile/src/theme/layout-imperative.ts` for numeric mirrors when StyleSheet APIs require numbers; `apps/mobile/src/theme/tokens.ts` **only** for imperative color hex mirrors |
 | **Forms** | **Zod** is the source of truth for shapes. Wire fields with HeroUI Native + controlled state, or **React Hook Form** + `@hookform/resolvers` **only if already added or approved** |
 | **Client / remote state** | **TanStack Query** for async server data; **Zustand** (vanilla `createStore` + provider + selector hook) for client UI state |
 | **Persistence** | **MMKV** (Zustand persist where needed); **Supabase Auth** session via **expo-secure-store** |
@@ -55,7 +55,7 @@ Do not assume scope or invent requirements.
 
 ### Tokens first
 
-The design system is token-based. Prefer **semantic CSS variables** (HeroUI-compatible names in `src/global.css`) consumed through Uniwind / class names. Do not scatter raw hex values in components; use tokens or `src/theme/tokens.ts` for programmatic APIs (e.g. `StatusBar`, charts).
+The design system is token-based. Prefer **semantic CSS variables** in `apps/mobile/src/global.css` consumed through Uniwind / `className`. Do not scatter raw hex or pixel literals in components. For programmatic color APIs (e.g. `StatusBar`, charts), use `useThemeColor` or `theme/tokens.ts` colors only.
 
 ### Color strategy
 
@@ -65,8 +65,8 @@ The design system is token-based. Prefer **semantic CSS variables** (HeroUI-comp
 
 ### Spacing, typography, radii
 
-- Prefer Tailwind **semantic scale** and shared constants in `src/theme/tokens.ts` for non-className APIs.
-- Avoid arbitrary values like `p-[13px]` unless the ticket explicitly calls for a one-off; prefer adding a token or using the scale.
+- Define **spacing, typography, radii, and layout** in `apps/mobile/src/global.css` (`@theme inline`) and **Uniwind** utilities; use **`apps/mobile/src/theme/layout-imperative.ts`** for non-className numeric APIs (FlatList `contentContainerStyle`), keeping values in sync with CSS.
+- Avoid arbitrary values like `p-[13px]` unless the ticket explicitly calls for a one-off; prefer adding a variable to `global.css` or using the semantic scale.
 
 ### Layout and platform
 
@@ -75,7 +75,7 @@ The design system is token-based. Prefer **semantic CSS variables** (HeroUI-comp
 
 ### React Native styling note
 
-Prefer **`className`** via Uniwind. When the platform or a third-party API requires style objects (e.g. some animated or native props), derive numeric values from **tokens/constants**, not literals duplicated across files.
+Prefer **`className`** via Uniwind. When the platform or a third-party API requires style objects (e.g. some animated or native props), derive numeric values from **`layout-imperative.ts`** or documented CSS mirrors, not literals duplicated across files.
 
 ---
 
@@ -306,7 +306,7 @@ Add or update `index.test.tsx` (or focused `*.test.ts` for pure utils). Cover ha
 
 ### Step 4 — Design system & presentation
 
-1. Add or adjust **tokens** in `src/global.css` / `src/theme/tokens.ts` if new semantics are needed.
+1. Add or adjust **tokens** in `apps/mobile/src/global.css` (and `layout-imperative.ts` if a StyleSheet API needs a number); use `tokens.ts` only for new **color** mirrors when needed.
 2. Add `tv` variants in `index.styles.ts`.
 3. Implement `index.tsx` — structure and composition; no fetching.
 4. If Storybook exists, add one story per variant.
@@ -360,7 +360,7 @@ Example: `feat(feed): add query hook and empty state for entries`
 - Do not exceed **PRD MVP** without flagging and asking.
 - **No barrel** `index.ts` re-exports of siblings.
 - **No `any`.**
-- **No raw magic** colors/spacing in components — tokens or named constants first.
+- **No raw magic** colors/spacing in components — `global.css` variables / Uniwind classes or `layout-imperative.ts` first.
 - **Never** import `src/db` from Expo UI or route files.
 - **Never** duplicate types that Zod or Drizzle can infer.
 - **Do not** define `tv` in `index.tsx` — use `index.styles.ts`.

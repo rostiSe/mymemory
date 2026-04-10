@@ -168,10 +168,10 @@ New screens: `search.tsx`, `spaces.tsx`, `digestion.tsx`
 
 ### 3.3 Component library (few but high-quality, each with `tv()` styles)
 
-**Entry** (`src/components/entry/`): EntryCard, EntryDetail, EntryTLDR, EntryTags, ProcessingStatus
-**Feed** (`src/components/feed/`): FeedList, FeedInputBar, FeedFilters
-**Search** (`src/components/search/`): SearchBar, SearchResults
-**Space** (`src/components/space/`): SpaceCard, SpaceList, SpaceTree, SpaceSuggestionCard
+**Entry** (`apps/mobile/src/features/entry/components/`): EntryCard, ProcessingStatus (more: EntryDetail, EntryTLDR, EntryTags as needed)
+**Feed** (same **`entry`** feature): FeedScreen + feed list/input live under `features/entry/screens/` and co-located components
+**Search** (`features/search/` or shared `components/ui/` for generic search chrome only)
+**Space** (`apps/mobile/src/features/space/components/`): SpaceTree, SpaceCard, etc.
 **Digest** (`src/components/digest/`): DigestCard, DigestContent, PeriodPicker
 **Share** (`src/components/share/`): ShareForm, TypeSelector
 
@@ -203,10 +203,10 @@ pnpm add @ai-sdk/react
 
 | File | Hooks |
 |------|-------|
-| `src/hooks/use-entries.ts` | `useEntries`, `useEntry`, `useCreateEntry`, `useUpdateEntry`, `useDeleteEntry` |
+| `apps/mobile/src/features/entry/hooks/useEntries.ts` | `useFeedEntries`, `useCreateEntry`, `useEntryById` (extend with update/delete as needed) |
 | `src/hooks/use-ingest.ts` | `useIngest` mutation, `useIngestStatus` (polls every 2s while processing) |
 | `src/hooks/use-search.ts` | `useSemanticSearch` (debounced) |
-| `src/hooks/use-spaces.ts` | `useSpaces`, `useSpace`, CRUD mutations |
+| `apps/mobile/src/features/space/hooks/useSpaces.ts` | `useSpaces`, `useCreateSpace` (extend with get/update as needed) |
 | `src/hooks/use-digests.ts` | `useDigests`, `useDigest`, `useGenerateDigest` |
 | `src/hooks/use-tags.ts` | `useTags` |
 

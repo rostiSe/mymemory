@@ -3,36 +3,40 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeColor } from "heroui-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import {
+  ICON_SIZE_TAB_PX,
+  LAYOUT_FLOATING_TAB_ABOVE_PILL_GAP_PX,
+  LAYOUT_FLOATING_TAB_HORIZONTAL_MARGIN_PX,
+  LAYOUT_FLOATING_TAB_MIN_BOTTOM_FALLBACK_PX,
+} from "@/theme/layout-imperative";
 
 /**
  * Custom floating pill-shaped tab bar.
  *
- * Design reference: Stitch bottom nav — centered, rounded-full,
- * semi-transparent surface with shadow, floating above bottom edge.
- *
- * Usage: Pass as `tabBar` prop to `<Tabs>` from expo-router.
- *
- * @example
- * ```tsx
- * import { FloatingTabBar } from "@/components/floating-tab-bar";
- * <Tabs tabBar={(props) => <FloatingTabBar {...props} />}>
- * ```
+ * Pass as `tabBar` prop to `<Tabs>` from expo-router.
+ * Layout numbers mirror `global.css` (--layout-*, --icon-size-tab).
  */
-export function FloatingTabBar({
+export default function FloatingTabBar({
   state,
   descriptors,
   navigation,
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const accentColor = useThemeColor("accent");
   const mutedColor = useThemeColor("muted");
+  const accentForeground = useThemeColor("accent-foreground");
 
-  const bottomOffset = Math.max(insets.bottom, 12) + 12;
+  const bottomOffset =
+    Math.max(insets.bottom, LAYOUT_FLOATING_TAB_MIN_BOTTOM_FALLBACK_PX) +
+    LAYOUT_FLOATING_TAB_ABOVE_PILL_GAP_PX;
 
   return (
     <View
-      style={{ bottom: bottomOffset }}
-      className="absolute left-5 right-5 mx-auto max-w-md flex-row items-center justify-around rounded-full border border-border bg-surface px-2 py-2"
+      style={{
+        bottom: bottomOffset,
+        left: LAYOUT_FLOATING_TAB_HORIZONTAL_MARGIN_PX,
+        right: LAYOUT_FLOATING_TAB_HORIZONTAL_MARGIN_PX,
+      }}
+      className="absolute flex-row items-center justify-around rounded-full border border-border bg-surface px-2 py-2"
     >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
@@ -73,8 +77,8 @@ export function FloatingTabBar({
           >
             <MaterialIcons
               name={iconName}
-              size={24}
-              color={isFocused ? "#FFFFFF" : mutedColor}
+              size={ICON_SIZE_TAB_PX}
+              color={isFocused ? accentForeground : mutedColor}
             />
           </Pressable>
         );
@@ -84,7 +88,7 @@ export function FloatingTabBar({
 }
 
 function getIconName(
-  routeName: string
+  routeName: string,
 ): React.ComponentProps<typeof MaterialIcons>["name"] {
   switch (routeName) {
     case "index":

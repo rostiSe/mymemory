@@ -1,11 +1,5 @@
-import { View, Text } from 'react-native';
-import { Stack } from 'expo-router';
+import SpacesScreen from "@/features/space/screens/SpacesScreen";
 
-export default function SpacesScreen() {
-  return (
-    <View className="flex-1 bg-background p-4 justify-center items-center">
-      <Text className="text-foreground text-xl font-bold">Spaces</Text>
-      <Text className="text-muted mt-2">Explore auto-categorized clusters of knowledge.</Text>
-    </View>
-  );
+export default function SpacesRoute() {
+  return <SpacesScreen />;
 }

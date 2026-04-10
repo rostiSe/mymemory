@@ -5,14 +5,15 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClientProvider } from "@tanstack/react-query";
 import * as SplashScreen from "expo-splash-screen";
 import { queryClient } from "@/lib/query-client";
-import { AuthStoreProvider } from "@/stores/providers/auth-provider";
-import { UIStoreProvider } from "@/stores/providers/ui-provider";
+import {
+  AuthStoreProvider,
+  useAuthStore,
+} from "@/stores/providers/auth-provider";
 import { AppStoreProvider } from "@/stores/providers/app-provider";
-import { useAuthStore } from "@/stores/providers/auth-provider";
-import { useUIStore } from "@/stores/providers/ui-provider";
+import { UIStoreProvider, useUIStore } from "@/stores/providers/ui-provider";
 import { Uniwind } from "uniwind";
 import * as SystemUI from "expo-system-ui";
-import { ErrorBoundary } from "@/components/error-boundary";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
@@ -66,6 +67,7 @@ function AppShell() {
   );
 }
 
+/** Expo Router `ExpoRoot` provides `SafeAreaProvider` — use `useSafeAreaInsets()` without duplicating the provider here. */
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

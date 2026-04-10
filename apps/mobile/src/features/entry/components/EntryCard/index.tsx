@@ -10,7 +10,7 @@ interface EntryCardProps {
   onPress?: () => void;
 }
 
-export function EntryCard({
+export default function EntryCard({
   title,
   summary,
   type = "url",

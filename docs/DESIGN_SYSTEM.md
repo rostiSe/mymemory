@@ -55,17 +55,19 @@ Colors are defined as CSS variables in `src/global.css` using `@layer theme` wit
 
 ### Programmatic Access
 
-For imperative use (StatusBar, native components):
+For **colors** when imperative APIs need a hex (StatusBar, charts, etc.):
 
 ```tsx
 // Via HeroUI hook (reactive to theme changes)
 import { useThemeColor } from "heroui-native";
 const bgColor = useThemeColor("background");
 
-// Via static tokens (for constants, non-reactive)
+// Via static color mirror (non-reactive; same values as global.css)
 import { colors } from "@/theme/tokens";
-const bgColor = colors.light.background; // "#F9F9F9"
+const bgColor = colors.light.background;
 ```
+
+Spacing, layout, and typography: use **`global.css`** and **`layout-imperative.ts`** (see the section *Spacing, typography, radii, and layout* below).
 
 ### Adding Custom Colors
 
@@ -87,6 +89,61 @@ In `src/global.css`:
 ```
 
 Then use: `<View className="bg-my-custom" />`
+
+---
+
+## Spacing, typography, radii, and layout (source of truth: `global.css`)
+
+**Spacing, typography, line heights, radii, and layout** (screen padding, floating tab clearance, scroll fade size, icon sizes) are defined in **`apps/mobile/src/global.css`** inside **`@theme inline`**. They are theme-agnostic pixel values shared by light and dark; **colors** stay in `@layer theme` with `@variant light` / `@variant dark`.
+
+### Principles
+
+- Prefer **`className`** with Uniwind (e.g. `p-md`, `gap-sm`, `px-[var(--spacing-screen)]`, `rounded-lg`).
+- Avoid raw numbers in components; use **semantic CSS variables** or Tailwind utilities mapped from `@theme`.
+- For **`StyleSheet` / `contentContainerStyle`** (FlatList, etc.) where `className` is not enough, use **`apps/mobile/src/theme/layout-imperative.ts`** — numeric mirrors **must stay in sync** with the matching variables in `global.css` (documented in that file).
+
+### Examples of variables (`@theme inline`)
+
+| Variable | Role |
+|----------|------|
+| `--spacing-xs` … `--spacing-2xl` | Base spacing scale |
+| `--spacing-screen`, `--spacing-screen-y` | Default horizontal / vertical padding for screen content |
+| `--spacing-tab-clearance` | Extra scroll bottom padding above the floating tab bar + home indicator |
+| `--layout-floating-tab-bar-height` | Target height for the floating pill |
+| `--layout-floating-tab-bottom-offset` | Bottom layout reference |
+| `--layout-floating-tab-horizontal-margin` | Side inset for the floating bar |
+| `--layout-scroll-fade-size` | HeroUI `ScrollShadow` gradient height |
+| `--font-size-xs` … `--font-size-3xl` | Typography scale |
+| `--line-height-tight` / `normal` / `relaxed` | Line height multipliers |
+| `--radius-sm` … `--radius-full` | Corner radii |
+| `--icon-size-tab` | Tab bar icon size |
+
+### Runtime safe area
+
+Device-specific insets (notch, home indicator) come from **`useSafeAreaInsets()`** (`react-native-safe-area-context`). **Expo Router** already wraps the app with **`SafeAreaProvider`** (`ExpoRoot`); do not add a second provider unless you bypass Expo’s root.
+
+Use **`ScreenInset`** (`components/layout/ScreenInset`) for padding derived from insets, or apply inset padding on scroll views directly. **Do not** use React Native’s deprecated `SafeAreaView`; avoid the library’s `SafeAreaView` on animated scroll content (prefer insets + `View`).
+
+**Tabs with `headerShown: true`:** the navigator header already respects the top safe area — do **not** add a second top inset to the main content. **Tabs with `headerShown: false`** (e.g. Feed): apply top (and usually left/right) insets to the scroll surface or wrap with `ScreenInset`.
+
+### Scroll edge fade
+
+**`ScrollEdgeFade`** (`components/layout/ScrollEdgeFade`) wraps HeroUI **`ScrollShadow`** with **`expo-linear-gradient`’s `LinearGradient`** (required by HeroUI). Use it around a **single** scroll child (`FlatList`, `ScrollView`). Keep it **separate** from `ScreenInset` (different concerns).
+
+### Programmatic access (colors only in `tokens.ts`)
+
+```tsx
+// Colors — when CSS / useThemeColor is not enough (StatusBar, charts)
+import { colors } from "@/theme/tokens";
+
+// Layout numbers for StyleSheet-only APIs — must match global.css
+import {
+  LAYOUT_FLOATING_TAB_CLEARANCE_PX,
+  SPACING_SCREEN_PX,
+} from "@/theme/layout-imperative";
+```
+
+Do **not** add spacing or typography to `tokens.ts`; extend **`global.css`** instead.
 
 ---
 
@@ -137,23 +194,31 @@ const { theme, hasAdaptiveThemes } = useUniwind();
 
 ### Custom Components
 
-#### `FloatingTabBar` (`src/components/floating-tab-bar.tsx`)
+#### `FloatingTabBar` (`apps/mobile/src/components/layout/FloatingTabBar/index.tsx`)
 
 Custom floating pill-shaped tab bar passed to Expo Router's `<Tabs tabBar={...}>`.
 
 ```tsx
-import { FloatingTabBar } from "@/components/floating-tab-bar";
+import FloatingTabBar from "@/components/layout/FloatingTabBar";
 
 <Tabs tabBar={(props) => <FloatingTabBar {...props} />}>
   <Tabs.Screen name="index" options={{ title: "Feed" }} />
 </Tabs>
 ```
 
-**Design:** Rounded-full, positioned above bottom edge, surface background with border. Active tab gets `bg-accent` with white icon.
+**Design:** Rounded-full, positioned above bottom edge using `useSafeAreaInsets()` and **`layout-imperative`** constants that mirror `global.css` (`--layout-floating-tab-*`, `--icon-size-tab`). Surface background with border. Active tab uses `bg-accent` and **`useThemeColor("accent-foreground")`** for the icon.
 
 To add a new tab, update `getIconName()` in the component to map the route name to a MaterialIcons name.
 
-#### `ErrorBoundary` (`src/components/error-boundary.tsx`)
+#### `ScreenInset` (`apps/mobile/src/components/layout/ScreenInset/index.tsx`)
+
+Applies **`useSafeAreaInsets()`** padding on a plain `View`. Props: `edges` (default all sides). No `SafeAreaView`.
+
+#### `ScrollEdgeFade` (`apps/mobile/src/components/layout/ScrollEdgeFade/index.tsx`)
+
+HeroUI **`ScrollShadow`** + **`LinearGradient`** from `expo-linear-gradient`. Wraps one scrollable child; optional `size` defaults to **`layout-imperative`** / `--layout-scroll-fade-size`.
+
+#### `ErrorBoundary` (`apps/mobile/src/components/ErrorBoundary/index.tsx`)
 
 React error boundary wrapping the app shell. Catches render errors and shows a fallback UI with retry button.
 
