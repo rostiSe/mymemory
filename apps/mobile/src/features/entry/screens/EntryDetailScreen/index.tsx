@@ -24,8 +24,7 @@ export default function EntryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: entry, isPending, isError, error } = useEntryById(id);
   const insets = useSafeAreaInsets();
-  const { scrollHandler, heroContainerStyle, heroImageStyle } =
-    useEntryDetailScroll();
+  const { scrollHandler, heroImageStyle } = useEntryDetailScroll();
 
   const imageUri = useMemo(
     () => (entry ? resolveEntryHeroImageUri(entry) : undefined),
@@ -96,11 +95,7 @@ export default function EntryDetailScreen() {
           paddingBottom: bottomPad,
         }}
       >
-        <EntryDetailHero
-          imageUri={imageUri}
-          heroContainerStyle={heroContainerStyle}
-          heroImageStyle={heroImageStyle}
-        />
+        <EntryDetailHero imageUri={imageUri} heroImageStyle={heroImageStyle} />
         <View className="-mt-6 rounded-t-3xl bg-background px-(--spacing-screen) pt-6">
           <EntryDetailHeader
             title={headerProps.title}

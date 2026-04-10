@@ -36,11 +36,17 @@ export const LAYOUT_FLOATING_TAB_ABOVE_PILL_GAP_PX = 12;
 /** Matches --icon-size-tab */
 export const ICON_SIZE_TAB_PX = 24;
 
-/** Entry detail hero: max height before scroll collapse (parallax + zoom range). */
-export const ENTRY_DETAIL_HERO_MAX_HEIGHT_PX = 480;
+/** Entry detail hero: fixed viewport height for the image region. */
+export const ENTRY_DETAIL_HERO_MAX_HEIGHT_PX = 320;
+
+/**
+ * Max upward translate (px) for hero image parallax while scrolling.
+ * Used with `ENTRY_DETAIL_HERO_MAX_HEIGHT_PX` as the scroll input range in `useEntryDetailScroll`.
+ */
+export const ENTRY_DETAIL_HERO_PARALLAX_TRANSLATE_MAX_PX = -36;
 
 /**
  * Max scale applied to hero image while scrolling (1 = no zoom).
- * Paired with `ENTRY_DETAIL_HERO_MAX_HEIGHT_PX` in `useEntryDetailScroll`.
+ * Transform-only; hero container height stays fixed.
  */
-export const ENTRY_DETAIL_HERO_ZOOM_SCALE_MAX = 1.3;
+export const ENTRY_DETAIL_HERO_ZOOM_SCALE_MAX = 1.1;

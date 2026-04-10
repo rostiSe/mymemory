@@ -1,24 +1,28 @@
 import { embed, embedMany } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
-/** OpenAI embedding models reject inputs over 8192 tokens. */
+/** OpenAI embedding models reject inputs over 8192 tokens per input string. */
 const OPENAI_EMBEDDING_MAX_TOKENS = 8192;
 
-/** Margin so URL-heavy markdown (high tokens/char) still fits. */
+/** Margin under the token cap. */
 const TOKEN_SAFETY_MARGIN = 512;
 
 /**
- * Conservative chars per token for web markdown (links, punctuation).
- * Lower = smaller chunks = fewer 400s from OpenAI.
+ * Assume worst-case token density for scraped pages (URLs, markdown, punctuation).
+ * ~1 effective token per char is possible; do not use a large chars/token ratio.
  */
-const HEURISTIC_CHARS_PER_TOKEN = 2.5;
+const HEURISTIC_CHARS_PER_TOKEN = 0.72;
 
-const MAX_CHARS_PER_CHUNK = Math.floor(
-  (OPENAI_EMBEDDING_MAX_TOKENS - TOKEN_SAFETY_MARGIN) * HEURISTIC_CHARS_PER_TOKEN,
+const MAX_CHARS_PER_CHUNK = Math.max(
+  512,
+  Math.floor(
+    (OPENAI_EMBEDDING_MAX_TOKENS - TOKEN_SAFETY_MARGIN) *
+      HEURISTIC_CHARS_PER_TOKEN,
+  ),
 );
 
 /** Cap embedding API calls per entry (remaining text is not reflected in the vector). */
-const MAX_CHUNKS = 8;
+const MAX_CHUNKS = 40;
 
 const embeddingModel = openai.embedding('text-embedding-3-small');
 
