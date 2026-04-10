@@ -76,47 +76,56 @@
   }
 
   @variant dark {
+    /* ── Reference neutrals (card/background contrast: page = carbon → cards = iron) ── */
+    --bright-snow: #f8f9fa;
+    --platinum: #e9ecef;
+    --alabaster-grey: #dee2e6;
+    --pale-slate: #ced4da;
+    --pale-slate-2: #adb5bd;
+    --slate-grey: #6c757d;
+    --iron-grey: #495057;
+    --gunmetal: #343a40;
+    --carbon-black: #212529;
+
     /* ── Base ── */
-    --background: oklch(0.14 0 0); /* #121212 */
-    --foreground: oklch(0.96 0 0); /* #F3F3F3 */
-    --muted: oklch(0.65 0.008 250); /* lighter gray for dark */
+    --background: var(--carbon-black);
+    --foreground: var(--bright-snow);
+    --muted: var(--pale-slate-2);
 
-    /* ── Surfaces ── */
-    --surface: oklch(0.2 0 0); /* #1E1E1E */
-    --surface-foreground: oklch(0.96 0 0);
-    --surface-secondary: oklch(0.17 0 0); /* #1A1A1A */
-    --surface-secondary-foreground: oklch(0.96 0 0);
-    --surface-tertiary: oklch(0.22 0 0);
-    --surface-tertiary-foreground: oklch(0.96 0 0);
+    /* ── Surfaces: iron cards on carbon page; gunmetal inset; slate tertiary lift ── */
+    --surface: var(--iron-grey);
+    --surface-foreground: var(--bright-snow);
+    --surface-secondary: var(--gunmetal);
+    --surface-secondary-foreground: var(--bright-snow);
+    --surface-tertiary: var(--slate-grey);
+    --surface-tertiary-foreground: var(--bright-snow);
 
-    /* ── Accent (lighter blue-slate for dark mode) ── */
-    --accent: oklch(0.7 0.035 220); /* #90A4AE-ish */
-    --accent-foreground: oklch(0.14 0 0); /* dark text on light accent */
+    /* ── Accent (oklch — brand; foreground on light accent chips) ── */
+    --accent: oklch(0.7 0.035 220);
+    --accent-foreground: var(--carbon-black);
 
     /* ── Neutral default ── */
-    --default: oklch(0.25 0.005 250);
-    --default-foreground: oklch(0.96 0 0);
+    --default: var(--gunmetal);
+    --default-foreground: var(--bright-snow);
 
     /* ── Status ── */
     --success: oklch(0.72 0.19 150);
-    --success-foreground: oklch(0.14 0 0);
+    --success-foreground: var(--carbon-black);
     --warning: oklch(0.82 0.14 76);
-    --warning-foreground: oklch(0.14 0 0);
+    --warning-foreground: var(--carbon-black);
     --danger: oklch(0.6 0.2 25);
-    --danger-foreground: oklch(0.96 0 0);
+    --danger-foreground: var(--bright-snow);
 
-    /* ── Borders ── */
-    --border: oklch(0.28 0.005 250);
-
-    /* ── Form fields ── */
-    --field-background: oklch(0.2 0 0);
-    --field-foreground: oklch(0.96 0 0);
-    --field-placeholder: oklch(0.55 0.008 250);
-    --field-border: oklch(0.28 0.005 250);
+    /* ── Borders / fields (visible edges without matching card fill) ── */
+    --border: var(--slate-grey);
+    --field-background: var(--gunmetal);
+    --field-foreground: var(--bright-snow);
+    --field-placeholder: var(--pale-slate-2);
+    --field-border: var(--iron-grey);
 
     /* ── Overlay ── */
-    --overlay: oklch(0.2 0 0);
-    --overlay-foreground: oklch(0.96 0 0);
+    --overlay: var(--gunmetal);
+    --overlay-foreground: var(--bright-snow);
   }
 }
 
@@ -132,6 +141,9 @@
   --spacing-lg: 24px;
   --spacing-xl: 32px;
   --spacing-2xl: 48px;
+
+  /* Card padding */
+  --spacing-card: 16px;
 
   /* Screen content padding */
   --spacing-screen: 16px;

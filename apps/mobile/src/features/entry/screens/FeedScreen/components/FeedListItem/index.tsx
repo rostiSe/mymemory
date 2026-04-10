@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { View } from "react-native";
-import EntryCard from "@/features/entry/components/EntryCard";
-import ProcessingStatus from "@/features/entry/components/ProcessingStatus";
+import EntryCard from "../EntryCard";
+import ProcessingStatus from "../ProcessingStatus";
 
 export type FeedListItemProps = {
   entryId: string;
@@ -24,7 +24,10 @@ function FeedListItemInner({
   createdAt,
   onPressEntry,
 }: FeedListItemProps) {
-  const displayDate = new Date(createdAt).toLocaleDateString();
+  const displayDate = new Date(createdAt).toLocaleDateString("de-DE", {
+    day: "numeric",
+    month: "long",
+  });
 
   return (
     <View className="gap-2 mb-4">

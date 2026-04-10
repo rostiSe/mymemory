@@ -1,7 +1,5 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
 import { ScrollEdgeFade } from "@/components/layout/ScrollEdgeFade";
-import { FeedHeader } from "@/features/entry/components/FeedHeader";
-import { FeedListItem } from "@/features/entry/components/FeedListItem";
 import { useFeedEntries } from "@/features/entry/hooks/useEntries";
 import { entrySchema } from "@mymemory/shared/contracts";
 import { router } from "expo-router";
@@ -14,13 +12,13 @@ import {
   Text,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { z } from "zod";
+import { FeedHeader } from "./components/FeedHeader";
+import { FeedListItem } from "./components/FeedListItem";
 
 type Entry = z.infer<typeof entrySchema>;
 
 export default function FeedScreen() {
-  const insets = useSafeAreaInsets();
   const {
     data,
     isPending,
