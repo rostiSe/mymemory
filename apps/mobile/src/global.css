@@ -73,6 +73,9 @@
     /* ── Overlay ── */
     --overlay: oklch(1 0 0);
     --overlay-foreground: oklch(0.18 0.005 200);
+
+    /* ShareQuickActivity: dim content behind translucent window */
+    --share-quick-scrim: oklch(0 0 0 / 0.5);
   }
 
   @variant dark {
@@ -182,4 +185,5 @@
   --color-tab-bar-inactive: var(--muted);
   --color-header: var(--background);
   --color-header-foreground: var(--foreground);
+  --color-share-quick-scrim: var(--share-quick-scrim);
 }

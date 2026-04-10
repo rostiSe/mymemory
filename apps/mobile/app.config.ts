@@ -60,6 +60,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         },
       ],
       "expo-secure-store",
+      "./plugins/withAndroidShareQuick",
     ],
     experiments: {
       typedRoutes: true,

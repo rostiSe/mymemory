@@ -2,9 +2,11 @@ import { ScreenInset } from "@/components/layout/ScreenInset";
 import { ScrollEdgeFade } from "@/components/layout/ScrollEdgeFade";
 import { useFeedEntries } from "@/features/entry/hooks/useEntries";
 import { entrySchema } from "@mymemory/shared/contracts";
+import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
 import { useCallback, useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
   FlatList,
@@ -19,6 +21,9 @@ import { FeedListItem } from "./components/FeedListItem";
 type Entry = z.infer<typeof entrySchema>;
 
 export default function FeedScreen() {
+  const insets = useSafeAreaInsets();
+  const listContentBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
+
   const {
     data,
     isPending,
@@ -153,6 +158,7 @@ export default function FeedScreen() {
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.35}
           refreshControl={refreshControl}
+          contentContainerStyle={{ paddingBottom: listContentBottomPad }}
         />
       </ScrollEdgeFade>
     </ScreenInset>
