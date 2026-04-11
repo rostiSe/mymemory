@@ -1,15 +1,13 @@
 import { memo } from "react";
 import { View } from "react-native";
 import EntryCard from "../EntryCard";
-import ProcessingStatus from "../ProcessingStatus";
 
 export type FeedListItemProps = {
   entryId: string;
   title: string;
   summary: string;
+  summaryLoading: boolean;
   type: "url" | "note";
-  processedStatus: "pending" | "processing" | "done" | "failed";
-  error?: string | null;
   createdAt: string | Date;
   onPressEntry: (id: string) => void;
 };
@@ -18,9 +16,8 @@ function FeedListItemInner({
   entryId,
   title,
   summary,
+  summaryLoading,
   type,
-  processedStatus,
-  error,
   createdAt,
   onPressEntry,
 }: FeedListItemProps) {
@@ -30,11 +27,11 @@ function FeedListItemInner({
   });
 
   return (
-    <View className="gap-2 mb-4">
-      <ProcessingStatus status={processedStatus} error={error} />
+    <View className="mb-4">
       <EntryCard
         title={title}
         summary={summary}
+        summaryLoading={summaryLoading}
         type={type}
         date={displayDate}
         onPress={() => onPressEntry(entryId)}

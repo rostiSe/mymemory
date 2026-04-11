@@ -2,6 +2,7 @@ import type { CaptureComposerProps } from "@/features/entry/components/CaptureCo
 import {
   type FeedPendingRow,
   type FeedRow,
+  isPendingFeedRow,
 } from "@/features/entry/utils/feed-rows";
 import {
   type EntryListPage,
@@ -9,7 +10,7 @@ import {
 } from "@/features/entry/utils/flattenEntryListPages";
 import { newOptimisticRowId } from "@/features/entry/utils/optimisticRowId";
 import type { InfiniteData } from "@tanstack/react-query";
-import { useCallback, useMemo, useOptimistic, useTransition } from "react";
+import { useCallback, useMemo, useOptimistic, useRef, useTransition } from "react";
 
 type CreateMutation = ReturnType<
   typeof import("@/features/entry/hooks/useEntries").useCreateEntry
@@ -55,16 +56,38 @@ export function useFeedOptimisticCreate({
   isPending,
 }: UseFeedOptimisticCreateParams): UseFeedOptimisticCreateResult {
   const [isCreateTransitionPending, startCreateTransition] = useTransition();
+  /** Server id from the last successful create — used to drop the placeholder once the row is in cache. */
+  const lastCreatedEntryIdRef = useRef<string | null>(null);
 
   const baseRows: FeedRow[] = useMemo(
     () => flattenEntryListPages(infiniteData?.pages),
     [infiniteData?.pages],
   );
 
-  const [optimisticRows, addOptimisticRow] = useOptimistic(
+  const [rawOptimisticRows, addOptimisticRow] = useOptimistic(
     baseRows,
     (current, pending: FeedPendingRow): FeedRow[] => [pending, ...current],
   );
+
+  /**
+   * `useOptimistic` can still show `[placeholder, …]` while the transition runs even after
+   * `writeEntryRowToCaches` has prepended the real row → duplicate cards. Remove the leading
+   * placeholder only when the next row is the entry we just created.
+   */
+  const optimisticRows = useMemo((): FeedRow[] => {
+    const rows = rawOptimisticRows;
+    const createdId = lastCreatedEntryIdRef.current;
+    if (
+      createdId &&
+      rows.length >= 2 &&
+      isPendingFeedRow(rows[0]) &&
+      !isPendingFeedRow(rows[1]) &&
+      rows[1].id === createdId
+    ) {
+      return rows.slice(1);
+    }
+    return rows;
+  }, [rawOptimisticRows]);
 
   const optimisticSubmit = useCallback(
     (
@@ -72,11 +95,14 @@ export function useFeedOptimisticCreate({
       callbacks: { onSuccess: () => void; onError: (e: unknown) => void },
     ) => {
       startCreateTransition(async () => {
+        lastCreatedEntryIdRef.current = null;
         addOptimisticRow({ id: newOptimisticRowId(), pending: true });
         try {
-          await createMutation.mutateAsync(input);
+          const entry = await createMutation.mutateAsync(input);
+          lastCreatedEntryIdRef.current = entry.id;
           callbacks.onSuccess();
         } catch (e) {
+          lastCreatedEntryIdRef.current = null;
           callbacks.onError(e);
         }
       });
