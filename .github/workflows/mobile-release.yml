@@ -39,6 +39,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
+      - name: Build shared workspace packages
+        run: pnpm --filter @mymemory/shared build
+
       - name: Build Android APK (Production)
         id: build_apk
         working-directory: apps/mobile
