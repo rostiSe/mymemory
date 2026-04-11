@@ -10,7 +10,6 @@ import {
   type FeedRow,
   isPendingFeedRow,
 } from "@/features/entry/utils/feed-rows";
-import { useRefetchOnScreenFocus } from "@/hooks/useRefetchOnScreenFocus";
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
@@ -42,8 +41,6 @@ export default function FeedScreen() {
     hasNextPage,
     fetchNextPage,
   } = useFeedEntries();
-
-  useRefetchOnScreenFocus(refetch);
 
   const { optimisticRows, isInitialLoading, captureComposerProps } =
     useFeedOptimisticCreate({

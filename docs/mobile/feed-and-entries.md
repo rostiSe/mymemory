@@ -10,8 +10,7 @@ How the **feed list**, **optimistic create**, and small **pure utilities** are s
 
 ## Data fetching
 
-- **`useFeedEntries`** (`hooks/useEntries.ts`) — `useInfiniteQuery` for the entry list; use with React Navigation focus refetch when product requires fresh data on each visit.
-- **`useRefetchOnScreenFocus`** (`hooks/useRefetchOnScreenFocus.ts`) — call with `refetch` from `useFeedEntries` so returning to the tab or stack triggers a refetch (does not invalidate unrelated queries).
+- **`useFeedEntries`** (`hooks/useEntries.ts`) — `useInfiniteQuery` for the entry list. The feed **does not** refetch on every tab focus (avoids constant reloads); use **pull-to-refresh** or rely on mutation / `entry-query-cache` updates. For other screens that truly need “refetch when focused,” use `useRefetchOnScreenFocus` there only.
 
 ## Optimistic create
 
