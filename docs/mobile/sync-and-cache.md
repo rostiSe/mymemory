@@ -17,6 +17,8 @@ Two **different** patterns — only the first uses the entries-specific merge he
 1. **Pipeline / ingest** — `useCreateEntry`: mutation + `ai.ingest` `.then` / `.catch` calls the helpers above.
 2. **Share intent** — Share Quick writes cache + MMKV; main app **`useEntrySync`** on foreground runs `getById` + `writeEntryRowToCaches` or domain invalidation.
 
+**Feed tab:** switching tabs does **not** auto-refetch the infinite list (avoids a full reload every time). Refresh manually with pull-to-refresh, or rely on creates / Share Quick / cache merges.
+
 **MVP:** single-device, **no Supabase Realtime**. Updates = mutations + MMKV nudge + optional **detail polling** while `processedStatus` is pending (`lib/config/query.ts`), pull-to-refresh, app focus (`useSyncReactQueryAppFocus`).
 
 ## Track B — Everything else (spaces, digestions, plain lists)
