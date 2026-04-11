@@ -14,11 +14,12 @@ import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { HeroUINativeProvider, useThemeColor } from "heroui-native";
 import { Uniwind } from "uniwind";
 import {
-  applySuccessfulIngestToCache,
-  invalidateAllEntryQueries,
-} from "@/lib/entry-query-cache";
+  invalidateEntriesDomain,
+  writeEntryRowToCaches,
+} from "@/features/entry/entry-query-cache";
 import { queryClient } from "@/lib/query-client";
-import { orpc, orpcClient } from "@/lib/orpc";
+import { orpcClient } from "@/lib/orpc";
+import { bumpShareEntrySyncMarker } from "@/lib/share-quick-cache-marker";
 import {
   AuthStoreProvider,
   useAuthStore,
@@ -161,16 +162,19 @@ function ShareQuickInner({
 
       try {
         const entry = await orpcClient.entries.create(mapped.input);
+        writeEntryRowToCaches(qc, entry);
+        bumpShareEntrySyncMarker(entry.id);
         void orpcClient.ai
           .ingest({ entryId: entry.id })
           .then((result) => {
-            applySuccessfulIngestToCache(qc, entry.id, result.data);
+            writeEntryRowToCaches(qc, result.data);
+            bumpShareEntrySyncMarker(entry.id);
           })
           .catch((err: unknown) => {
             console.error("[ShareQuick ai.ingest]", err);
-            invalidateAllEntryQueries(qc);
+            invalidateEntriesDomain(qc);
+            bumpShareEntrySyncMarker(entry.id);
           });
-        void qc.invalidateQueries({ queryKey: orpc.entries.list.key() });
 
         setPhase("success");
         setMessage("Text saved");

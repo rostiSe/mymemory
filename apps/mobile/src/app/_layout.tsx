@@ -4,6 +4,8 @@ import { HeroUINativeProvider, useThemeColor } from "heroui-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClientProvider } from "@tanstack/react-query";
 import * as SplashScreen from "expo-splash-screen";
+import { useSyncReactQueryAppFocus } from "@/hooks/useSyncReactQueryAppFocus";
+import { useEntrySync } from "@/features/entry/hooks/useEntrySync";
 import { queryClient } from "@/lib/query-client";
 import {
   AuthStoreProvider,
@@ -30,6 +32,9 @@ function AppShell() {
 
   const backgroundColor = useThemeColor("background");
   const foregroundColor = useThemeColor("foreground");
+
+  useSyncReactQueryAppFocus();
+  useEntrySync();
 
   useEffect(() => {
     initialize();
