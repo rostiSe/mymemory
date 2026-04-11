@@ -109,6 +109,7 @@ export default function EntryDetailScreen() {
             </View>
           ) : null}
           <EntrySummaryCard
+            contentKey={entry.id}
             summaryText={summaryText}
             loading={
               entry.processedStatus === "pending" ||

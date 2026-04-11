@@ -50,3 +50,15 @@ export const ENTRY_DETAIL_HERO_PARALLAX_TRANSLATE_MAX_PX = -36;
  * Transform-only; hero container height stays fixed.
  */
 export const ENTRY_DETAIL_HERO_ZOOM_SCALE_MAX = 1.1;
+
+/**
+ * Markdown + `CollapsibleClamp` — **keep these exports**: `CollapsibleClamp` imports them;
+ * removing them breaks collapsed height (NaN → full content + dimmed overlay).
+ */
+export const MARKDOWN_PARAGRAPH_LINE_HEIGHT_PX = 24;
+export const MARKDOWN_PARAGRAPH_MARGIN_BOTTOM_PX = 16;
+export const MARKDOWN_IMAGE_MARGIN_TOP_PX = 12;
+export const MARKDOWN_IMAGE_MARGIN_BOTTOM_PX = 16;
+export const MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX = 240;
+export const COLLAPSIBLE_CLAMP_FADE_HEIGHT_PX = 48;
+export const COLLAPSIBLE_CLAMP_EXPANDED_MAX_HEIGHT_PX = 8192;

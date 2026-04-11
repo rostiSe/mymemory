@@ -1,22 +1,27 @@
-import { Text, View } from "react-native";
+import { CollapsibleClamp } from "@/components/ui/CollapsibleClamp";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { Card, SkeletonGroup } from "heroui-native";
+import { Text, View } from "react-native";
 
 type EntrySummaryCardProps = {
   summaryText: string;
   /** Shimmer body while summary is still being generated. */
   loading?: boolean;
+  /** Pass entry id so expand/collapse state resets when navigating between entries. */
+  contentKey?: string | number;
 };
 
 /**
- * Short summary / TLDR (plain text). Card only — topics and tags live in separate sections.
+ * Summary / TLDR as markdown inside a card. Collapsible when content exceeds a few lines.
  */
 export function EntrySummaryCard({
   summaryText,
   loading = false,
+  contentKey,
 }: EntrySummaryCardProps) {
   return (
-    <Card className="mb-4">
-      <Card.Body className="gap-2 p-4">
+    <Card className="mb-4 rounded-lg p-0 border border-accent-soft">
+      <Card.Body className="gap-2 px-card pt-card">
         <Text className="text-foreground text-xs font-semibold uppercase tracking-wide">
           Summary
         </Text>
@@ -29,9 +34,12 @@ export function EntrySummaryCard({
             </View>
           </SkeletonGroup>
         ) : (
-          <Text className="text-foreground text-base leading-relaxed">
-            {summaryText}
-          </Text>
+          <CollapsibleClamp contentKey={contentKey} expandHint={summaryText}>
+            <MarkdownRenderer
+              markdown={summaryText}
+              allowTrailingMargin={false}
+            />
+          </CollapsibleClamp>
         )}
       </Card.Body>
     </Card>

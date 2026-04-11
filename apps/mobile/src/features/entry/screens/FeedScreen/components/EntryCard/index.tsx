@@ -1,3 +1,5 @@
+import { CollapsibleClamp } from "@/components/ui/CollapsibleClamp";
+import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
   Card,
@@ -26,10 +28,11 @@ export default function EntryCard({
   onPress,
 }: EntryCardProps) {
   const mutedColor = useThemeColor("muted");
+  const surfaceSecondaryColor = useThemeColor("surface-secondary");
 
   return (
-    <Card className="dark:bg-surface-secondary rounded-md border dark:border-accent-soft p-0 ">
-      <PressableFeedback className="p-card" onPress={onPress}>
+    <Card className="bg-surface-secondary rounded-md border border-accent-soft p-0 ">
+      <PressableFeedback className="px-card pt-card" onPress={onPress}>
         <PressableFeedback.Ripple className="overflow-hidden" />
         <Card.Body className="gap-2">
           <View className="flex-row gap-0.5 items-start justify-between">
@@ -58,9 +61,19 @@ export default function EntryCard({
               </View>
             </SkeletonGroup>
           ) : (
-            <Text className="text-muted text-sm" numberOfLines={3}>
-              {summary || "No summary available."}
-            </Text>
+            <CollapsibleClamp
+              contentKey={summary}
+              collapsedLineCount={3}
+              dimWhenCollapsed
+              showFadeGradient
+              expandHint={summary || "No summary available."}
+              fadeGradientEndColor={surfaceSecondaryColor}
+            >
+              <MarkdownRenderer
+                className="text-xs"
+                markdown={summary || "No summary available."}
+              />
+            </CollapsibleClamp>
           )}
         </Card.Body>
       </PressableFeedback>
