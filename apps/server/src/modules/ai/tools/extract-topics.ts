@@ -2,6 +2,11 @@ import { generateObject } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
 
+import {
+  extractTopicsSystemPrompt,
+  extractTopicsUserPrompt,
+} from '../prompts.js';
+
 export async function extractTopics(markdown: string, summary: string, existingTopics: string[] = []) {
   try {
     const { object } = await generateObject({
@@ -14,8 +19,8 @@ export async function extractTopics(markdown: string, summary: string, existingT
           })
         ).describe('An array of 1 to 5 main topics discussed in the content.'),
       }),
-      system: 'You are an expert content analyzer. Identify the primary topics discussed in the given content.',
-      prompt: `Existing topics in the system (prefer reusing names if relevant): ${existingTopics.join(', ')}\n\nSummary:\n${summary}\n\nContent:\n${markdown.slice(0, 4000)}`,
+      system: extractTopicsSystemPrompt(),
+      prompt: extractTopicsUserPrompt({ markdown, summary, existingTopics }),
     });
     
     return object.topics;
