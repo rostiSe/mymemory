@@ -22,6 +22,8 @@ This document serves as your "Source of Truth" for how the architecture works, w
 - **[oRPC](https://orpc.dev/) (Client) + TanStack Query**: Automatically generates React Query hooks (`useQuery`, `useMutation`) directly from your backend contract. You never have to manually type a `fetch` request again.
 - **[HeroUI Native](https://heroui.com/) / Tailwind v4**: Modern, utility-first styling tailored for React Native.
 
+**Mobile-only deep dives** (Share Quick, cache/sync, feed, workspace `dist/`): see [docs/mobile/README.md](./mobile/README.md).
+
 ### The Data Layer
 - **[Drizzle ORM](https://orm.drizzle.team/)**: A headless TypeScript ORM that lets you write SQL-like queries with perfect type safety.
 - **[Zod](https://zod.dev/)**: Used for defining API inputs, outputs, and validation schemas.
@@ -181,8 +183,8 @@ killall node
 
 ### `Module not found: @mymemory/shared`
 If the mobile app or server complains it can't find your shared workspace:
-1. Ensure the `package.json` in the workspace has `"main"` or `"exports"` configured correctly.
-2. Ensure the consuming app has `"@mymemory/shared": "workspace:*"` in its `package.json`.
+1. Run **`pnpm --filter @mymemory/shared build`** so **`dist/`** exists (see [docs/mobile/workspace-and-build.md](./mobile/workspace-and-build.md)).
+2. Ensure the workspace `package.json` has **`exports`** pointing at **`dist/`** and the consumer has `"@mymemory/shared": "workspace:*"`.
 3. Restart the TS Server in your IDE (`Ctrl+Shift+P` -> `TypeScript: Restart TS server`).
 
 ---

@@ -7,20 +7,19 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "react-native": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./contracts": {
-      "react-native": "./src/contracts/index.ts",
       "types": "./dist/contracts/index.d.ts",
       "import": "./dist/contracts/index.js",
       "default": "./dist/contracts/index.js"
     }
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "pnpm run build"
   },
   "dependencies": {
     "@orpc/contract": "^1.13.13",

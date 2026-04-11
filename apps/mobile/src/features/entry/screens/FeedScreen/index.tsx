@@ -1,12 +1,20 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
 import { ScrollEdgeFade } from "@/components/layout/ScrollEdgeFade";
-import { useFeedEntries } from "@/features/entry/hooks/useEntries";
-import { entrySchema } from "@mymemory/shared/contracts";
+import { SkeletonListItem } from "@/components/ui/SkeletonListItem";
+import {
+  useCreateEntry,
+  useFeedEntries,
+} from "@/features/entry/hooks/useEntries";
+import { useFeedOptimisticCreate } from "@/features/entry/hooks/useFeedOptimisticCreate";
+import {
+  type FeedRow,
+  isPendingFeedRow,
+} from "@/features/entry/utils/feed-rows";
+import { useRefetchOnScreenFocus } from "@/hooks/useRefetchOnScreenFocus";
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
 import { useCallback, useMemo } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ActivityIndicator,
   FlatList,
@@ -14,15 +22,14 @@ import {
   Text,
   View,
 } from "react-native";
-import type { z } from "zod";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FeedHeader } from "./components/FeedHeader";
 import { FeedListItem } from "./components/FeedListItem";
-
-type Entry = z.infer<typeof entrySchema>;
 
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
   const listContentBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
+  const createMutation = useCreateEntry();
 
   const {
     data,
@@ -36,12 +43,14 @@ export default function FeedScreen() {
     fetchNextPage,
   } = useFeedEntries();
 
-  const entries = useMemo(
-    () => data?.pages.flatMap((page) => page.items) ?? [],
-    [data],
-  );
+  useRefetchOnScreenFocus(refetch);
 
-  const isInitialLoading = isPending && entries.length === 0;
+  const { optimisticRows, isInitialLoading, captureComposerProps } =
+    useFeedOptimisticCreate({
+      infiniteData: data,
+      createMutation,
+      isPending,
+    });
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -53,21 +62,26 @@ export default function FeedScreen() {
     router.push({ pathname: "/entry/[id]", params: { id } });
   }, []);
 
-  const keyExtractor = useCallback((item: Entry) => item.id, []);
+  const keyExtractor = useCallback((item: FeedRow) => item.id, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: Entry }) => (
-      <FeedListItem
-        entryId={item.id}
-        title={item.title || item.url || "Untitled"}
-        summary={item.summary ?? ""}
-        type={item.type}
-        processedStatus={item.processedStatus}
-        error={item.error}
-        createdAt={item.createdAt}
-        onPressEntry={onPressEntry}
-      />
-    ),
+    ({ item }: { item: FeedRow }) => {
+      if (isPendingFeedRow(item)) {
+        return <SkeletonListItem layout="entry-card" />;
+      }
+      return (
+        <FeedListItem
+          entryId={item.id}
+          title={item.title || item.url || "Untitled"}
+          summary={item.summary ?? ""}
+          type={item.type}
+          processedStatus={item.processedStatus}
+          error={item.error}
+          createdAt={item.createdAt}
+          onPressEntry={onPressEntry}
+        />
+      );
+    },
     [onPressEntry],
   );
 
@@ -89,7 +103,7 @@ export default function FeedScreen() {
         </View>
       );
     }
-    if (entries.length > 0 && hasNextPage === false) {
+    if (optimisticRows.length > 0 && hasNextPage === false) {
       return (
         <View className="items-center pt-6 pb-2">
           <View className="mb-3 h-px w-16 bg-border" />
@@ -98,7 +112,7 @@ export default function FeedScreen() {
       );
     }
     return null;
-  }, [isFetchingNextPage, hasNextPage, entries.length]);
+  }, [isFetchingNextPage, hasNextPage, optimisticRows.length]);
 
   const listEmpty = useMemo(() => {
     if (isInitialLoading) {
@@ -123,7 +137,11 @@ export default function FeedScreen() {
     return (
       <ScreenInset className="flex-1 bg-background">
         <View className="flex-1 px-(--spacing-screen) pt-(--spacing-md)">
-          <FeedHeader />
+          <FeedHeader
+            captureComposerProps={{
+              mutation: createMutation,
+            }}
+          />
           <View className="gap-3 rounded-lg border border-border bg-surface-secondary p-4">
             <Text className="text-foreground font-semibold">
               Could not load feed
@@ -146,11 +164,11 @@ export default function FeedScreen() {
 
   return (
     <ScreenInset edges={["top"]} className="flex-1 bg-background">
-      <FeedHeader />
+      <FeedHeader captureComposerProps={captureComposerProps} />
       <ScrollEdgeFade className="flex-1 bg-background">
         <FlatList
           className="flex-1 bg-background px-screen"
-          data={entries}
+          data={optimisticRows}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           ListFooterComponent={listFooter}

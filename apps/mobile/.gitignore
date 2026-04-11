@@ -8,6 +8,7 @@ android/
 ios/
 web-build/
 dist/
+build/
 .expo/
 .env
 .env.local

@@ -203,8 +203,8 @@ pnpm add @ai-sdk/react
 
 | File | Hooks |
 |------|-------|
-| `apps/mobile/src/features/entry/hooks/useEntries.ts` | `useFeedEntries`, `useCreateEntry`, `useEntryById` (extend with update/delete as needed) |
-| `src/hooks/use-ingest.ts` | `useIngest` mutation, `useIngestStatus` (polls every 2s while processing) |
+| `apps/mobile/src/features/entry/hooks/useEntries.ts` | `useFeedEntries`, `useCreateEntry`, `useEntryById` (ingest wired in create; extend as needed) |
+| `apps/mobile/src/features/entry/entry-query-cache.ts` | SSOT for entry list/detail TanStack cache writes after create / Share Quick |
 | `src/hooks/use-search.ts` | `useSemanticSearch` (debounced) |
 | `apps/mobile/src/features/space/hooks/useSpaces.ts` | `useSpaces`, `useCreateSpace` (extend with get/update as needed) |
 | `src/hooks/use-digests.ts` | `useDigests`, `useDigest`, `useGenerateDigest` |

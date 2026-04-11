@@ -96,7 +96,7 @@ export default function EntryDetailScreen() {
         }}
       >
         <EntryDetailHero imageUri={imageUri} heroImageStyle={heroImageStyle} />
-        <View className="-mt-6 rounded-t-3xl bg-background px-(--spacing-screen) pt-6">
+        <View className="-mt-6 rounded-t-lg bg-background px-(--spacing-screen) pt-6">
           <EntryDetailHeader
             title={headerProps.title}
             subtitle={headerProps.subtitle}
