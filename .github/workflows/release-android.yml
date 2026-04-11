@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build shared workspace packages
+        run: pnpm --filter @mymemory/shared build
+
       - name: Setup Expo
         uses: expo/expo-github-action@v8
         with:
