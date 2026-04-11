@@ -1,10 +1,17 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import { Card, PressableFeedback, useThemeColor } from "heroui-native";
+import {
+  Card,
+  PressableFeedback,
+  SkeletonGroup,
+  useThemeColor,
+} from "heroui-native";
 import { Text, View } from "react-native";
 
 interface EntryCardProps {
   title?: string;
   summary?: string;
+  /** When true, summary lines show as shimmer placeholders (title still visible). */
+  summaryLoading?: boolean;
   type?: "url" | "note";
   date?: string;
   onPress?: () => void;
@@ -13,6 +20,7 @@ interface EntryCardProps {
 export default function EntryCard({
   title,
   summary,
+  summaryLoading = false,
   type = "url",
   date,
   onPress,
@@ -41,9 +49,19 @@ export default function EntryCard({
             {date && <Text className="text-muted text-xs item">{date}</Text>}
           </View>
 
-          <Text className="text-muted text-sm" numberOfLines={3}>
-            {summary || "No summary available."}
-          </Text>
+          {summaryLoading ? (
+            <SkeletonGroup isLoading variant="shimmer">
+              <View className="gap-2 pt-0.5">
+                <SkeletonGroup.Item className="h-3 w-full rounded-md" />
+                <SkeletonGroup.Item className="h-3 w-11/12 rounded-md" />
+                <SkeletonGroup.Item className="h-3 w-4/5 rounded-md" />
+              </View>
+            </SkeletonGroup>
+          ) : (
+            <Text className="text-muted text-sm" numberOfLines={3}>
+              {summary || "No summary available."}
+            </Text>
+          )}
         </Card.Body>
       </PressableFeedback>
     </Card>

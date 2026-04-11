@@ -71,9 +71,11 @@ export default function FeedScreen() {
           entryId={item.id}
           title={item.title || item.url || "Untitled"}
           summary={item.summary ?? ""}
+          summaryLoading={
+            item.processedStatus === "pending" ||
+            item.processedStatus === "processing"
+          }
           type={item.type}
-          processedStatus={item.processedStatus}
-          error={item.error}
           createdAt={item.createdAt}
           onPressEntry={onPressEntry}
         />

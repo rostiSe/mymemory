@@ -1,4 +1,5 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
+import { ProcessingStatus } from "@/features/entry/components/ProcessingStatus";
 import { useEntryById } from "@/features/entry/hooks/useEntries";
 import { useEntryDetailScroll } from "@/features/entry/hooks/useEntryDetailScroll";
 import { buildEntryMetaLine } from "@/features/entry/utils/buildEntryMetaLine";
@@ -6,11 +7,12 @@ import { resolveEntryHeroImageUri } from "@/features/entry/utils/resolveEntryHer
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { useLocalSearchParams } from "expo-router";
 import { useMemo } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { Text, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EntryDetailHeader } from "./components/EntryDetailHeader";
 import { EntryDetailHero } from "./components/EntryDetailHero";
+import { EntryDetailSkeleton } from "./components/EntryDetailSkeleton";
 import { EntryMarkdownBody } from "./components/EntryMarkdownBody";
 import { EntryReviewedAction } from "./components/EntryReviewedAction";
 import { EntrySpacesPlaceholder } from "./components/EntrySpacesPlaceholder";
@@ -53,11 +55,7 @@ export default function EntryDetailScreen() {
   const bottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
 
   if (isPending) {
-    return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" />
-      </View>
-    );
+    return <EntryDetailSkeleton />;
   }
 
   if (isError) {
@@ -102,7 +100,21 @@ export default function EntryDetailScreen() {
             subtitle={headerProps.subtitle}
             metaLine={headerProps.metaLine}
           />
-          <EntrySummaryCard summaryText={summaryText} />
+          {entry.processedStatus !== "done" ? (
+            <View className="mb-4">
+              <ProcessingStatus
+                status={entry.processedStatus}
+                error={entry.error}
+              />
+            </View>
+          ) : null}
+          <EntrySummaryCard
+            summaryText={summaryText}
+            loading={
+              entry.processedStatus === "pending" ||
+              entry.processedStatus === "processing"
+            }
+          />
           <EntryTopicsSection />
           <EntryTagsSection />
           <EntryMarkdownBody markdown={entry.content} />
