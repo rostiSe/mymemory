@@ -1,4 +1,4 @@
-import { db, eq } from "@mymemory/db";
+import { db, eq, and } from "@mymemory/db";
 import {
   embeddings,
   entries,
@@ -8,17 +8,20 @@ import {
   entryTopics,
   spaceSuggestions,
   tags,
-  topics
+  topics,
 } from "@mymemory/db/schema";
 import {
   extractMediumArticleWithFirecrawl,
   isMediumArticleUrl,
 } from "../tools/extract-content-medium-firecrawl.js";
 import { extractContentFromUrl } from "../tools/extract-content.js";
-import { extractTopics } from "../tools/extract-topics.js";
+import type { ExtractionMetadata } from "../tools/extract-content.types.js";
+import { extractCoverImage } from "../tools/extract-cover-image.js";
+import { analyzeContent } from "../tools/analyze-content.js";
+import { cleanContent } from "../tools/clean-content.js";
 import { generateEmbedding } from "../tools/generate-embedding.js";
-import { generateTags } from "../tools/generate-tags.js";
-import { summarizeText } from "../tools/summarize.js";
+import { assignSpace } from "../tools/assign-space.js";
+import { findRelatedEntries } from "../tools/find-related-entries.js";
 
 export async function processEntry(entryId: string, userId: string) {
   try {
@@ -27,7 +30,7 @@ export async function processEntry(entryId: string, userId: string) {
         `processEntry called with undefined entryId! userId: ${userId}`,
       );
     }
-    // 1. Fetch Entry & Mark Processing
+
     const [entry] = await db
       .update(entries)
       .set({ processedStatus: "processing", error: null })
@@ -36,80 +39,118 @@ export async function processEntry(entryId: string, userId: string) {
 
     if (!entry) throw new Error("Entry not found");
 
-    let markdown = entry.content;
+    let rawMarkdown = entry.content;
+    let extractionMetadata: ExtractionMetadata | null = null;
 
-    // 2. Extract content for URLs if content is empty or not yet extracted
     if (
       entry.type === "url" &&
       entry.url &&
-      (!markdown || markdown.trim() === "")
+      (!rawMarkdown || rawMarkdown.trim() === "")
     ) {
       if (isMediumArticleUrl(entry.url)) {
         if (process.env.FIRECRAWL_API_KEY?.trim()) {
-          markdown = (await extractMediumArticleWithFirecrawl(entry.url))
-            .markdown;
+          const result = await extractMediumArticleWithFirecrawl(entry.url);
+          rawMarkdown = result.markdown;
+          extractionMetadata = result.metadata;
         } else {
           console.warn(
             "[ingest] Medium URL but FIRECRAWL_API_KEY unset; using Jina Reader (may hit paywall)",
           );
-          markdown = (await extractContentFromUrl(entry.url)).markdown;
+          const result = await extractContentFromUrl(entry.url);
+          rawMarkdown = result.markdown;
+          extractionMetadata = result.metadata;
         }
       } else {
-        markdown = (await extractContentFromUrl(entry.url)).markdown;
+        const result = await extractContentFromUrl(entry.url);
+        rawMarkdown = result.markdown;
+        extractionMetadata = result.metadata;
       }
-      // We don't save immediately, we'll save in the final transaction to avoid partial states
     }
 
-    if (!markdown) throw new Error("No content to process");
+    if (!rawMarkdown?.trim()) throw new Error("No content to process");
 
-    // 3. Parallel: Summarize + Embed
-    const [summary, embedding] = await Promise.all([
-      summarizeText(markdown),
-      generateEmbedding(markdown),
+    let readableContent: string;
+    if (entry.type === "note") {
+      readableContent = rawMarkdown;
+    } else {
+      readableContent = await cleanContent(rawMarkdown);
+    }
+
+    const [existingTagRows, existingTopicRows] = await Promise.all([
+      db.select({ name: tags.name }).from(tags).where(eq(tags.userId, userId)),
+      db
+        .select({ name: topics.name })
+        .from(topics)
+        .where(eq(topics.userId, userId)),
+    ]);
+    const existingTags = existingTagRows.map((t) => t.name);
+    const existingTopics = existingTopicRows.map((t) => t.name);
+
+    const [analysis, embedding] = await Promise.all([
+      analyzeContent({
+        markdown: readableContent,
+        existingTags,
+        existingTopics,
+      }),
+      generateEmbedding(readableContent),
     ]);
 
-    // 4. Parallel: Generate Tags & Extract Topics
-    // For a real app, we'd fetch existing tags/topics here to pass in, but skipping for brevity
-    const [generatedTags, extractedTopics] = await Promise.all([
-      generateTags(markdown, summary),
-      extractTopics(markdown, summary),
-    ]);
+    const {
+      summary,
+      keyPoints,
+      tags: generatedTags,
+      topics: extractedTopics,
+      language,
+    } = analysis;
 
-    // 5. Semantic operations (need embedding)
-    const { assignSpace } = await import("../tools/assign-space.js");
-    const { findRelatedEntries } =
-      await import("../tools/find-related-entries.js");
+    const coverImageUrl = extractCoverImage(extractionMetadata, rawMarkdown);
+    const wordCount = readableContent.split(/\s+/).filter(Boolean).length;
+
+    const metadataTitle =
+      extractionMetadata &&
+      typeof extractionMetadata.title === "string" &&
+      extractionMetadata.title.trim()
+        ? extractionMetadata.title.trim()
+        : null;
 
     const [spaceId, relatedEntries] = await Promise.all([
       assignSpace(userId, embedding),
       findRelatedEntries(userId, embedding, 5, entryId),
     ]);
 
-    // 6. Transaction: Persist all results atomically
     await db.transaction(async (tx) => {
-      // Update entry with new content and summary
       await tx
         .update(entries)
         .set({
-          content: markdown,
+          ...(entry.title?.trim()
+            ? {}
+            : metadataTitle
+              ? { title: metadataTitle }
+              : {}),
+          content: readableContent,
+          rawContent: rawMarkdown,
+          readableContent,
+          coverImageUrl,
+          metadata: extractionMetadata,
+          keyPoints,
           summary,
+          wordCount,
+          language: language ?? null,
           processedStatus: "done",
         })
         .where(eq(entries.id, entryId));
 
-      // Insert embedding
       await tx.insert(embeddings).values({
         entryId,
         vector: embedding,
       });
 
-      // Tags
       if (generatedTags.length > 0) {
         for (const tagName of generatedTags) {
           let [tag] = await tx
             .select()
             .from(tags)
-            .where(eq(tags.name, tagName))
+            .where(and(eq(tags.userId, userId), eq(tags.name, tagName)))
             .limit(1);
           if (!tag) {
             [tag] = await tx
@@ -124,13 +165,17 @@ export async function processEntry(entryId: string, userId: string) {
         }
       }
 
-      // Topics
       if (extractedTopics.length > 0) {
         for (const topicInfo of extractedTopics) {
           let [topic] = await tx
             .select()
             .from(topics)
-            .where(eq(topics.name, topicInfo.name))
+            .where(
+              and(
+                eq(topics.userId, userId),
+                eq(topics.name, topicInfo.name),
+              ),
+            )
             .limit(1);
           if (!topic) {
             [topic] = await tx
@@ -149,15 +194,12 @@ export async function processEntry(entryId: string, userId: string) {
         }
       }
 
-      // Spaces
       if (spaceId) {
         await tx
           .insert(entrySpaces)
           .values({ entryId, spaceId })
           .onConflictDoNothing();
-        // Here we could also recalculate the centroid vector of the space
       } else {
-        // Suggest a space
         await tx.insert(spaceSuggestions).values({
           userId,
           entryId,
@@ -166,10 +208,8 @@ export async function processEntry(entryId: string, userId: string) {
         });
       }
 
-      // Relations
       for (const rel of relatedEntries) {
         if (rel.similarity > 0.5) {
-          // Only link if reasonably similar
           await tx
             .insert(entryRelations)
             .values({
