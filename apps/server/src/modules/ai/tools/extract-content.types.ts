@@ -9,6 +9,8 @@ export type ExtractionMetadata = {
   description?: string;
   ogImage?: string;
   siteName?: string;
+  /** Canonical page URL from the extractor (Firecrawl may send `sourceURL`). */
+  sourceUrl?: string;
   author?: string;
   publishedAt?: string;
   [key: string]: unknown;

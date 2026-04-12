@@ -79,6 +79,27 @@ export async function processEntry(entryId: string, userId: string) {
     } else {
       readableContent = await cleanContent(rawMarkdown);
     }
+    readableContent = readableContent.trim();
+    if (readableContent === "") {
+      const extractedCover = extractCoverImage(extractionMetadata, rawMarkdown);
+      await db
+        .update(entries)
+        .set({
+          content: "",
+          rawContent: rawMarkdown,
+          readableContent: "",
+          coverImageUrl: extractedCover,
+          metadata: extractionMetadata,
+          keyPoints: [],
+          summary: null,
+          wordCount: 0,
+          language: null,
+          processedStatus: "done",
+          error: null,
+        })
+        .where(eq(entries.id, entryId));
+      return;
+    }
 
     const [existingTagRows, existingTopicRows] = await Promise.all([
       db.select({ name: tags.name }).from(tags).where(eq(tags.userId, userId)),
