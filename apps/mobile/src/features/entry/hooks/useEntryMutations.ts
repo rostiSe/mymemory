@@ -27,13 +27,15 @@ export function useToggleEntryField() {
     mutationFn: (input: ToggleFieldInput) =>
       orpcClient.entries.toggleField(input),
     onMutate: async (input) => {
-      const key = entryDetailQueryKey(input.id);
-      const prev = queryClient.getQueryData<EntryDetailRow | undefined>(key);
+      const prev = queryClient.getQueryData<EntryDetailRow | undefined>(
+        entryDetailQueryKey(input.id),
+      );
       if (input.field === "isArchived" && input.value === true) {
         return { prev };
       }
+      /** Merge into feed list cache immediately so the feed updates before onSuccess (e.g. quick back navigation). */
       if (prev) {
-        queryClient.setQueryData<EntryDetailRow>(key, {
+        writeEntryRowToCaches(queryClient, {
           ...prev,
           [input.field]: input.value,
         });
@@ -42,7 +44,7 @@ export function useToggleEntryField() {
     },
     onError: (_err, input, ctx) => {
       if (ctx?.prev !== undefined) {
-        queryClient.setQueryData(entryDetailQueryKey(input.id), ctx.prev);
+        writeEntryRowToCaches(queryClient, ctx.prev);
       }
     },
     onSuccess: (result, variables) => {
@@ -62,10 +64,11 @@ export function useSetReviewStatus() {
     mutationFn: (input: SetReviewStatusInput) =>
       orpcClient.entries.setReviewStatus(input),
     onMutate: async (input) => {
-      const key = entryDetailQueryKey(input.id);
-      const prev = queryClient.getQueryData<EntryDetailRow | undefined>(key);
+      const prev = queryClient.getQueryData<EntryDetailRow | undefined>(
+        entryDetailQueryKey(input.id),
+      );
       if (prev) {
-        queryClient.setQueryData<EntryDetailRow>(key, {
+        writeEntryRowToCaches(queryClient, {
           ...prev,
           reviewStatus: input.status,
         });
@@ -74,7 +77,7 @@ export function useSetReviewStatus() {
     },
     onError: (_err, input, ctx) => {
       if (ctx?.prev !== undefined) {
-        queryClient.setQueryData(entryDetailQueryKey(input.id), ctx.prev);
+        writeEntryRowToCaches(queryClient, ctx.prev);
       }
     },
     onSuccess: (result) => {

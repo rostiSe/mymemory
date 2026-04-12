@@ -10,12 +10,15 @@ import {
 } from "@mymemory/db/schema";
 import { entryDetailSchema, entrySchema } from "@mymemory/shared/contracts";
 import { ORPCError } from "@orpc/server";
-import { and, desc, eq, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, getTableColumns, lt, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 type Entry = z.infer<typeof entrySchema>;
 type EntryDetail = z.infer<typeof entryDetailSchema>;
 type EntryRow = typeof entries.$inferSelect;
+
+/** Cosine similarity from pgvector `1 - (vector <=> query)`; below this is noise. */
+const SEMANTIC_SEARCH_MIN_SIMILARITY = 0.3;
 
 const cursorPayloadSchema = z.object({
   createdAt: z.string(),
@@ -402,6 +405,44 @@ export const entryService = {
       throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
     }
     return toEntry(row);
+  },
+
+  async search(
+    database: typeof db,
+    userId: string,
+    input: { query: string; limit: number },
+    embedding: number[],
+  ): Promise<{ items: Array<Entry & { similarity: number }> }> {
+    const limit = Math.min(Math.max(input.limit, 1), 30);
+    const vectorLiteral = JSON.stringify(embedding);
+    const fetchCap = Math.min(limit * 8, 120);
+
+    const rows = await database
+      .select({
+        ...getTableColumns(entries),
+        similarity:
+          sql<number>`1 - (${embeddings.vector} <=> ${vectorLiteral}::vector)`.as(
+            "similarity",
+          ),
+      })
+      .from(entries)
+      .innerJoin(embeddings, eq(entries.id, embeddings.entryId))
+      .where(
+        and(eq(entries.userId, userId), eq(entries.isArchived, false)),
+      )
+      .orderBy(sql`${embeddings.vector} <=> ${vectorLiteral}::vector`)
+      .limit(fetchCap);
+
+    const filtered = rows
+      .filter((r) => r.similarity >= SEMANTIC_SEARCH_MIN_SIMILARITY)
+      .slice(0, limit);
+
+    return {
+      items: filtered.map((r) => {
+        const { similarity, ...row } = r;
+        return { ...toEntry(row), similarity };
+      }),
+    };
   },
 
   async delete(

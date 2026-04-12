@@ -1,6 +1,6 @@
 # T-007: Wire Entry Detail Interactions
 
-**Status:** todo
+**Status:** done
 **Phase:** 3 — Frontend Interactions
 **Type:** feature (mobile only)
 **Risk:** low (UI wiring to hooks from T-006, no server changes)

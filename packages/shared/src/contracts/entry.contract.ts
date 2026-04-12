@@ -100,6 +100,19 @@ export const entryByIdInputSchema = z.object({ id: z.guid() });
 
 export const entryDeleteOutputSchema = z.object({ success: z.literal(true) });
 
+export const entrySearchInputSchema = z.object({
+  query: z.string().min(1).max(500),
+  limit: z.number().int().min(1).max(30).default(15),
+});
+
+export const entrySearchResultItemSchema = entrySchema.extend({
+  similarity: z.number(),
+});
+
+export const entrySearchOutputSchema = z.object({
+  items: z.array(entrySearchResultItemSchema),
+});
+
 export const entryContract = oc.router({
   list: oc.input(entryListInputSchema).output(entryListOutputSchema),
   getById: oc
@@ -124,4 +137,7 @@ export const entryContract = oc.router({
   trackRead: oc.input(entryByIdInputSchema).output(entrySchema),
   retryIngest: oc.input(entryByIdInputSchema).output(entrySchema),
   delete: oc.input(entryByIdInputSchema).output(entryDeleteOutputSchema),
+  search: oc
+    .input(entrySearchInputSchema)
+    .output(entrySearchOutputSchema),
 });
