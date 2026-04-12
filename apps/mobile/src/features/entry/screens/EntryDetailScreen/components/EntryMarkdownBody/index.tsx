@@ -9,6 +9,8 @@ type EntryMarkdownBodyProps = {
  * Entry detail “Content” section — markdown via shared {@link MarkdownRenderer}.
  */
 export function EntryMarkdownBody({ markdown }: EntryMarkdownBodyProps) {
+  if (!markdown?.trim()) return null;
+
   return (
     <View className="mb-4">
       <Text className="text-foreground mb-2 text-sm font-semibold">

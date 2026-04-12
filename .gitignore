@@ -23,6 +23,9 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Turborepo (local cache — never commit)
+.turbo/
+
 # Metro
 .metro-health-check*
 
