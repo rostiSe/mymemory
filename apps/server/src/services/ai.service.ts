@@ -74,7 +74,7 @@ export const aiService = {
     let extractedText = text || "";
 
     if (url) {
-      extractedText = await extractContentFromUrl(url);
+      extractedText = (await extractContentFromUrl(url)).markdown;
     }
 
     if (!extractedText) {

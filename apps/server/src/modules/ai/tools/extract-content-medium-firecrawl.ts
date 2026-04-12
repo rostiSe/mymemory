@@ -6,6 +6,8 @@
  * FIRECRAWL_MEDIUM_PROFILE, FIRECRAWL_MEDIUM_HEADERS_JSON, FIRECRAWL_MEDIUM_EXTRA_HOSTS.
  */
 
+import type { ExtractionMetadata, ExtractionResult } from './extract-content.types.js';
+
 const FIRECRAWL_SCRAPE_URL =
   process.env.FIRECRAWL_API_URL?.replace(/\/$/, '') ??
   'https://api.firecrawl.dev/v2/scrape';
@@ -73,15 +75,37 @@ function parseOptionalHeadersJson(
 type FirecrawlScrapeResponse = {
   success?: boolean;
   error?: string;
-  data?: { markdown?: string | null };
+  data?: {
+    markdown?: string | null;
+    metadata?: {
+      title?: string;
+      description?: string;
+      ogImage?: string;
+      siteName?: string;
+      sourceURL?: string;
+      author?: string;
+      publishedTime?: string;
+      [key: string]: unknown;
+    } | null;
+  };
 };
+
+function firecrawlMetadataToExtractionMetadata(
+  m: NonNullable<NonNullable<FirecrawlScrapeResponse['data']>['metadata']>,
+): ExtractionMetadata {
+  return {
+    ...m,
+    publishedAt:
+      typeof m.publishedTime === 'string' ? m.publishedTime : undefined,
+  };
+}
 
 /**
  * Scrape a Medium article as markdown using Firecrawl (browser + optional auth).
  */
 export async function extractMediumArticleWithFirecrawl(
   url: string,
-): Promise<string> {
+): Promise<ExtractionResult> {
   const apiKey = process.env.FIRECRAWL_API_KEY?.trim();
   if (!apiKey) {
     throw new Error(
@@ -152,5 +176,11 @@ export async function extractMediumArticleWithFirecrawl(
     );
   }
 
-  return markdown;
+  const rawMeta = json.data?.metadata;
+  const metadata =
+    rawMeta && typeof rawMeta === 'object'
+      ? firecrawlMetadataToExtractionMetadata(rawMeta)
+      : null;
+
+  return { markdown, metadata };
 }

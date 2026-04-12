@@ -46,15 +46,16 @@ export async function processEntry(entryId: string, userId: string) {
     ) {
       if (isMediumArticleUrl(entry.url)) {
         if (process.env.FIRECRAWL_API_KEY?.trim()) {
-          markdown = await extractMediumArticleWithFirecrawl(entry.url);
+          markdown = (await extractMediumArticleWithFirecrawl(entry.url))
+            .markdown;
         } else {
           console.warn(
             "[ingest] Medium URL but FIRECRAWL_API_KEY unset; using Jina Reader (may hit paywall)",
           );
-          markdown = await extractContentFromUrl(entry.url);
+          markdown = (await extractContentFromUrl(entry.url)).markdown;
         }
       } else {
-        markdown = await extractContentFromUrl(entry.url);
+        markdown = (await extractContentFromUrl(entry.url)).markdown;
       }
       // We don't save immediately, we'll save in the final transaction to avoid partial states
     }
