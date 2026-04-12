@@ -6,7 +6,9 @@
     "build": "tsc",
     "start": "node dist/dev-server.js",
     "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "smoke:analyze-content": "tsx scripts/smoke-analyze-content.ts",
+    "smoke:ingest": "tsx scripts/smoke-ingest.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.50",
