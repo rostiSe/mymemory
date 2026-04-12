@@ -3,8 +3,8 @@
  * Dynamic parts are passed as typed arguments; truncation for long markdown lives here.
  */
 
-/** Max characters of markdown included in tag/topic prompts (increase when switching to readable content). */
-export const MAX_CONTENT_CHARS = 4000;
+/** Max characters of markdown included in analysis and standalone tag/topic prompts. */
+export const MAX_CONTENT_CHARS = 10_000;
 
 /** System prompt for `summarizeText` in `tools/summarize.ts`. */
 export function summarizeSystemPrompt(): string {
@@ -50,14 +50,53 @@ export function extractTopicsUserPrompt(opts: ExtractTopicsUserPromptOpts): stri
   return `Existing topics in the system (prefer reusing names if relevant): ${opts.existingTopics.join(', ')}\n\nSummary:\n${opts.summary}\n\nContent:\n${content}`;
 }
 
-// TODO(T-001 follow-up): wire clean-content step — placeholders for Step 4 pipeline.
-
-/** @internal Reserved for clean-content tool. */
-export function cleanContentSystemPrompt(): string {
-  return '';
+/** System prompt for `analyzeContent` in `tools/analyze-content.ts`. */
+export function analyzeContentSystemPrompt(): string {
+  return `You are an expert content analyst. Given a piece of content, produce a structured analysis:
+a concise summary, key takeaways (specific claims, numbers, or techniques — not vague restatements),
+relevant tags for categorization, and the primary topics discussed.
+When existing tags or topics are provided, prefer reusing them over inventing new ones.`;
 }
 
-/** @internal Reserved for clean-content tool. */
-export function cleanContentUserPrompt(_raw: string): string {
-  return '';
+export type AnalyzeContentUserPromptOpts = {
+  markdown: string;
+  existingTags?: string[];
+  existingTopics?: string[];
+};
+
+/** User prompt for `analyzeContent` — truncates markdown to {@link MAX_CONTENT_CHARS}; lists existing tags/topics when non-empty. */
+export function analyzeContentUserPrompt(opts: AnalyzeContentUserPromptOpts): string {
+  const content = opts.markdown.slice(0, MAX_CONTENT_CHARS);
+  const existingTags = opts.existingTags ?? [];
+  const existingTopics = opts.existingTopics ?? [];
+  const sections: string[] = [];
+
+  if (existingTags.length > 0) {
+    sections.push(
+      `Existing tags in the system (prefer reusing these if relevant): ${existingTags.join(', ')}`,
+    );
+  }
+  if (existingTopics.length > 0) {
+    sections.push(
+      `Existing topics in the system (prefer reusing names if relevant): ${existingTopics.join(', ')}`,
+    );
+  }
+
+  sections.push(`Content:\n${content}`);
+  return sections.join('\n\n');
+}
+
+/** System prompt for `cleanContent` in `tools/clean-content.ts`. */
+export function cleanContentSystemPrompt(): string {
+  return `You are an expert content cleaner. Given raw scraped markdown from a web page,
+remove: navigation menus, header/footer boilerplate, advertisements, cookie/consent banners,
+sidebar content, social sharing buttons, related article links, comment sections,
+and subscription prompts. Preserve: the main article content, headings, paragraphs,
+code blocks, blockquotes, lists, tables, and meaningful images (keep their markdown syntax).
+Return clean, well-structured markdown.`;
+}
+
+/** User prompt for `cleanContent` — full raw markdown slice is passed from the tool (see MAX_RAW_CHARS there). */
+export function cleanContentUserPrompt(rawMarkdown: string): string {
+  return `Clean the following raw scraped markdown:\n\n${rawMarkdown}`;
 }
