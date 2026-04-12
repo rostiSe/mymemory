@@ -1,9 +1,11 @@
 import {
   entryByIdInputSchema,
   entryListInputSchema,
+  entrySearchInputSchema,
   entrySetReviewStatusInputSchema,
   entryToggleFieldInputSchema,
 } from "@mymemory/shared/contracts";
+import { generateEmbedding } from "../modules/ai/tools/generate-embedding.js";
 import { z } from "zod";
 import { authed, base } from "../orpc.js";
 import { entryService } from "../services/entry.service.js";
@@ -55,5 +57,11 @@ export const entryRouter = base.router({
     .input(entryByIdInputSchema)
     .handler(async ({ input, context }) => {
       return entryService.delete(context.db, context.user!.id, input);
+    }),
+  search: authed
+    .input(entrySearchInputSchema)
+    .handler(async ({ input, context }) => {
+      const embedding = await generateEmbedding(input.query);
+      return entryService.search(context.db, context.user!.id, input, embedding);
     }),
 });

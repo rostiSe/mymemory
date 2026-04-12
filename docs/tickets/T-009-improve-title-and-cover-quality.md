@@ -1,8 +1,8 @@
 # T-009: Improve Title & Cover Image Quality
 
-**Status:** todo
+**Status:** done
 **Phase:** 2 — Strengthen URL Pipeline (patch)
-**Type:** enhancement (server-only — AI pipeline)
+**Type:** enhancement (server + mobile one-liner)
 **Risk:** low (extends existing analyzeContent schema + prompts, no new LLM calls)
 **Depends on:** T-002 (analyzeContent tool exists), T-005 (pipeline wired)
 
@@ -32,6 +32,13 @@
 - If no user title but metadataTitle exists → use metadataTitle
 - If neither → title stays null (feed shows raw URL via `item.title || item.url || "Untitled"`)
 
+**CaptureComposer bug** (`apps/mobile/src/features/entry/components/CaptureComposer/index.tsx`):
+- When the user submits a URL, the composer sends `{ url, title: url, type: "url" }`
+- This sets `entry.title` to the raw URL string at creation time
+- The pipeline guard (`entry.title?.trim() ? {} : ...`) sees a non-empty title and **skips** the metadata/AI title update
+- Result: even after the pipeline runs with a good metadata title, the entry keeps the URL as its title
+- **This is the primary reason titles show as URLs** — the pipeline improvement alone won't fix it without this fix
+
 **Cover image flow** (`pipelines/ingest.ts`, line 106 + `tools/extract-cover-image.ts`):
 - `extractCoverImage(metadata, rawMarkdown)` — pure function, priority:
   1. `metadata.ogImage` (no quality check — logos pass through)
@@ -43,6 +50,22 @@
 ---
 
 ## What to Do
+
+### 0. Fix CaptureComposer — stop sending URL as title
+
+**File:** `apps/mobile/src/features/entry/components/CaptureComposer/index.tsx`
+
+The composer currently sends `title: url` when creating a URL entry. This blocks the pipeline from setting a better title. Remove the `title` field from the create input for URL entries:
+
+```ts
+// Before (broken):
+const input = { url, title: url, type: "url", content: "" };
+
+// After (fixed):
+const input = { url, type: "url" as const, content: "" };
+```
+
+Title should be `undefined` at creation — the pipeline will populate it with the AI-generated title (or metadata fallback). The user never typed a title; the composer was stuffing the URL in as a placeholder.
 
 ### 1. Add `title` and `heroImageUrl` to `analyzeContentSchema`
 
@@ -263,6 +286,7 @@ await tx
 
 | File | Action |
 |------|--------|
+| `apps/mobile/src/features/entry/components/CaptureComposer/index.tsx` | **Modify** — remove `title: url` from create input |
 | `apps/server/src/modules/ai/tools/analyze-content.ts` | **Modify** — add `title` and `heroImageUrl` to schema |
 | `apps/server/src/modules/ai/prompts.ts` | **Modify** — update system prompt, add `imageUrls` to user prompt opts |
 | `apps/server/src/modules/ai/pipelines/ingest.ts` | **Modify** — collect image URLs, use AI title/hero with smart fallback |
@@ -272,6 +296,7 @@ await tx
 
 ## Definition of Done
 
+- [ ] CaptureComposer no longer sends `title: url` — title is `undefined` at creation for URL entries
 - [ ] `analyzeContentSchema` has `title: z.string()` field with descriptive `.describe()`
 - [ ] `analyzeContentSchema` has `heroImageUrl: z.string().url().nullable()` field with descriptive `.describe()`
 - [ ] `AnalyzeContentResult` type includes `title` and `heroImageUrl` (inferred automatically)

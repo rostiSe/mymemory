@@ -1,6 +1,6 @@
 # T-006: Entry Mutations API + Mobile Hooks
 
-**Status:** todo
+**Status:** done
 **Phase:** 3 — Frontend Interactions
 **Type:** feature (full stack)
 **Risk:** low (CRUD mutations on existing columns, no schema changes)

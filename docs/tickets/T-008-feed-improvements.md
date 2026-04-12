@@ -1,6 +1,6 @@
 # T-008: Feed Improvements — Cover Images, Indicators, Filters, Archive
 
-**Status:** todo
+**Status:** done
 **Phase:** 3 — Frontend Interactions
 **Type:** feature (full stack — server filter param + mobile UI)
 **Risk:** low-medium (touches FlatList rendering, filter state, and list query)
