@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useThemeColor } from "heroui-native";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, View, type ColorValue } from "react-native";
 import Animated, {
   Easing,
@@ -48,12 +48,19 @@ export function estimateExceedsCollapsedLines(
   return roughLines > collapsedLines;
 }
 
+export type CollapsibleClampCollapseMode = "expandable" | "fade-only";
+
 export type CollapsibleClampProps = {
   children: ReactNode;
   collapsedLineCount?: number;
   lineHeightPx?: number;
   expandHint?: string;
   expandable?: boolean;
+  /**
+   * `expandable` — tap to expand/collapse (Reanimated). `fade-only` — fixed max-height,
+   * bottom fade, no interaction (avoids extra state / layout work on long lists & web).
+   */
+  collapseMode?: CollapsibleClampCollapseMode;
   charsPerVisualLine?: number;
   showFadeGradient?: boolean;
   fadeGradientEndColor?: ColorValue;
@@ -70,12 +77,63 @@ export type CollapsibleClampProps = {
  * so dimming does not track the huge maxHeight span (72→8192), which otherwise
  * keeps content gray until the very end of the animation.
  */
+type FadeOnlyClampProps = {
+  children: ReactNode;
+  collapsedPx: number;
+  fadeHeightPx: number;
+  fadeEndColor: ColorValue;
+  showFadeGradient: boolean;
+  dimWhenCollapsed: boolean;
+};
+
+function FadeOnlyClamp({
+  children,
+  collapsedPx,
+  fadeHeightPx,
+  fadeEndColor,
+  showFadeGradient,
+  dimWhenCollapsed,
+}: FadeOnlyClampProps) {
+  return (
+    <View
+      className="relative w-full"
+      style={{ maxHeight: collapsedPx, overflow: "hidden" }}
+    >
+      <View
+        style={dimWhenCollapsed ? { opacity: DIM_WHEN_COLLAPSED_OPACITY } : undefined}
+      >
+        {children}
+      </View>
+      {showFadeGradient ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: fadeHeightPx,
+          }}
+        >
+          <LinearGradient
+            pointerEvents="none"
+            colors={["transparent", fadeEndColor]}
+            locations={[0, 1]}
+            style={{ flex: 1 }}
+          />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
 export function CollapsibleClamp({
   children,
   collapsedLineCount = DEFAULT_COLLAPSED_LINES,
   lineHeightPx: lineHeightPxProp = MARKDOWN_PARAGRAPH_LINE_HEIGHT_PX,
   expandHint = "",
   expandable,
+  collapseMode = "expandable",
   charsPerVisualLine = DEFAULT_CHARS_PER_VISUAL_LINE,
   showFadeGradient = true,
   dimWhenCollapsed = true,
@@ -110,14 +168,15 @@ export function CollapsibleClamp({
   const fadeEndColor = fadeGradientEndColor ?? surfaceFallback;
   const mutedIcon = useThemeColor("muted");
 
-  const needsExpand =
-    expandable === true ||
-    (expandable !== false &&
-      estimateExceedsCollapsedLines(
-        expandHint,
-        collapsedLineCount,
-        charsPerVisualLine,
-      ));
+  const needsClamp = useMemo(() => {
+    if (expandable === false) return false;
+    if (expandable === true) return true;
+    return estimateExceedsCollapsedLines(
+      expandHint,
+      collapsedLineCount,
+      charsPerVisualLine,
+    );
+  }, [expandable, expandHint, collapsedLineCount, charsPerVisualLine]);
 
   const [expanded, setExpanded] = useState(false);
   /** 0 = collapsed, 1 = expanded — drives height, dim, and fade together. */
@@ -135,18 +194,18 @@ export function CollapsibleClamp({
     if (prevContentKey.current === contentKey) return;
     prevContentKey.current = contentKey;
     setExpanded(false);
-    if (needsExpand) {
+    if (needsClamp && collapseMode === "expandable") {
       progress.value = 0;
     }
-  }, [contentKey, needsExpand, progress]);
+  }, [collapseMode, contentKey, needsClamp, progress]);
 
   useEffect(() => {
-    if (!needsExpand) return;
+    if (!needsClamp || collapseMode !== "expandable") return;
     progress.value = withTiming(expanded ? 1 : 0, {
       duration: EXPAND_MS,
       easing: FLOW_EASING,
     });
-  }, [expanded, needsExpand, progress]);
+  }, [collapseMode, expanded, needsClamp, progress]);
 
   const animatedOuter = useAnimatedStyle(() => {
     const h = interpolate(
@@ -190,11 +249,29 @@ export function CollapsibleClamp({
   }, [showFadeGradient]);
 
   const toggle = useCallback(() => {
-    if (needsExpand) setExpanded((v) => !v);
-  }, [needsExpand]);
+    if (needsClamp && collapseMode === "expandable") {
+      setExpanded((v) => !v);
+    }
+  }, [collapseMode, needsClamp]);
 
-  if (!needsExpand) {
+  if (!needsClamp) {
     return <View className="w-full">{children}</View>;
+  }
+
+  if (collapseMode === "fade-only") {
+    return (
+      <View className="w-full">
+        <FadeOnlyClamp
+          collapsedPx={collapsedPx}
+          dimWhenCollapsed={dimWhenCollapsed}
+          fadeEndColor={fadeEndColor}
+          fadeHeightPx={fadeHeightPx}
+          showFadeGradient={showFadeGradient}
+        >
+          {children}
+        </FadeOnlyClamp>
+      </View>
+    );
   }
 
   return (

@@ -1,8 +1,9 @@
-import type { EntryListFilter } from "@mymemory/shared/contracts";
 import { MaterialIcons } from "@expo/vector-icons";
+import type { EntryListFilter } from "@mymemory/shared/contracts";
+import { TagGroup, useThemeColor } from "heroui-native";
 import type { ComponentProps } from "react";
+import { useCallback, useMemo } from "react";
 import { ScrollView, View } from "react-native";
-import { Chip, useThemeColor } from "heroui-native";
 
 export type FeedFilterBarProps = {
   active: EntryListFilter;
@@ -23,41 +24,69 @@ const FILTERS: FilterDef[] = [
 ];
 
 /**
- * Horizontal filter chips for the entries feed (server-side `entries.list` filter).
+ * Feed scope filters (server `entries.list`). HeroUI `TagGroup` single selection.
  */
 export function FeedFilterBar({ active, onChange }: FeedFilterBarProps) {
-  const accentFg = useThemeColor("accent-foreground");
   const mutedColor = useThemeColor("muted");
+  const accentSoftFg = useThemeColor("accent-soft-foreground");
+
+  const selectedKeys = useMemo(
+    () => new Set<EntryListFilter>([active]),
+    [active],
+  );
+
+  const onSelectionChange = useCallback(
+    (keys: Set<string | number>) => {
+      const first = keys.values().next().value;
+      if (typeof first === "string") {
+        onChange(first as EntryListFilter);
+      }
+    },
+    [onChange],
+  );
 
   return (
-    <View className="pb-2">
+    <View className="pb-2 w-full">
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         className="max-h-12"
         contentContainerClassName="flex-row items-center gap-2 px-screen"
       >
-        {FILTERS.map(({ id, label, icon }) => {
-          const isActive = active === id;
-          const iconColor = isActive ? accentFg : mutedColor;
-          return (
-            <Chip
-              key={id}
-              size="sm"
-              variant={isActive ? "primary" : "secondary"}
-              color={isActive ? "accent" : "default"}
-              onPress={() => onChange(id)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: isActive }}
-              className="shrink-0"
-            >
-              {icon ? (
-                <MaterialIcons name={icon} size={14} color={iconColor} />
-              ) : null}
-              <Chip.Label className="text-xs font-medium">{label}</Chip.Label>
-            </Chip>
-          );
-        })}
+        <TagGroup
+          selectionMode="single"
+          selectedKeys={selectedKeys}
+          onSelectionChange={onSelectionChange}
+          size="sm"
+          variant="surface"
+          className="flex-row"
+        >
+          <TagGroup.List className="flex-row flex-nowrap gap-2">
+            {FILTERS.map(({ id, label, icon }) => (
+              <TagGroup.Item
+                key={id}
+                id={id}
+                className="rounded-md min-w-14 h-8"
+                accessibilityLabel={label}
+              >
+                {({ isSelected }) => (
+                  <>
+                    {icon ? (
+                      <MaterialIcons
+                        name={icon}
+                        size={14}
+                        color={isSelected ? accentSoftFg : mutedColor}
+                      />
+                    ) : null}
+                    <TagGroup.ItemLabel className="text-xs font-medium">
+                      {label}
+                    </TagGroup.ItemLabel>
+                  </>
+                )}
+              </TagGroup.Item>
+            ))}
+          </TagGroup.List>
+        </TagGroup>
       </ScrollView>
     </View>
   );

@@ -1,3 +1,4 @@
+import { MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX } from "@/theme/layout-imperative";
 import { useThemeColor } from "heroui-native";
 import { useMemo } from "react";
 import type { MarkdownStyle } from "react-native-enriched-markdown";
@@ -47,8 +48,12 @@ export function useMarkdownThemeStyle(): MarkdownStyle {
         backgroundColor: codeSurface,
       },
       inlineMath: { color: foreground },
+      /**
+       * `react-native-enriched-markdown` only supports a fixed block image height (native layout).
+       * Natural aspect is preserved inside that box by the native renderer where supported.
+       */
       image: {
-        height: 240,
+        height: MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX,
         borderRadius: 2,
         marginTop: 0,
         marginBottom: 0,
