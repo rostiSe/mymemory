@@ -15,6 +15,13 @@
       "when": 1775495989114,
       "tag": "0001_mature_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775955419844,
+      "tag": "0002_enriched_entries",
+      "breakpoints": true
     }
   ]
 }

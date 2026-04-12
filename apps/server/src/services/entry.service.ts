@@ -20,6 +20,15 @@ function toEntry(row: EntryRow): Entry {
     summary: row.summary ?? undefined,
     url: row.url ?? undefined,
     error: row.error ?? undefined,
+    rawContent: row.rawContent ?? undefined,
+    readableContent: row.readableContent ?? undefined,
+    coverImageUrl: row.coverImageUrl ?? undefined,
+    metadata: row.metadata ?? undefined,
+    keyPoints: row.keyPoints ?? undefined,
+    lastReadAt: row.lastReadAt ?? undefined,
+    sourceApp: row.sourceApp ?? undefined,
+    wordCount: row.wordCount ?? undefined,
+    language: row.language ?? undefined,
   } as Entry;
 }
 

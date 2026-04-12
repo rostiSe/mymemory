@@ -18,6 +18,32 @@ export const entrySchema = z.object({
   error: z.string().nullable().optional(),
   createdAt: dateSchema,
   updatedAt: dateSchema,
+
+  // Enriched content
+  rawContent: z.string().nullable().optional(),
+  readableContent: z.string().nullable().optional(),
+  coverImageUrl: z.string().nullable().optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+  keyPoints: z.array(z.string()).nullable().optional(),
+
+  // User interaction
+  isFavorited: z.boolean().default(false),
+  isArchived: z.boolean().default(false),
+  isPinned: z.boolean().default(false),
+  readCount: z.number().int().default(0),
+  lastReadAt: dateSchema.nullable().optional(),
+
+  // Lifecycle
+  reviewStatus: z
+    .enum(["unreviewed", "kept", "dismissed", "remind"])
+    .default("unreviewed"),
+
+  // Source context
+  sourceApp: z.string().nullable().optional(),
+
+  // Content metrics
+  wordCount: z.number().int().nullable().optional(),
+  language: z.string().nullable().optional(),
 });
 
 export const entryListInputSchema = z.object({

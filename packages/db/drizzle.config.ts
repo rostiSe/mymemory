@@ -5,7 +5,8 @@ import { defineConfig } from 'drizzle-kit';
 const dbUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/postgres';
 
 export default defineConfig({
-  schema: './src/schema/*.ts',
+  // Use compiled schema: drizzle-kit loads via CJS and cannot resolve `./entries.js` from `.ts` sources.
+  schema: './dist/schema/*.js',
   out: './src/migrations',
   dialect: 'postgresql',
   dbCredentials: {
