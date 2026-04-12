@@ -3,7 +3,6 @@ import {
   embeddings,
   entries,
   entryRelations,
-  entrySpaces,
   entryTags,
   entryTopics,
   spaceSuggestions,
@@ -24,7 +23,6 @@ import { looksLikeBoilerplate, looksLikeUrl } from "../utils/title-quality.js";
 import { analyzeContent } from "../tools/analyze-content.js";
 import { cleanContent } from "../tools/clean-content.js";
 import { generateEmbedding } from "../tools/generate-embedding.js";
-import { assignSpace } from "../tools/assign-space.js";
 import { findRelatedEntries } from "../tools/find-related-entries.js";
 
 export async function processEntry(entryId: string, userId: string) {
@@ -154,10 +152,12 @@ export async function processEntry(entryId: string, userId: string) {
       ? undefined
       : aiTitle || (isMetadataTitleUseful ? metadataTitle : null);
 
-    const [spaceId, relatedEntries] = await Promise.all([
-      assignSpace(userId, embedding),
-      findRelatedEntries(userId, embedding, 5, entryId),
-    ]);
+    const relatedEntries = await findRelatedEntries(
+      userId,
+      embedding,
+      5,
+      entryId,
+    );
 
     await db.transaction(async (tx) => {
       await tx
@@ -231,19 +231,13 @@ export async function processEntry(entryId: string, userId: string) {
         }
       }
 
-      if (spaceId) {
-        await tx
-          .insert(entrySpaces)
-          .values({ entryId, spaceId })
-          .onConflictDoNothing();
-      } else {
-        await tx.insert(spaceSuggestions).values({
-          userId,
-          entryId,
-          suggestedName: extractedTopics[0]?.name || "New Space",
-          reason: "No existing spaces matched semantically.",
-        });
-      }
+      await tx.insert(spaceSuggestions).values({
+        userId,
+        entryId,
+        suggestedName: extractedTopics[0]?.name || "New Space",
+        reason:
+          "Suggested from extracted topics; approve in Spaces to create or assign.",
+      });
 
       for (const rel of relatedEntries) {
         if (rel.similarity > 0.5) {

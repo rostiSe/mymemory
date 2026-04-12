@@ -6,7 +6,7 @@ This module isolates server-side AI and ingest logic: URL → markdown, summariz
 
 ## Structure
 
-- **`tools/`** — One file per capability (extract, summarize, embed, tags, topics, assign-space, find-related-entries, Medium/Firecrawl scrape).
+- **`tools/`** — One file per capability (extract, summarize, embed, tags, topics, find-related-entries, Medium/Firecrawl scrape). Space auto-assign removed; suggestions live in `modules/spaces/` + ingest.
 - **`pipelines/`** — Orchestration (`ingest.ts` = `processEntry`).
 
 ## Smoke test (`analyzeContent`)

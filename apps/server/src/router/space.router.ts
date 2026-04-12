@@ -3,7 +3,7 @@ import { implement } from "@orpc/server";
 import { z } from "zod";
 import type { ORPCContext } from "../context.js";
 import { authed } from "../orpc.js";
-import { spaceService } from "../services/space.service.js";
+import { spaceService } from "../modules/spaces/services/space.service.js";
 
 export const spaceRouter = implement(spaceContract)
   .$context<ORPCContext>()

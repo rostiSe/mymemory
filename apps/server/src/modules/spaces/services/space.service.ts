@@ -2,7 +2,7 @@ import type { db } from "@mymemory/db";
 import { spaces } from "@mymemory/db/schema";
 import { and, eq } from "drizzle-orm";
 import type { z } from "zod";
-import type { spaceContract, spaceSchema } from "@mymemory/shared/contracts";
+import type { spaceSchema } from "@mymemory/shared/contracts";
 
 type Space = z.infer<typeof spaceSchema>;
 
@@ -13,7 +13,7 @@ export const spaceService = {
       .from(spaces)
       .where(eq(spaces.userId, userId));
 
-    return userSpaces.map(s => ({
+    return userSpaces.map((s) => ({
       ...s,
       description: s.description ?? undefined,
       centroidVector: s.centroidVector ?? undefined,
@@ -23,7 +23,7 @@ export const spaceService = {
   async getById(
     database: typeof db,
     userId: string,
-    input: { id: string }
+    input: { id: string },
   ): Promise<Space | null> {
     const [row] = await database
       .select()
@@ -42,7 +42,7 @@ export const spaceService = {
   async create(
     database: typeof db,
     userId: string,
-    input: { name: string; description?: string }
+    input: { name: string; description?: string },
   ): Promise<Space> {
     const { name, description } = input || {};
 
