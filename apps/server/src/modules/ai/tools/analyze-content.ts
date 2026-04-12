@@ -40,14 +40,41 @@ export const analyzeContentSchema = z.object({
     .describe(
       'ISO 639-1 language code of the content, e.g. "en", "es", "de", "fr".',
     ),
+  title: z.string().describe(
+    'A concise, descriptive headline (5-12 words) that captures the main point of the content. '
+      + 'Write it like a newspaper headline — clear, specific, informative. '
+      + 'Do NOT use the site name, domain, or generic phrases like "Home" or "Welcome".',
+  ),
+  // Note: do not use z.string().url() — OpenAI structured outputs reject JSON Schema `format: "uri"`.
+  heroImageUrl: z
+    .union([z.string(), z.null()])
+    .describe(
+      'Absolute https or http URL of the most visually relevant content image — a photo, diagram, '
+        + "illustration, or chart that represents the article's subject. "
+        + 'Return null if no suitable image exists. '
+        + 'EXCLUDE: site logos, favicons, author avatars, social media icons, '
+        + 'tracking pixels, ads, and generic stock banners.',
+    ),
 });
 
 export type AnalyzeContentResult = z.infer<typeof analyzeContentSchema>;
+
+function normalizeHeroImageUrl(value: string | null): string | null {
+  if (value === null || value.trim() === '') return null;
+  try {
+    const u = new URL(value.trim());
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return null;
+    return u.href;
+  } catch {
+    return null;
+  }
+}
 
 export async function analyzeContent(opts: {
   markdown: string;
   existingTags?: string[];
   existingTopics?: string[];
+  imageUrls?: string[];
 }): Promise<AnalyzeContentResult> {
   try {
     const { output } = await generateText({
@@ -65,7 +92,10 @@ export async function analyzeContent(opts: {
       throw new Error('analyzeContent: model returned no structured output');
     }
 
-    return output;
+    return {
+      ...output,
+      heroImageUrl: normalizeHeroImageUrl(output.heroImageUrl),
+    };
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) {
       console.error('analyzeContent failed to generate valid object:', error.cause);

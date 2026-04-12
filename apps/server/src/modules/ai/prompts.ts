@@ -53,8 +53,10 @@ export function extractTopicsUserPrompt(opts: ExtractTopicsUserPromptOpts): stri
 /** System prompt for `analyzeContent` in `tools/analyze-content.ts`. */
 export function analyzeContentSystemPrompt(): string {
   return `You are an expert content analyst. Given a piece of content, produce a structured analysis:
+a concise descriptive headline (not the site name or a URL — a real headline capturing the main point),
 a concise summary, key takeaways (specific claims, numbers, or techniques — not vague restatements),
-relevant tags for categorization, the primary topics discussed, and the ISO 639-1 language code (e.g. en, es, de, fr).
+relevant tags for categorization, the primary topics discussed, the ISO 639-1 language code (e.g. en, es, de, fr),
+and the URL of the best content image if one exists (not logos, avatars, or icons).
 When existing tags or topics are provided, prefer reusing them over inventing new ones.`;
 }
 
@@ -62,6 +64,8 @@ export type AnalyzeContentUserPromptOpts = {
   markdown: string;
   existingTags?: string[];
   existingTopics?: string[];
+  /** Image URLs found in the page (OG + markdown); model picks the best hero or null. */
+  imageUrls?: string[];
 };
 
 /** User prompt for `analyzeContent` — truncates markdown to {@link MAX_CONTENT_CHARS}; lists existing tags/topics when non-empty. */
@@ -79,6 +83,12 @@ export function analyzeContentUserPrompt(opts: AnalyzeContentUserPromptOpts): st
   if (existingTopics.length > 0) {
     sections.push(
       `Existing topics in the system (prefer reusing names if relevant): ${existingTopics.join(', ')}`,
+    );
+  }
+
+  if (opts.imageUrls?.length) {
+    sections.push(
+      `Image URLs found in the content (pick the best content image for heroImageUrl, or null if none are suitable):\n${opts.imageUrls.join('\n')}`,
     );
   }
 
