@@ -46,6 +46,24 @@ export const ENTRY_DETAIL_HERO_MAX_HEIGHT_PX = 320;
  */
 export const FEED_ENTRY_CARD_COVER_HEIGHT_PX = 128;
 
+/** Max height for feed card hero when using intrinsic `aspectRatio` (contain). */
+export const FEED_ENTRY_CARD_COVER_MAX_HEIGHT_PX = 280;
+
+/**
+ * Feed row `Swipeable` + `FlatList`: if vertical movement exceeds ± this many points
+ * before the pan activates, the swipe fails so scrolling wins.
+ */
+export const FEED_CARD_SWIPE_FAIL_OFFSET_Y_PX = 10;
+
+/**
+ * Feed row `Swipeable`: finger must move past ± this horizontal delta (points)
+ * before the swipe pan activates (cuts accidental swipes while scrolling).
+ */
+export const FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX = 36;
+
+/** Feed row `Swipeable` friction (`friction` prop); higher = less “sticky” to the finger. */
+export const FEED_CARD_SWIPE_FRICTION = 3;
+
 /**
  * Max upward translate (px) for hero image parallax while scrolling.
  * Used with `ENTRY_DETAIL_HERO_MAX_HEIGHT_PX` as the scroll input range in `useEntryDetailScroll`.
@@ -69,3 +87,15 @@ export const MARKDOWN_IMAGE_MARGIN_BOTTOM_PX = 16;
 export const MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX = 240;
 export const COLLAPSIBLE_CLAMP_FADE_HEIGHT_PX = 48;
 export const COLLAPSIBLE_CLAMP_EXPANDED_MAX_HEIGHT_PX = 8192;
+
+/**
+ * Space suggestions `Dialog` + nested `FlatList`: max list height as a fraction of window height.
+ * Dialog content needs a numeric cap so the list can scroll inside the overlay.
+ */
+export const SPACE_SUGGESTIONS_DIALOG_LIST_MAX_HEIGHT_WINDOW_FRACTION = 0.65;
+
+/**
+ * Space suggestions dialog panel width as a fraction of window width.
+ * Avoids `%` / `max-w-*` Uniwind resolution issues where the panel collapses to a thin strip.
+ */
+export const SPACE_SUGGESTIONS_DIALOG_WIDTH_WINDOW_FRACTION = 0.92;

@@ -1,16 +1,17 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { BottomSheet, Button, useThemeColor } from "heroui-native";
+import type { ReactNode } from "react";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
-import { withUniwind } from "uniwind";
-
-const StyledIonicons = withUniwind(Ionicons);
 
 type BottomSheetTone = "default" | "danger";
 
 type BottomSheetComponentProps = {
-  children: React.ReactNode;
+  /**
+   * Trigger wrapped in `BottomSheet.Trigger`. Omit when the sheet is **controlled**
+   * (`isOpen` / `onOpenChange`) and opened programmatically.
+   */
+  children?: ReactNode;
   title: string;
   description: string;
   primaryButtonLabel: string;
@@ -67,7 +68,9 @@ export default function BottomSheetComponent({
 
   return (
     <BottomSheet isOpen={isOpen} onOpenChange={setOpen}>
-      <BottomSheet.Trigger asChild>{children}</BottomSheet.Trigger>
+      {children != null ? (
+        <BottomSheet.Trigger asChild>{children}</BottomSheet.Trigger>
+      ) : null}
       <BottomSheet.Portal>
         <BottomSheet.Overlay />
         <BottomSheet.Content>

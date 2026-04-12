@@ -36,6 +36,7 @@ export function EntrySummaryCard({
         ) : (
           <CollapsibleClamp contentKey={contentKey} expandHint={summaryText}>
             <MarkdownRenderer
+              variant="excerpt"
               markdown={summaryText}
               allowTrailingMargin={false}
             />

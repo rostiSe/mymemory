@@ -27,7 +27,7 @@ const cursorPayloadSchema = z.object({
   isPinned: z.boolean().optional(),
 });
 
-function toEntry(row: EntryRow): Entry {
+export function toEntry(row: EntryRow): Entry {
   return {
     ...row,
     title: row.title ?? undefined,

@@ -3,6 +3,7 @@ import {
   EnrichedMarkdownText,
   type EnrichedMarkdownTextProps,
 } from "react-native-enriched-markdown";
+import { memo, useCallback, useMemo } from "react";
 import { useMarkdownThemeStyle } from "./useMarkdownThemeStyle";
 
 function isHttpUrl(url: string): boolean {
@@ -16,6 +17,11 @@ export type MarkdownRendererProps = {
   /** Uniwind classes on the wrapper `View`. */
   className?: string;
   allowTrailingMargin?: boolean;
+  /**
+   * `excerpt` — feed cards: lighter parsing (no LaTeX), no selection, slightly tighter type.
+   * `body` — entry detail and full content.
+   */
+  variant?: "excerpt" | "body";
 } & Pick<
   EnrichedMarkdownTextProps,
   "flavor" | "md4cFlags" | "streamingAnimation"
@@ -23,25 +29,50 @@ export type MarkdownRendererProps = {
 
 /**
  * Shared markdown surface: HeroUI theme colors, safe HTTP(S) link handling.
- * Use for entry body, summaries, or any inline rich text — adjust styling in one place via
- * {@link useMarkdownThemeStyle} and this component’s props.
+ * Memoized so parent list re-renders don’t re-touch native markdown unless props change.
  */
-export function MarkdownRenderer({
+export const MarkdownRenderer = memo(function MarkdownRenderer({
   markdown,
   emptyFallback = "_No content yet._",
   className,
   allowTrailingMargin = true,
+  variant = "body",
   flavor,
-  md4cFlags,
-  streamingAnimation,
+  md4cFlags: md4cFlagsProp,
+  streamingAnimation = false,
 }: MarkdownRendererProps) {
-  const markdownStyle = useMarkdownThemeStyle();
+  const baseMarkdownStyle = useMarkdownThemeStyle();
 
-  const onLinkPress = (event: { url: string }) => {
+  const markdownStyle = useMemo(() => {
+    if (variant === "excerpt") {
+      const p = baseMarkdownStyle.paragraph;
+      return {
+        ...baseMarkdownStyle,
+        paragraph: {
+          ...p,
+          fontSize: 14,
+          lineHeight: 20,
+        },
+      };
+    }
+    return baseMarkdownStyle;
+  }, [variant, baseMarkdownStyle]);
+
+  const md4cFlags = useMemo(() => {
+    if (md4cFlagsProp !== undefined) return md4cFlagsProp;
+    if (variant === "excerpt") {
+      return { underline: false, latexMath: false };
+    }
+    return { underline: false, latexMath: true };
+  }, [md4cFlagsProp, variant]);
+
+  const onLinkPress = useCallback((event: { url: string }) => {
     if (isHttpUrl(event.url)) {
       void Linking.openURL(event.url);
     }
-  };
+  }, []);
+
+  const selectable = variant !== "excerpt";
 
   return (
     <View className={className}>
@@ -53,7 +84,8 @@ export function MarkdownRenderer({
         flavor={flavor}
         md4cFlags={md4cFlags}
         streamingAnimation={streamingAnimation}
+        selectable={selectable}
       />
     </View>
   );
-}
+});

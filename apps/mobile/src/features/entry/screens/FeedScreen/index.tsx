@@ -6,13 +6,17 @@ import {
   useCreateEntry,
   useFeedEntries,
 } from "@/features/entry/hooks/useEntries";
-import { useFeedArchiveEntry } from "@/features/entry/hooks/useFeedArchiveEntry";
+import { useDeleteEntry } from "@/features/entry/hooks/useEntryMutations";
+import { useFeedFavoriteToggle } from "@/features/entry/hooks/useFeedFavoriteToggle";
 import { useFeedOptimisticCreate } from "@/features/entry/hooks/useFeedOptimisticCreate";
+import { buildFeedCardMetaHint } from "@/features/entry/utils/buildEntryMetaLine";
 import {
   type FeedRow,
   isPendingFeedRow,
 } from "@/features/entry/utils/feed-rows";
+import { resolveEntryHeroImageUri } from "@/features/entry/utils/resolveEntryHeroImageUri";
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
+import type { EntryListFilter } from "@mymemory/shared/contracts";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
 import { useCallback, useMemo, useState } from "react";
@@ -24,9 +28,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { buildFeedCardMetaHint } from "@/features/entry/utils/buildEntryMetaLine";
-import { resolveEntryHeroImageUri } from "@/features/entry/utils/resolveEntryHeroImageUri";
-import type { EntryListFilter } from "@mymemory/shared/contracts";
 import { FeedHeader } from "./components/FeedHeader";
 import { FeedListItem } from "./components/FeedListItem";
 
@@ -35,7 +36,15 @@ export default function FeedScreen() {
   const listContentBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
   const createMutation = useCreateEntry();
   const [feedFilter, setFeedFilter] = useState<EntryListFilter>("all");
-  const onArchiveEntry = useFeedArchiveEntry();
+  const deleteEntry = useDeleteEntry();
+  const onToggleFavorite = useFeedFavoriteToggle();
+
+  const onDeleteEntry = useCallback(
+    (id: string) => {
+      deleteEntry.mutate({ id });
+    },
+    [deleteEntry],
+  );
 
   const {
     data,
@@ -94,11 +103,12 @@ export default function FeedScreen() {
           isPinned={item.isPinned}
           processedStatus={item.processedStatus}
           onPressEntry={onPressEntry}
-          onArchiveEntry={onArchiveEntry}
+          onToggleFavorite={onToggleFavorite}
+          onDeleteEntry={onDeleteEntry}
         />
       );
     },
-    [onArchiveEntry, onPressEntry],
+    [onPressEntry, onToggleFavorite, onDeleteEntry],
   );
 
   const refreshControl = useMemo(

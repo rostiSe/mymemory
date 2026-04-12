@@ -1,5 +1,12 @@
 import type { EntryRow } from "@/features/entry/types";
-import { memo, useCallback, useRef } from "react";
+import { EntryDeleteConfirmSheet } from "@/features/entry/components/EntryDeleteConfirmSheet";
+import {
+  FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
+  FEED_CARD_SWIPE_FAIL_OFFSET_Y_PX,
+  FEED_CARD_SWIPE_FRICTION,
+} from "@/theme/layout-imperative";
+import type { FC } from "react";
+import { memo, useCallback, useState } from "react";
 import { View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Swipeable } from "react-native-gesture-handler";
@@ -20,10 +27,11 @@ export type FeedListItemProps = {
   isPinned?: boolean;
   processedStatus?: EntryRow["processedStatus"];
   onPressEntry: (id: string) => void;
-  onArchiveEntry: (id: string) => void;
+  onToggleFavorite: (id: string, currentlyFavorited: boolean) => void;
+  onDeleteEntry: (id: string) => void;
 };
 
-function FeedListItemInner({
+const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
   entryId,
   title,
   summary,
@@ -32,48 +40,96 @@ function FeedListItemInner({
   createdAt,
   metaHint,
   heroImageUri,
-  isFavorited,
+  isFavorited = false,
   isPinned,
   processedStatus,
   onPressEntry,
-  onArchiveEntry,
-}: FeedListItemProps) {
-  const warningFg = useThemeColor("warning-foreground");
-  const archivedRef = useRef(false);
+  onToggleFavorite,
+  onDeleteEntry,
+}) {
+  const dangerFg = useThemeColor("danger-foreground");
+  const accentSoftFg = useThemeColor("accent-soft-foreground");
+  const dangerColor = useThemeColor("danger");
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const displayDate = new Date(createdAt).toLocaleDateString("de-DE", {
     day: "numeric",
     month: "long",
   });
 
-  const renderRightActions = useCallback(
+  const renderLeftActions = useCallback(
     () => (
-      <View className="justify-center self-stretch rounded-md bg-warning px-5">
-        <MaterialIcons name="archive" size={24} color={warningFg} />
+      <View
+        accessibilityLabel={
+          isFavorited ? "Remove from favorites" : "Add to favorites"
+        }
+        className="justify-center self-stretch rounded-sm bg-accent px-5"
+      >
+        <MaterialIcons
+          name={isFavorited ? "favorite" : "favorite-border"}
+          size={24}
+          color={isFavorited ? dangerColor : accentSoftFg}
+        />
       </View>
     ),
-    [warningFg],
+    [accentSoftFg, dangerColor, isFavorited],
   );
 
-  const handleSwipeableOpen = useCallback(() => {
-    if (archivedRef.current) return;
-    archivedRef.current = true;
-    onArchiveEntry(entryId);
-  }, [entryId, onArchiveEntry]);
+  const renderRightActions = useCallback(
+    () => (
+      <View
+        accessibilityLabel="Delete entry"
+        className="justify-center self-stretch rounded-sm bg-danger px-5"
+      >
+        <MaterialIcons name="delete-outline" size={24} color={dangerFg} />
+      </View>
+    ),
+    [dangerFg],
+  );
 
-  const handleSwipeableClose = useCallback(() => {
-    archivedRef.current = false;
-  }, []);
+  const handleSwipeableOpen = useCallback(
+    (direction: "left" | "right", row: Swipeable) => {
+      if (direction === "right") {
+        setDeleteOpen(true);
+        queueMicrotask(() => {
+          row.close();
+        });
+        return;
+      }
+      if (direction === "left") {
+        onToggleFavorite(entryId, isFavorited);
+        queueMicrotask(() => {
+          row.close();
+        });
+      }
+    },
+    [entryId, isFavorited, onToggleFavorite],
+  );
+
+  const handleConfirmDelete = useCallback(() => {
+    onDeleteEntry(entryId);
+  }, [entryId, onDeleteEntry]);
 
   return (
     <View className="mb-4">
       <Swipeable
+        renderLeftActions={renderLeftActions}
         renderRightActions={renderRightActions}
         onSwipeableOpen={handleSwipeableOpen}
-        onSwipeableClose={handleSwipeableClose}
+        overshootLeft={false}
         overshootRight={false}
+        friction={FEED_CARD_SWIPE_FRICTION}
+        activeOffsetX={[
+          -FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
+          FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
+        ]}
+        failOffsetY={[
+          -FEED_CARD_SWIPE_FAIL_OFFSET_Y_PX,
+          FEED_CARD_SWIPE_FAIL_OFFSET_Y_PX,
+        ]}
       >
         <EntryCard
+          summaryContentKey={entryId}
           title={title}
           summary={summary}
           summaryLoading={summaryLoading}
@@ -87,8 +143,13 @@ function FeedListItemInner({
           onPress={() => onPressEntry(entryId)}
         />
       </Swipeable>
+      <EntryDeleteConfirmSheet
+        isOpen={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        onConfirmDelete={handleConfirmDelete}
+      />
     </View>
   );
 }
 
-export const FeedListItem = memo(FeedListItemInner);
+export const FeedListItem = memo(FeedListItemInner) as typeof FeedListItemInner;

@@ -68,6 +68,7 @@ function AppShell() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="debug" options={{ title: "Debug" }} />
+      <Stack.Screen name="space/[id]" options={{ title: "Space" }} />
       <Stack.Screen
         name="entry/[id]"
         options={{

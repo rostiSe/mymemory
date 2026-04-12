@@ -1,4 +1,4 @@
-import BottomSheetComponent from "@/components/ui/BottomSheet";
+import { EntryDeleteConfirmSheet } from "@/features/entry/components/EntryDeleteConfirmSheet";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useThemeColor } from "heroui-native";
 import { Pressable, Text, View } from "react-native";
@@ -75,14 +75,7 @@ export function EntryDetailHeader({
               </Pressable>
             </>
           ) : null}
-          <BottomSheetComponent
-            tone="danger"
-            title="Delete this entry?"
-            description="This cannot be undone."
-            primaryButtonLabel="Delete"
-            secondaryButtonLabel="Cancel"
-            onPrimaryButtonPress={onConfirmDelete}
-          >
+          <EntryDeleteConfirmSheet onConfirmDelete={onConfirmDelete}>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="More actions — delete entry"
@@ -90,7 +83,7 @@ export function EntryDetailHeader({
             >
               <MaterialIcons name="more-vert" size={22} color={mutedColor} />
             </Pressable>
-          </BottomSheetComponent>
+          </EntryDeleteConfirmSheet>
         </View>
       </View>
       {!!subtitle && (
