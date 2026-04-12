@@ -35,6 +35,11 @@ export const analyzeContentSchema = z.object({
     .min(1)
     .max(5)
     .describe('Primary topics discussed in the content.'),
+  language: z
+    .string()
+    .describe(
+      'ISO 639-1 language code of the content, e.g. "en", "es", "de".',
+    ),
 });
 
 export type AnalyzeContentResult = z.infer<typeof analyzeContentSchema>;

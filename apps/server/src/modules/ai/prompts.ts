@@ -54,7 +54,7 @@ export function extractTopicsUserPrompt(opts: ExtractTopicsUserPromptOpts): stri
 export function analyzeContentSystemPrompt(): string {
   return `You are an expert content analyst. Given a piece of content, produce a structured analysis:
 a concise summary, key takeaways (specific claims, numbers, or techniques — not vague restatements),
-relevant tags for categorization, and the primary topics discussed.
+relevant tags for categorization, the primary topics discussed, and the ISO 639-1 language code (e.g. en, es, de).
 When existing tags or topics are provided, prefer reusing them over inventing new ones.`;
 }
 
