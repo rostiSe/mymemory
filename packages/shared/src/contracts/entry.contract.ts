@@ -46,9 +46,19 @@ export const entrySchema = z.object({
   language: z.string().nullable().optional(),
 });
 
+export const entryListFilterSchema = z.enum([
+  "all",
+  "favorites",
+  "pinned",
+  "to-review",
+]);
+
+export type EntryListFilter = z.infer<typeof entryListFilterSchema>;
+
 export const entryListInputSchema = z.object({
   limit: z.number().int().min(1).max(50).default(20),
   cursor: z.string().nullish(),
+  filter: entryListFilterSchema.default("all"),
 });
 
 export const entryListOutputSchema = z.object({
@@ -75,10 +85,25 @@ export const entryDetailSchema = entrySchema.extend({
   topics: z.array(entryTopicItemSchema),
 });
 
+export const entryToggleFieldInputSchema = z.object({
+  id: z.guid(),
+  field: z.enum(["isFavorited", "isPinned", "isArchived"]),
+  value: z.boolean(),
+});
+
+export const entrySetReviewStatusInputSchema = z.object({
+  id: z.guid(),
+  status: z.enum(["unreviewed", "kept", "dismissed", "remind"]),
+});
+
+export const entryByIdInputSchema = z.object({ id: z.guid() });
+
+export const entryDeleteOutputSchema = z.object({ success: z.literal(true) });
+
 export const entryContract = oc.router({
   list: oc.input(entryListInputSchema).output(entryListOutputSchema),
   getById: oc
-    .input(z.object({ id: z.guid() }))
+    .input(entryByIdInputSchema)
     .output(entryDetailSchema.nullable()),
   create: oc
     .input(
@@ -90,4 +115,13 @@ export const entryContract = oc.router({
       }),
     )
     .output(entrySchema),
+  toggleField: oc
+    .input(entryToggleFieldInputSchema)
+    .output(entrySchema),
+  setReviewStatus: oc
+    .input(entrySetReviewStatusInputSchema)
+    .output(entrySchema),
+  trackRead: oc.input(entryByIdInputSchema).output(entrySchema),
+  retryIngest: oc.input(entryByIdInputSchema).output(entrySchema),
+  delete: oc.input(entryByIdInputSchema).output(entryDeleteOutputSchema),
 });

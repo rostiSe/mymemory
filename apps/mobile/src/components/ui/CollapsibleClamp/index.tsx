@@ -19,7 +19,10 @@ import Animated, {
 } from "react-native-reanimated";
 
 const DEFAULT_COLLAPSED_LINES = 3;
-const EXPAND_MS = 280;
+/** Time-based progress 0→1 keeps dim/fade in sync with perceived motion (not a 8192px height scale). */
+const EXPAND_MS = 240;
+/** One curve for open + close so motion feels even (no “slow start” only on collapse). */
+const FLOW_EASING = Easing.bezier(0.4, 0, 0.2, 1);
 const FALLBACK_LINE_HEIGHT_PX = 24;
 const FALLBACK_EXPANDED_MAX_PX = 8192;
 const FALLBACK_FADE_HEIGHT_PX = 48;
@@ -27,7 +30,6 @@ const FALLBACK_FADE_HEIGHT_PX = 48;
 const CHEVRON_ICON_SIZE = 17;
 const CHEVRON_ROW_MIN_HEIGHT_PX = 40;
 const CHEVRON_ICON_OPACITY = 0.38;
-/** Must track `maxHeightAnim` so dimming stays in sync with height (no instant gray). */
 const DIM_WHEN_COLLAPSED_OPACITY = 0.55;
 
 /** Rough chars per visual line at typical card width — heuristic only. */
@@ -63,6 +65,10 @@ export type CollapsibleClampProps = {
 /**
  * Collapsed region uses animated `maxHeight`. Requires numeric exports from
  * `layout-imperative.ts` (see file comment there).
+ *
+ * Opacity and fade follow a **time-based** `progress` (0 = collapsed, 1 = expanded)
+ * so dimming does not track the huge maxHeight span (72→8192), which otherwise
+ * keeps content gray until the very end of the animation.
  */
 export function CollapsibleClamp({
   children,
@@ -114,7 +120,8 @@ export function CollapsibleClamp({
       ));
 
   const [expanded, setExpanded] = useState(false);
-  const maxHeightAnim = useSharedValue(needsExpand ? collapsedPx : expandedMaxPx);
+  /** 0 = collapsed, 1 = expanded — drives height, dim, and fade together. */
+  const progress = useSharedValue(0);
 
   const isFirstEffect = useRef(true);
   const prevContentKey = useRef(contentKey);
@@ -129,61 +136,58 @@ export function CollapsibleClamp({
     prevContentKey.current = contentKey;
     setExpanded(false);
     if (needsExpand) {
-      maxHeightAnim.value = collapsedPx;
+      progress.value = 0;
     }
-  }, [contentKey, collapsedPx, needsExpand, maxHeightAnim]);
+  }, [contentKey, needsExpand, progress]);
 
   useEffect(() => {
     if (!needsExpand) return;
-    maxHeightAnim.value = withTiming(
-      expanded ? expandedMaxPx : collapsedPx,
-      {
-        duration: EXPAND_MS,
-        easing: expanded
-          ? Easing.out(Easing.cubic)
-          : Easing.in(Easing.cubic),
-      },
-    );
-  }, [expanded, collapsedPx, expandedMaxPx, needsExpand, maxHeightAnim]);
+    progress.value = withTiming(expanded ? 1 : 0, {
+      duration: EXPAND_MS,
+      easing: FLOW_EASING,
+    });
+  }, [expanded, needsExpand, progress]);
 
-  const animatedOuter = useAnimatedStyle(() => ({
-    maxHeight: maxHeightAnim.value,
-    overflow: "hidden" as const,
-  }));
-
-  /** Opacity tracks height progress so dim/fade never jump ahead of the clamp animation. */
-  const animatedContentOpacity = useAnimatedStyle(() => {
-    const t = interpolate(
-      maxHeightAnim.value,
-      [collapsedPx, expandedMaxPx],
+  const animatedOuter = useAnimatedStyle(() => {
+    const h = interpolate(
+      progress.value,
       [0, 1],
+      [collapsedPx, expandedMaxPx],
       Extrapolation.CLAMP,
     );
+    return {
+      maxHeight: h,
+      overflow: "hidden" as const,
+    };
+  }, [collapsedPx, expandedMaxPx]);
+
+  const animatedContentOpacity = useAnimatedStyle(() => {
     if (!dimWhenCollapsed) {
       return { opacity: 1 };
     }
     return {
       opacity: interpolate(
-        t,
+        progress.value,
         [0, 1],
         [DIM_WHEN_COLLAPSED_OPACITY, 1],
         Extrapolation.CLAMP,
       ),
     };
-  }, [dimWhenCollapsed, collapsedPx, expandedMaxPx]);
+  }, [dimWhenCollapsed]);
 
   const animatedFadeOverlayOpacity = useAnimatedStyle(() => {
     if (!showFadeGradient) {
       return { opacity: 0 };
     }
-    const t = interpolate(
-      maxHeightAnim.value,
-      [collapsedPx, expandedMaxPx],
-      [0, 1],
-      Extrapolation.CLAMP,
-    );
-    return { opacity: 1 - t };
-  }, [showFadeGradient, collapsedPx, expandedMaxPx]);
+    return {
+      opacity: interpolate(
+        progress.value,
+        [0, 1],
+        [1, 0],
+        Extrapolation.CLAMP,
+      ),
+    };
+  }, [showFadeGradient]);
 
   const toggle = useCallback(() => {
     if (needsExpand) setExpanded((v) => !v);
@@ -192,39 +196,6 @@ export function CollapsibleClamp({
   if (!needsExpand) {
     return <View className="w-full">{children}</View>;
   }
-
-  const chevronControl = (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityState={{ expanded }}
-      accessibilityLabel={expanded ? "Show less" : "Show more"}
-      onPress={toggle}
-      className={`items-center justify-center active:opacity-70 ${
-        expanded ? "py-1.5" : ""
-      }`}
-      style={
-        expanded
-          ? undefined
-          : {
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              minHeight: CHEVRON_ROW_MIN_HEIGHT_PX,
-              justifyContent: "flex-end",
-              paddingBottom: 2,
-            }
-      }
-    >
-      <View style={{ opacity: CHEVRON_ICON_OPACITY }}>
-        <Ionicons
-          name={expanded ? "chevron-up" : "chevron-down"}
-          size={CHEVRON_ICON_SIZE}
-          color={mutedIcon}
-        />
-      </View>
-    </Pressable>
-  );
 
   return (
     <View className="w-full">
@@ -252,9 +223,26 @@ export function CollapsibleClamp({
             />
           </Animated.View>
         ) : null}
-        {!expanded ? chevronControl : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded }}
+          accessibilityLabel={expanded ? "Show less" : "Show more"}
+          onPress={toggle}
+          className="absolute left-0 right-0 bottom-0 items-center justify-end active:opacity-70"
+          style={{
+            minHeight: CHEVRON_ROW_MIN_HEIGHT_PX,
+            paddingBottom: 2,
+          }}
+        >
+          <View style={{ opacity: CHEVRON_ICON_OPACITY }}>
+            <Ionicons
+              name={expanded ? "chevron-up" : "chevron-down"}
+              size={CHEVRON_ICON_SIZE}
+              color={mutedIcon}
+            />
+          </View>
+        </Pressable>
       </Animated.View>
-      {expanded ? chevronControl : null}
     </View>
   );
 }

@@ -1,12 +1,14 @@
+import type { EntryRow } from "@/features/entry/types";
 import { MaterialIcons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 import { Text, View } from "react-native";
-import { useThemeColor } from "heroui-native";
-import type { EntryRow } from "@/features/entry/types";
+import { Button, useThemeColor } from "heroui-native";
 
 type ProcessingStatusProps = {
   status: EntryRow["processedStatus"];
   error?: string | null;
+  /** Shown only when `status === "failed"`. */
+  onRetry?: () => void;
 };
 
 type MaterialIconName = ComponentProps<typeof MaterialIcons>["name"];
@@ -44,7 +46,11 @@ const STATUS_CONFIG: Record<
 /**
  * Inline status for entry detail when AI / server work is still in flight or failed.
  */
-export function ProcessingStatus({ status, error }: ProcessingStatusProps) {
+export function ProcessingStatus({
+  status,
+  error,
+  onRetry,
+}: ProcessingStatusProps) {
   const config = STATUS_CONFIG[status];
   const iconColor = useThemeColor(config.iconColorKey);
 
@@ -59,6 +65,11 @@ export function ProcessingStatus({ status, error }: ProcessingStatusProps) {
           <Text className="text-danger text-xs">{error}</Text>
         ) : null}
       </View>
+      {status === "failed" && onRetry ? (
+        <Button size="sm" variant="secondary" onPress={onRetry}>
+          Retry
+        </Button>
+      ) : null}
     </View>
   );
 }

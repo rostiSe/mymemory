@@ -6,9 +6,7 @@ import { Button, InputGroup, TextField, useThemeColor } from "heroui-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 
-export type CreateEntryInput = Parameters<
-  typeof orpcClient.entries.create
->[0];
+export type CreateEntryInput = Parameters<typeof orpcClient.entries.create>[0];
 
 export type CaptureComposerProps = {
   mutation: ReturnType<typeof useCreateEntry>;
@@ -86,6 +84,7 @@ export function CaptureComposer({
             <MaterialIcons name="link" size={20} color={mutedColor} />
           </InputGroup.Prefix>
           <InputGroup.Input
+            className="rounded-md border border-accent-soft shadow-lg"
             placeholder="Save a URL..."
             value={url}
             onChangeText={setUrl}
