@@ -38,7 +38,7 @@ export const analyzeContentSchema = z.object({
   language: z
     .string()
     .describe(
-      'ISO 639-1 language code of the content, e.g. "en", "es", "de".',
+      'ISO 639-1 language code of the content, e.g. "en", "es", "de", "fr".',
     ),
 });
 
