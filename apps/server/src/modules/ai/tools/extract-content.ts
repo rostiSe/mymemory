@@ -71,27 +71,45 @@ export async function extractContentFromUrl(url: string): Promise<ExtractionResu
       throw new Error(`Jina Reader API error: ${response.statusText}`);
     }
 
-    const json = (await response.json()) as {
-      data?: {
-        content?: string;
-        title?: string;
-        description?: string;
-        url?: string;
-        images?: unknown;
-        siteName?: string;
-        author?: string;
-        publishedTime?: string;
-      };
+    const json: unknown = await response.json();
+
+    if (!json || typeof json !== 'object' || Array.isArray(json)) {
+      throw new Error('Jina Reader returned empty or invalid content');
+    }
+
+    const payload = (json as { data?: unknown }).data;
+    if (
+      payload == null ||
+      typeof payload !== 'object' ||
+      Array.isArray(payload)
+    ) {
+      throw new Error('Jina Reader returned empty or invalid content');
+    }
+
+    const data = payload as {
+      content?: unknown;
+      title?: string;
+      description?: string;
+      url?: string;
+      images?: unknown;
+      siteName?: string;
+      author?: string;
+      publishedTime?: string;
     };
 
-    const markdown = json.data?.content ?? '';
-    if (!markdown.trim()) {
-      throw new Error('Jina Reader returned empty content');
+    const content = data.content;
+    if (typeof content !== 'string') {
+      throw new Error('Jina Reader returned empty or invalid content');
+    }
+
+    const markdown = content.trim();
+    if (markdown.length === 0) {
+      throw new Error('Jina Reader returned empty or invalid content');
     }
 
     return {
       markdown,
-      metadata: json.data ? buildJinaMetadata(json.data) : null,
+      metadata: buildJinaMetadata(data),
     };
   } catch (error) {
     console.error('Error extracting content via Jina Reader:', error);

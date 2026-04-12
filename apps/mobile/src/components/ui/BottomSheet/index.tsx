@@ -1,6 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { BottomSheet, Button } from "heroui-native";
+import { BottomSheet, Button, useThemeColor } from "heroui-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 import { withUniwind } from "uniwind";
@@ -61,7 +61,9 @@ export default function BottomSheetComponent({
   }, [onSecondaryButtonPress, setOpen]);
 
   const iconWrapClass = tone === "danger" ? "bg-danger/10" : "bg-success/10";
-  const iconClass = tone === "danger" ? "text-danger" : "text-success";
+  const dangerColor = useThemeColor("danger");
+  const successColor = useThemeColor("success");
+  const iconColor = tone === "danger" ? dangerColor : successColor;
 
   return (
     <BottomSheet isOpen={isOpen} onOpenChange={setOpen}>
@@ -76,7 +78,7 @@ export default function BottomSheetComponent({
               <MaterialIcons
                 name={tone === "danger" ? "delete" : "check"}
                 size={22}
-                color={iconClass}
+                color={iconColor}
               />
             </View>
           </View>

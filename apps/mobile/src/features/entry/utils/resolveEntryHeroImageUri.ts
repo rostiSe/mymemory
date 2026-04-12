@@ -36,6 +36,6 @@ export function resolveEntryHeroImageUri(entry: EntryHeroSource): string | undef
   const fromContent = extractFirstMarkdownImageUrl(entry.content);
   if (fromContent) return fromContent;
   const pageUrl = entry.url?.trim();
-  if (pageUrl && isLikelyDirectImageUrl(pageUrl)) return pageUrl;
+  if (pageUrl && isHttpUrl(pageUrl) && isLikelyDirectImageUrl(pageUrl)) return pageUrl;
   return undefined;
 }

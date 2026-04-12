@@ -65,19 +65,18 @@ export default function EntryCard({
 
   return (
     <Card className="bg-surface-secondary overflow-hidden rounded-md border border-accent-soft p-0 ">
-      {showCover ? (
-        <Image
-          source={{ uri: heroImageUri }}
-          style={styles.coverImage}
-          contentFit="cover"
-          accessibilityIgnoresInvertColors
-          onError={() => setCoverLoadFailed(true)}
-        />
-      ) : null}
-
-      <PressableFeedback className="px-card pt-card" onPress={onPress}>
+      <PressableFeedback className="flex-1" onPress={onPress}>
         <PressableFeedback.Ripple className="overflow-hidden" />
-        <Card.Body className="gap-2">
+        {showCover ? (
+          <Image
+            source={{ uri: heroImageUri }}
+            style={styles.coverImage}
+            contentFit="cover"
+            accessibilityIgnoresInvertColors
+            onError={() => setCoverLoadFailed(true)}
+          />
+        ) : null}
+        <Card.Body className="gap-2 px-card pt-card">
           <View className="flex-row gap-0.5 items-start justify-between">
             <View className="flex-row items-center gap-1.5 flex-1 min-w-0">
               <MaterialIcons

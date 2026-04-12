@@ -15,7 +15,7 @@ export function useEntryDetailInteractions(entry: EntryDetailRow | undefined): {
   handleTogglePin: () => void;
   handleSetReviewStatus: (status: EntryReviewStatus) => void;
   handleRetryIngest: () => void;
-  /** Confirms delete in UI (sheet/dialog); closes before navigating back. */
+  /** Confirms delete in UI (sheet/dialog); navigates back only after delete succeeds. */
   handleConfirmDelete: () => void;
 } {
   const router = useRouter();
@@ -58,8 +58,14 @@ export function useEntryDetailInteractions(entry: EntryDetailRow | undefined): {
 
   const handleConfirmDelete = useCallback(() => {
     if (!entry) return;
-    deleteEntry.mutate({ id: entry.id });
-    router.back();
+    deleteEntry.mutate(
+      { id: entry.id },
+      {
+        onSuccess: () => {
+          router.back();
+        },
+      },
+    );
   }, [entry, deleteEntry, router]);
 
   return {

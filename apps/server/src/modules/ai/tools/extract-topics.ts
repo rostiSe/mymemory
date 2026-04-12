@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { generateText, NoObjectGeneratedError, Output } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { z } from 'zod';
@@ -50,8 +52,19 @@ export async function extractTopics(
     return output.topics;
   } catch (error) {
     if (NoObjectGeneratedError.isInstance(error)) {
-      console.error('extractTopics failed to generate valid object:', error.cause);
-      console.error('Raw text:', error.text);
+      const rawText = error.text;
+      const textLength = typeof rawText === 'string' ? rawText.length : 0;
+      const textSha256Prefix =
+        typeof rawText === 'string' && rawText.length > 0
+          ? createHash('sha256').update(rawText).digest('hex').slice(0, 16)
+          : undefined;
+
+      console.error('extractTopics failed to generate valid object:', {
+        cause: error.cause,
+        rawTextOmitted: true,
+        textLength,
+        ...(textSha256Prefix !== undefined ? { textSha256Prefix } : {}),
+      });
     } else {
       console.error('Error extracting topics:', error);
     }

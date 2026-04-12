@@ -90,14 +90,46 @@ type FirecrawlScrapeResponse = {
   };
 };
 
+function pickString(v: unknown): string | undefined {
+  return typeof v === 'string' ? v : undefined;
+}
+
+/** Firecrawl-specific keys we fold into the shared `ExtractionMetadata` shape. */
+const FIRECRAWL_METADATA_NORMALIZED_KEYS = new Set([
+  'title',
+  'description',
+  'ogImage',
+  'siteName',
+  'author',
+  'sourceURL',
+  'sourceUrl',
+  'publishedTime',
+]);
+
 function firecrawlMetadataToExtractionMetadata(
   m: NonNullable<NonNullable<FirecrawlScrapeResponse['data']>['metadata']>,
 ): ExtractionMetadata {
-  return {
-    ...m,
-    publishedAt:
-      typeof m.publishedTime === 'string' ? m.publishedTime : undefined,
+  const sourceUrl =
+    pickString(m.sourceURL) ??
+    pickString((m as { sourceUrl?: unknown }).sourceUrl);
+
+  const out: ExtractionMetadata = {
+    title: pickString(m.title),
+    description: pickString(m.description),
+    ogImage: pickString(m.ogImage),
+    siteName: pickString(m.siteName),
+    author: pickString(m.author),
+    sourceUrl,
+    publishedAt: pickString(m.publishedTime),
   };
+
+  for (const [key, value] of Object.entries(m)) {
+    if (FIRECRAWL_METADATA_NORMALIZED_KEYS.has(key)) continue;
+    if (key in out) continue;
+    out[key] = value;
+  }
+
+  return out;
 }
 
 /**
