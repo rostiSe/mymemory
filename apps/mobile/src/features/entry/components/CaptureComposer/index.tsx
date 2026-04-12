@@ -39,9 +39,9 @@ export function CaptureComposer({
 
   const submit = useCallback(() => {
     if (!url.trim()) return;
+    /** Omit title so ingest can set AI/metadata title; sending `title: url` blocks updates. */
     const input: CreateEntryInput = {
       url,
-      title: url,
       type: "url",
       content: "",
     };

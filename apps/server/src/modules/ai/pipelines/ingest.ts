@@ -16,7 +16,11 @@ import {
 } from "../tools/extract-content-medium-firecrawl.js";
 import { extractContentFromUrl } from "../tools/extract-content.js";
 import type { ExtractionMetadata } from "../tools/extract-content.types.js";
-import { extractCoverImage } from "../tools/extract-cover-image.js";
+import {
+  collectImageUrls,
+  extractCoverImage,
+} from "../tools/extract-cover-image.js";
+import { looksLikeBoilerplate, looksLikeUrl } from "../utils/title-quality.js";
 import { analyzeContent } from "../tools/analyze-content.js";
 import { cleanContent } from "../tools/clean-content.js";
 import { generateEmbedding } from "../tools/generate-embedding.js";
@@ -86,11 +90,14 @@ export async function processEntry(entryId: string, userId: string) {
     const existingTags = existingTagRows.map((t) => t.name);
     const existingTopics = existingTopicRows.map((t) => t.name);
 
+    const imageUrls = collectImageUrls(extractionMetadata, rawMarkdown);
+
     const [analysis, embedding] = await Promise.all([
       analyzeContent({
         markdown: readableContent,
         existingTags,
         existingTopics,
+        imageUrls,
       }),
       generateEmbedding(readableContent),
     ]);
@@ -101,9 +108,12 @@ export async function processEntry(entryId: string, userId: string) {
       tags: generatedTags,
       topics: extractedTopics,
       language,
+      title: generatedTitle,
+      heroImageUrl,
     } = analysis;
 
-    const coverImageUrl = extractCoverImage(extractionMetadata, rawMarkdown);
+    const extractedCover = extractCoverImage(extractionMetadata, rawMarkdown);
+    const resolvedCoverImageUrl = heroImageUrl ?? extractedCover;
     const wordCount = readableContent.split(/\s+/).filter(Boolean).length;
 
     const metadataTitle =
@@ -112,6 +122,16 @@ export async function processEntry(entryId: string, userId: string) {
       extractionMetadata.title.trim()
         ? extractionMetadata.title.trim()
         : null;
+
+    const isMetadataTitleUseful =
+      metadataTitle != null &&
+      !looksLikeUrl(metadataTitle) &&
+      !looksLikeBoilerplate(metadataTitle);
+
+    const aiTitle = generatedTitle.trim();
+    const resolvedTitle = entry.title?.trim()
+      ? undefined
+      : aiTitle || (isMetadataTitleUseful ? metadataTitle : null);
 
     const [spaceId, relatedEntries] = await Promise.all([
       assignSpace(userId, embedding),
@@ -122,15 +142,11 @@ export async function processEntry(entryId: string, userId: string) {
       await tx
         .update(entries)
         .set({
-          ...(entry.title?.trim()
-            ? {}
-            : metadataTitle
-              ? { title: metadataTitle }
-              : {}),
+          ...(resolvedTitle !== undefined ? { title: resolvedTitle } : {}),
           content: readableContent,
           rawContent: rawMarkdown,
           readableContent,
-          coverImageUrl,
+          coverImageUrl: resolvedCoverImageUrl,
           metadata: extractionMetadata,
           keyPoints,
           summary,

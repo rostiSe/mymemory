@@ -35,6 +35,38 @@ export function extractCoverImage(
   return null;
 }
 
+/**
+ * All distinct http(s) image URLs from OG metadata and markdown (for LLM hero selection).
+ */
+export function collectImageUrls(
+  metadata: ExtractionMetadata | null,
+  markdown: string,
+): string[] {
+  const urls = new Set<string>();
+  if (metadata?.ogImage && isValidImageUrl(metadata.ogImage)) {
+    urls.add(metadata.ogImage);
+  }
+
+  const mdRegex =
+    /!\[[^\]]*]\s*\(\s*(https?:\/\/[^)\s]+)(?:\s+"[^"]*")?\s*\)/g;
+  for (const match of markdown.matchAll(mdRegex)) {
+    if (match[1] && isValidImageUrl(match[1])) urls.add(match[1]);
+  }
+
+  const htmlRegex = /<img[^>]+src=["'](https?:\/\/[^"']+)/gi;
+  for (const match of markdown.matchAll(htmlRegex)) {
+    if (match[1] && isValidImageUrl(match[1])) urls.add(match[1]);
+  }
+
+  const bareRegex =
+    /(https?:\/\/[^\s<>"')]+\.(?:jpg|jpeg|png|gif|webp|avif)(?:\?[^\s<>"')]*)?)/gi;
+  for (const match of markdown.matchAll(bareRegex)) {
+    if (match[1] && isValidImageUrl(match[1])) urls.add(match[1]);
+  }
+
+  return [...urls];
+}
+
 function isValidImageUrl(url: string): boolean {
   try {
     const parsed = new URL(url);

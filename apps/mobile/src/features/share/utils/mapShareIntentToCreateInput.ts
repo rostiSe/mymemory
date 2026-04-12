@@ -24,6 +24,25 @@ function isHttpUrl(text: string): boolean {
   }
 }
 
+/**
+ * When share `subject` is empty or repeats the same URL (common from browsers),
+ * omit title so the ingest pipeline can set AI/metadata title.
+ */
+function titleForUrlEntry(url: string, subject: string): string | undefined {
+  const s = subject.trim();
+  if (!s) return undefined;
+  const u = url.trim();
+  if (s === u) return undefined;
+  if (isHttpUrl(s)) {
+    try {
+      if (new URL(s).href === new URL(u).href) return undefined;
+    } catch {
+      return s;
+    }
+  }
+  return s;
+}
+
 function parseUrlFromText(text: string): string | undefined {
   const lines = text
     .split(/\r?\n/)
@@ -99,7 +118,7 @@ export function mapShareIntentToCreateInput(
         input: {
           type: "url",
           url: urlFromBody,
-          title: subject || undefined,
+          title: titleForUrlEntry(urlFromBody, subject),
           content: text.length > urlFromBody.length ? text : "",
         },
       };
