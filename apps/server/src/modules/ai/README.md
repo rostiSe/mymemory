@@ -31,7 +31,7 @@ Or process an existing row:
 
 `pnpm smoke:ingest "<entry-uuid>" "<user-uuid>"`
 
-Prints a JSON preview (`processedStatus`, summary snippet, `wordCount`, `language`, cover URL, etc.). Exit code 1 if status is not `done`.
+Prints a JSON preview (`processedStatus`, summary snippet, `wordCount`, `language`, cover URL, etc.). Exit code 1 if status is not `done`. The script calls `closeDb()` when finished so the process exits (the shared Postgres pool would otherwise keep Node alive).
 
 ## Technologies
 

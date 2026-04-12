@@ -18,3 +18,8 @@ if (!connectionString) {
 // https://orm.drizzle.team/docs/get-started-postgresql#supabase
 const client = postgres(connectionString, { prepare: false });
 export const db = drizzle(client, { schema });
+
+/** Close the Postgres pool so CLI scripts (e.g. smoke tests) can exit without Ctrl+C. */
+export async function closeDb(): Promise<void> {
+  await client.end({ timeout: 5 });
+}
