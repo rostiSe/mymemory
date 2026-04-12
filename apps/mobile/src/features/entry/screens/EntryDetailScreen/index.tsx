@@ -2,7 +2,10 @@ import { ScreenInset } from "@/components/layout/ScreenInset";
 import { ProcessingStatus } from "@/features/entry/components/ProcessingStatus";
 import { useEntryById } from "@/features/entry/hooks/useEntries";
 import { useEntryDetailScroll } from "@/features/entry/hooks/useEntryDetailScroll";
-import { buildEntryMetaLine } from "@/features/entry/utils/buildEntryMetaLine";
+import {
+  buildEntryMetaLine,
+  buildEntryMetaSubtitle,
+} from "@/features/entry/utils/buildEntryMetaLine";
 import { resolveEntryHeroImageUri } from "@/features/entry/utils/resolveEntryHeroImageUri";
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { useLocalSearchParams } from "expo-router";
@@ -13,9 +16,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { EntryDetailHeader } from "./components/EntryDetailHeader";
 import { EntryDetailHero } from "./components/EntryDetailHero";
 import { EntryDetailSkeleton } from "./components/EntryDetailSkeleton";
+import { EntryKeyPointsSection } from "./components/EntryKeyPointsSection";
 import { EntryMarkdownBody } from "./components/EntryMarkdownBody";
 import { EntryReviewedAction } from "./components/EntryReviewedAction";
 import { EntrySpacesPlaceholder } from "./components/EntrySpacesPlaceholder";
+import { EntrySourceDetailSection } from "./components/EntrySourceDetailSection";
 import { EntrySummaryCard } from "./components/EntrySummaryCard";
 import { EntryTagsSection } from "./components/EntryTagsSection";
 import { EntryTopicsSection } from "./components/EntryTopicsSection";
@@ -43,7 +48,7 @@ export default function EntryDetailScreen() {
     }
     return {
       title: entry.title?.trim() || PLACEHOLDER_TITLE,
-      subtitle: "",
+      subtitle: buildEntryMetaSubtitle(entry) ?? "",
       metaLine: buildEntryMetaLine(entry),
     };
   }, [entry]);
@@ -51,6 +56,12 @@ export default function EntryDetailScreen() {
   const summaryText =
     entry?.summary?.trim() ||
     "No summary yet — a short TLDR will appear here once generated.";
+
+  const showSummaryCard =
+    entry &&
+    (entry.processedStatus === "pending" ||
+      entry.processedStatus === "processing" ||
+      Boolean(entry.summary?.trim()));
 
   const bottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
 
@@ -108,16 +119,26 @@ export default function EntryDetailScreen() {
               />
             </View>
           ) : null}
-          <EntrySummaryCard
+          {showSummaryCard ? (
+            <EntrySummaryCard
+              contentKey={entry.id}
+              summaryText={summaryText}
+              loading={
+                entry.processedStatus === "pending" ||
+                entry.processedStatus === "processing"
+              }
+            />
+          ) : null}
+          <EntryKeyPointsSection
             contentKey={entry.id}
-            summaryText={summaryText}
-            loading={
-              entry.processedStatus === "pending" ||
-              entry.processedStatus === "processing"
-            }
+            keyPoints={entry.keyPoints ?? []}
           />
-          <EntryTopicsSection />
-          <EntryTagsSection />
+          <EntrySourceDetailSection
+            sourceApp={entry.sourceApp}
+            metadata={entry.metadata}
+          />
+          <EntryTopicsSection topics={entry.topics} />
+          <EntryTagsSection tags={entry.tags} />
           <EntryMarkdownBody markdown={entry.content} />
           <EntryReviewedAction />
           <EntrySpacesPlaceholder />

@@ -30,9 +30,10 @@
  * `MMKV_SHARE_ENTRY_LAST_ID` for a targeted `getById`.
  */
 
-import type { EntryRow } from "@/features/entry/types";
+import type { EntryDetailRow, EntryRow } from "@/features/entry/types";
 import type { EntryListPage } from "@/features/entry/utils/flattenEntryListPages";
 import { orpc } from "@/lib/orpc";
+import { entrySchema } from "@mymemory/shared/contracts";
 import type {
   InfiniteData,
   QueryClient,
@@ -52,6 +53,25 @@ export function entryDetailQueryKey(id: string): QueryKey {
 /** Root key for every procedure under `entries`. */
 export function entriesDomainQueryKey(): QueryKey {
   return orpc.entries.key();
+}
+
+/** Strip detail-only fields so infinite list items stay `EntryRow`-shaped. */
+export function stripEntryDetailToListRow(
+  row: EntryRow | EntryDetailRow,
+): EntryRow {
+  return entrySchema.parse(row);
+}
+
+/** Normalize cache writes so detail always includes `tags` / `topics` arrays. */
+export function normalizeEntryDetailCache(
+  row: EntryRow | EntryDetailRow,
+): EntryDetailRow {
+  const tags =
+    "tags" in row && Array.isArray(row.tags) ? row.tags : [];
+  const topics =
+    "topics" in row && Array.isArray(row.topics) ? row.topics : [];
+  const base = stripEntryDetailToListRow(row);
+  return { ...base, tags, topics };
 }
 
 function upsertEntryRowInInfiniteListCaches(
@@ -114,13 +134,15 @@ function removeEntryRowFromInfiniteListCaches(
 /** Sets detail cache and merges the row into cached infinite list pages (no list refetch). */
 export function writeEntryRowToCaches(
   queryClient: QueryClient,
-  row: EntryRow,
+  row: EntryRow | EntryDetailRow,
 ): void {
-  queryClient.setQueryData(entryDetailQueryKey(row.id), row);
+  const detail = normalizeEntryDetailCache(row);
+  const listRow = stripEntryDetailToListRow(detail);
+  queryClient.setQueryData(entryDetailQueryKey(detail.id), detail);
   upsertEntryRowInInfiniteListCaches(
     queryClient,
     entryListRootQueryKey(),
-    row,
+    listRow,
   );
 }
 

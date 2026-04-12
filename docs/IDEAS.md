@@ -24,3 +24,14 @@ This wil be the url path and only markdown for now. After that we will have othe
 
 Then there will be text. first type of text is like when i select a text and can share it then it should look at the text and everything we can get with the share and save it as a quote or somthing similar. we will build different components for similar cases and let the ai chosse what fits best. and the types need to be saved. maybe it is a passage or an explanation of somthing.
 The last one will be later notes with checkboxes and todoes. there we need to be able to brainstorm or have bigger ideas.
+
+---
+
+@docs/tickets/\_SUPERSEDED-T-002-summarize-generate-object.md:1-143 create a ticket with this structure:
+
+We want to create a strucutre in the ai module that will incorporate the 3 types of ingestion. file like image, text like notes or quotes, url that can be either markdown or file(handle like file then).
+if text shared it should look if short or long or something else so we can look if it is a paragraph or a quote or whatever. if it is a note we have written in the apps editor ( iw ill add this editor later) we will have to differntiate if it is a recipe for example or a shoppinglist. lets talk how we could do that.
+
+Then for image i want it to be like a pinterest pin. i want to save descriptions and vectorize and color and motive etc so we can cluster them better and add tags and topics etc. then i can filter by color or whatever.
+
+This needs to be a ticket were we write a palceholder structure that we can build in the next step

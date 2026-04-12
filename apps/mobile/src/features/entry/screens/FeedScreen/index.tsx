@@ -22,6 +22,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { buildFeedCardMetaHint } from "@/features/entry/utils/buildEntryMetaLine";
 import { FeedHeader } from "./components/FeedHeader";
 import { FeedListItem } from "./components/FeedListItem";
 
@@ -77,6 +78,7 @@ export default function FeedScreen() {
           }
           type={item.type}
           createdAt={item.createdAt}
+          metaHint={buildFeedCardMetaHint(item)}
           onPressEntry={onPressEntry}
         />
       );

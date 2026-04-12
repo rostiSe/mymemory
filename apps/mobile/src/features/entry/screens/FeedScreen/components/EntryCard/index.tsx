@@ -16,6 +16,8 @@ interface EntryCardProps {
   summaryLoading?: boolean;
   type?: "url" | "note";
   date?: string;
+  /** e.g. word count + language when `processedStatus === done` */
+  metaHint?: string;
   onPress?: () => void;
 }
 
@@ -25,6 +27,7 @@ export default function EntryCard({
   summaryLoading = false,
   type = "url",
   date,
+  metaHint,
   onPress,
 }: EntryCardProps) {
   const mutedColor = useThemeColor("muted");
@@ -51,6 +54,12 @@ export default function EntryCard({
             </View>
             {date && <Text className="text-muted text-xs item">{date}</Text>}
           </View>
+
+          {metaHint ? (
+            <Text className="text-muted text-xs" numberOfLines={1}>
+              {metaHint}
+            </Text>
+          ) : null}
 
           {summaryLoading ? (
             <SkeletonGroup isLoading variant="shimmer">

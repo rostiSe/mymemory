@@ -10,7 +10,7 @@ export const entryRouter = base.router({
       return entryService.listPaginated(context.db, context.user!.id, input);
     }),
   getById: authed
-    .input(z.object({ id: z.uuid() }))
+    .input(z.object({ id: z.guid() }))
     .handler(async ({ input, context }) => {
       return entryService.getById(context.db, context.user!.id, input);
     }),

@@ -56,9 +56,30 @@ export const entryListOutputSchema = z.object({
   nextCursor: z.string().nullable(),
 });
 
+/** Tag row returned with entry detail (read-only). */
+export const entryTagItemSchema = z.object({
+  id: z.guid(),
+  name: z.string(),
+});
+
+/** Topic row returned with entry detail (read-only). */
+export const entryTopicItemSchema = z.object({
+  id: z.guid(),
+  name: z.string(),
+  description: z.string().nullable().optional(),
+});
+
+/** Full entry row plus related tags and topics (e.g. `getById`). */
+export const entryDetailSchema = entrySchema.extend({
+  tags: z.array(entryTagItemSchema),
+  topics: z.array(entryTopicItemSchema),
+});
+
 export const entryContract = oc.router({
   list: oc.input(entryListInputSchema).output(entryListOutputSchema),
-  getById: oc.input(z.object({ id: z.guid() })).output(entrySchema.nullable()),
+  getById: oc
+    .input(z.object({ id: z.guid() }))
+    .output(entryDetailSchema.nullable()),
   create: oc
     .input(
       z.object({

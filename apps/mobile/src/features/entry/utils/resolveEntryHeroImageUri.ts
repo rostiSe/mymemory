@@ -14,12 +14,25 @@ function isLikelyDirectImageUrl(url: string): boolean {
 type EntryHeroSource = {
   content: string;
   url?: string | null;
+  /** Set by ingest pipeline (OG / first article image). */
+  coverImageUrl?: string | null;
 };
 
+function isHttpUrl(s: string): boolean {
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Hero image: prefer first image in `content`; if none, use `url` when it points at an image file.
+ * Hero image: prefer pipeline `coverImageUrl`, then first image in `content`, then direct image `url`.
  */
 export function resolveEntryHeroImageUri(entry: EntryHeroSource): string | undefined {
+  const cover = entry.coverImageUrl?.trim();
+  if (cover && isHttpUrl(cover)) return cover;
   const fromContent = extractFirstMarkdownImageUrl(entry.content);
   if (fromContent) return fromContent;
   const pageUrl = entry.url?.trim();

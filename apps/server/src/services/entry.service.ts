@@ -1,11 +1,18 @@
 import type { db } from "@mymemory/db";
-import { entries } from "@mymemory/db/schema";
-import { entrySchema } from "@mymemory/shared/contracts";
+import {
+  entries,
+  entryTags,
+  entryTopics,
+  tags,
+  topics,
+} from "@mymemory/db/schema";
+import { entryDetailSchema, entrySchema } from "@mymemory/shared/contracts";
 import { ORPCError } from "@orpc/server";
 import { and, desc, eq, lt, or } from "drizzle-orm";
 import { z } from "zod";
 
 type Entry = z.infer<typeof entrySchema>;
+type EntryDetail = z.infer<typeof entryDetailSchema>;
 type EntryRow = typeof entries.$inferSelect;
 
 const cursorPayloadSchema = z.object({
@@ -111,7 +118,7 @@ export const entryService = {
     database: typeof db,
     userId: string,
     input: { id: string },
-  ): Promise<Entry | null> {
+  ): Promise<EntryDetail | null> {
     const [row] = await database
       .select()
       .from(entries)
@@ -119,7 +126,38 @@ export const entryService = {
       .limit(1);
 
     if (!row) return null;
-    return toEntry(row);
+
+    const base = toEntry(row);
+    const [tagRows, topicRows] = await Promise.all([
+      database
+        .select({ id: tags.id, name: tags.name })
+        .from(entryTags)
+        .innerJoin(tags, eq(entryTags.tagId, tags.id))
+        .where(
+          and(eq(entryTags.entryId, input.id), eq(tags.userId, userId)),
+        ),
+      database
+        .select({
+          id: topics.id,
+          name: topics.name,
+          description: topics.description,
+        })
+        .from(entryTopics)
+        .innerJoin(topics, eq(entryTopics.topicId, topics.id))
+        .where(
+          and(eq(entryTopics.entryId, input.id), eq(topics.userId, userId)),
+        ),
+    ]);
+
+    return {
+      ...base,
+      tags: tagRows,
+      topics: topicRows.map((t) => ({
+        id: t.id,
+        name: t.name,
+        description: t.description ?? undefined,
+      })),
+    };
   },
 
   async create(

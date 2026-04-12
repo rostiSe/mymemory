@@ -20,3 +20,26 @@ export function buildEntryMetaLine(entry: Entry): string {
   }
   return `${entry.type} · ${date}${urlPart}`;
 }
+
+/**
+ * Second line under the title: word count and language when processing is done and data exists.
+ */
+export function buildEntryMetaSubtitle(entry: Entry): string | undefined {
+  if (entry.processedStatus !== "done") return undefined;
+  const parts: string[] = [];
+  if (entry.wordCount != null && entry.wordCount > 0) {
+    parts.push(`${entry.wordCount} words`);
+  }
+  const lang = entry.language?.trim();
+  if (lang) {
+    parts.push(lang.length <= 3 ? lang.toUpperCase() : lang);
+  }
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
+/**
+ * Compact hint for feed cards (word count + language) when enriched.
+ */
+export function buildFeedCardMetaHint(entry: Entry): string | undefined {
+  return buildEntryMetaSubtitle(entry);
+}

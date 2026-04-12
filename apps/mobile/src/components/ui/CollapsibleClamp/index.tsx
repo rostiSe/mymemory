@@ -10,6 +10,9 @@ import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Pressable, View, type ColorValue } from "react-native";
 import Animated, {
+  Easing,
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -20,6 +23,12 @@ const EXPAND_MS = 280;
 const FALLBACK_LINE_HEIGHT_PX = 24;
 const FALLBACK_EXPANDED_MAX_PX = 8192;
 const FALLBACK_FADE_HEIGHT_PX = 48;
+/** Chevron sits in the fade band; keep tap target comfortable without dominating. */
+const CHEVRON_ICON_SIZE = 17;
+const CHEVRON_ROW_MIN_HEIGHT_PX = 40;
+const CHEVRON_ICON_OPACITY = 0.38;
+/** Must track `maxHeightAnim` so dimming stays in sync with height (no instant gray). */
+const DIM_WHEN_COLLAPSED_OPACITY = 0.55;
 
 /** Rough chars per visual line at typical card width — heuristic only. */
 const DEFAULT_CHARS_PER_VISUAL_LINE = 38;
@@ -128,7 +137,12 @@ export function CollapsibleClamp({
     if (!needsExpand) return;
     maxHeightAnim.value = withTiming(
       expanded ? expandedMaxPx : collapsedPx,
-      { duration: EXPAND_MS },
+      {
+        duration: EXPAND_MS,
+        easing: expanded
+          ? Easing.out(Easing.cubic)
+          : Easing.in(Easing.cubic),
+      },
     );
   }, [expanded, collapsedPx, expandedMaxPx, needsExpand, maxHeightAnim]);
 
@@ -137,51 +151,110 @@ export function CollapsibleClamp({
     overflow: "hidden" as const,
   }));
 
+  /** Opacity tracks height progress so dim/fade never jump ahead of the clamp animation. */
+  const animatedContentOpacity = useAnimatedStyle(() => {
+    const t = interpolate(
+      maxHeightAnim.value,
+      [collapsedPx, expandedMaxPx],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    if (!dimWhenCollapsed) {
+      return { opacity: 1 };
+    }
+    return {
+      opacity: interpolate(
+        t,
+        [0, 1],
+        [DIM_WHEN_COLLAPSED_OPACITY, 1],
+        Extrapolation.CLAMP,
+      ),
+    };
+  }, [dimWhenCollapsed, collapsedPx, expandedMaxPx]);
+
+  const animatedFadeOverlayOpacity = useAnimatedStyle(() => {
+    if (!showFadeGradient) {
+      return { opacity: 0 };
+    }
+    const t = interpolate(
+      maxHeightAnim.value,
+      [collapsedPx, expandedMaxPx],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+    return { opacity: 1 - t };
+  }, [showFadeGradient, collapsedPx, expandedMaxPx]);
+
   const toggle = useCallback(() => {
     if (needsExpand) setExpanded((v) => !v);
   }, [needsExpand]);
-
-  const showFade =
-    Boolean(showFadeGradient) && needsExpand && !expanded;
-
-  const dimmed = Boolean(dimWhenCollapsed) && needsExpand && !expanded;
 
   if (!needsExpand) {
     return <View className="w-full">{children}</View>;
   }
 
-  return (
-    <View className="w-full">
-      <Animated.View style={animatedOuter} className="relative w-full">
-        <View style={{ opacity: dimmed ? 0.55 : 1 }}>{children}</View>
-        {showFade ? (
-          <LinearGradient
-            pointerEvents="none"
-            colors={["transparent", fadeEndColor]}
-            locations={[0, 1]}
-            style={{
+  const chevronControl = (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ expanded }}
+      accessibilityLabel={expanded ? "Show less" : "Show more"}
+      onPress={toggle}
+      className={`items-center justify-center active:opacity-70 ${
+        expanded ? "py-1.5" : ""
+      }`}
+      style={
+        expanded
+          ? undefined
+          : {
               position: "absolute",
               left: 0,
               right: 0,
               bottom: 0,
-              height: fadeHeightPx,
-            }}
-          />
-        ) : null}
-      </Animated.View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityState={{ expanded }}
-        accessibilityLabel={expanded ? "Show less" : "Show more"}
-        onPress={toggle}
-        className="items-center justify-center py-2 active:opacity-70"
-      >
+              minHeight: CHEVRON_ROW_MIN_HEIGHT_PX,
+              justifyContent: "flex-end",
+              paddingBottom: 2,
+            }
+      }
+    >
+      <View style={{ opacity: CHEVRON_ICON_OPACITY }}>
         <Ionicons
           name={expanded ? "chevron-up" : "chevron-down"}
-          size={22}
+          size={CHEVRON_ICON_SIZE}
           color={mutedIcon}
         />
-      </Pressable>
+      </View>
+    </Pressable>
+  );
+
+  return (
+    <View className="w-full">
+      <Animated.View style={animatedOuter} className="relative w-full">
+        <Animated.View style={animatedContentOpacity}>{children}</Animated.View>
+        {showFadeGradient ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              {
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: fadeHeightPx,
+              },
+              animatedFadeOverlayOpacity,
+            ]}
+          >
+            <LinearGradient
+              pointerEvents="none"
+              colors={["transparent", fadeEndColor]}
+              locations={[0, 1]}
+              style={{ flex: 1 }}
+            />
+          </Animated.View>
+        ) : null}
+        {!expanded ? chevronControl : null}
+      </Animated.View>
+      {expanded ? chevronControl : null}
     </View>
   );
 }

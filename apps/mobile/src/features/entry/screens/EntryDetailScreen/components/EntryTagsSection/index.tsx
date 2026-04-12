@@ -1,19 +1,21 @@
-import { Text, View } from "react-native";
+import type { EntryDetailRow } from "@/features/entry/types";
 import { Chip } from "heroui-native";
+import { Text, View } from "react-native";
 
-/**
- * TODO: replace placeholders with tags from API when available.
- */
-export function EntryTagsSection() {
-  const placeholderTags = ["tag-one", "tag-two"];
+type EntryTagsSectionProps = {
+  tags: EntryDetailRow["tags"];
+};
+
+export function EntryTagsSection({ tags }: EntryTagsSectionProps) {
+  if (!tags.length) return null;
 
   return (
     <View className="mb-4 gap-2">
       <Text className="text-foreground text-sm font-semibold">Tags</Text>
       <View className="flex-row flex-wrap gap-2">
-        {placeholderTags.map((label) => (
-          <Chip key={label} size="sm" variant="soft" color="accent">
-            {label}
+        {tags.map((t) => (
+          <Chip key={t.id} size="sm" variant="soft" color="accent">
+            {t.name}
           </Chip>
         ))}
       </View>

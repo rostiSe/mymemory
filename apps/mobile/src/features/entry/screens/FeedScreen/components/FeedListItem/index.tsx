@@ -9,6 +9,7 @@ export type FeedListItemProps = {
   summaryLoading: boolean;
   type: "url" | "note";
   createdAt: string | Date;
+  metaHint?: string;
   onPressEntry: (id: string) => void;
 };
 
@@ -19,6 +20,7 @@ function FeedListItemInner({
   summaryLoading,
   type,
   createdAt,
+  metaHint,
   onPressEntry,
 }: FeedListItemProps) {
   const displayDate = new Date(createdAt).toLocaleDateString("de-DE", {
@@ -34,6 +36,7 @@ function FeedListItemInner({
         summaryLoading={summaryLoading}
         type={type}
         date={displayDate}
+        metaHint={metaHint}
         onPress={() => onPressEntry(entryId)}
       />
     </View>
