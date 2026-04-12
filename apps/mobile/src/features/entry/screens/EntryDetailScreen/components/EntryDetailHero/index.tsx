@@ -1,11 +1,11 @@
+import { ENTRY_DETAIL_HERO_MAX_HEIGHT_PX } from "@/theme/layout-imperative";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
+import { useThemeColor } from "heroui-native";
 import { useEffect, useState } from "react";
+import type { ViewStyle } from "react-native";
 import { StyleSheet, View } from "react-native";
 import Animated, { type AnimatedStyle } from "react-native-reanimated";
-import { useThemeColor } from "heroui-native";
-import type { ViewStyle } from "react-native";
-import { ENTRY_DETAIL_HERO_MAX_HEIGHT_PX } from "@/theme/layout-imperative";
 
 type EntryDetailHeroProps = {
   imageUri?: string;
@@ -16,7 +16,10 @@ type EntryDetailHeroProps = {
  * Hero region: first markdown image or neutral placeholder.
  * Fixed height + overflow hidden; scroll motion is transform-only via `heroImageStyle`.
  */
-export function EntryDetailHero({ imageUri, heroImageStyle }: EntryDetailHeroProps) {
+export function EntryDetailHero({
+  imageUri,
+  heroImageStyle,
+}: EntryDetailHeroProps) {
   const muted = useThemeColor("muted");
   const [loadFailed, setLoadFailed] = useState(false);
 

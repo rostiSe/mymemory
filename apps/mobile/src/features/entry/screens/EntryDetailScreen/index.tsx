@@ -1,6 +1,8 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
 import { ProcessingStatus } from "@/features/entry/components/ProcessingStatus";
 import { useEntryById } from "@/features/entry/hooks/useEntries";
+import { useEntryDetailInteractions } from "@/features/entry/hooks/useEntryDetailInteractions";
+import { useEntryDetailTrackRead } from "@/features/entry/hooks/useEntryDetailTrackRead";
 import { useEntryDetailScroll } from "@/features/entry/hooks/useEntryDetailScroll";
 import {
   buildEntryMetaLine,
@@ -30,6 +32,14 @@ const PLACEHOLDER_TITLE = "Untitled memory";
 export default function EntryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: entry, isPending, isError, error } = useEntryById(id);
+  useEntryDetailTrackRead(entry?.id);
+  const {
+    handleToggleFavorite,
+    handleTogglePin,
+    handleSetReviewStatus,
+    handleRetryIngest,
+    handleConfirmDelete,
+  } = useEntryDetailInteractions(entry ?? undefined);
   const insets = useSafeAreaInsets();
   const { scrollHandler, heroImageStyle } = useEntryDetailScroll();
 
@@ -110,12 +120,23 @@ export default function EntryDetailScreen() {
             title={headerProps.title}
             subtitle={headerProps.subtitle}
             metaLine={headerProps.metaLine}
+            isFavorited={entry.isFavorited}
+            isPinned={entry.isPinned}
+            showFavoritePin={entry.processedStatus === "done"}
+            onToggleFavorite={handleToggleFavorite}
+            onTogglePin={handleTogglePin}
+            onConfirmDelete={handleConfirmDelete}
           />
           {entry.processedStatus !== "done" ? (
             <View className="mb-4">
               <ProcessingStatus
                 status={entry.processedStatus}
                 error={entry.error}
+                onRetry={
+                  entry.processedStatus === "failed"
+                    ? handleRetryIngest
+                    : undefined
+                }
               />
             </View>
           ) : null}
@@ -140,7 +161,12 @@ export default function EntryDetailScreen() {
           <EntryTopicsSection topics={entry.topics} />
           <EntryTagsSection tags={entry.tags} />
           <EntryMarkdownBody markdown={entry.content} />
-          <EntryReviewedAction />
+          {entry.processedStatus === "done" ? (
+            <EntryReviewedAction
+              reviewStatus={entry.reviewStatus}
+              onSetStatus={handleSetReviewStatus}
+            />
+          ) : null}
           <EntrySpacesPlaceholder />
         </View>
       </Animated.ScrollView>

@@ -1,10 +1,12 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
 import { ScrollEdgeFade } from "@/components/layout/ScrollEdgeFade";
 import { SkeletonListItem } from "@/components/ui/SkeletonListItem";
+import { FeedFilterBar } from "@/features/entry/components/FeedFilterBar";
 import {
   useCreateEntry,
   useFeedEntries,
 } from "@/features/entry/hooks/useEntries";
+import { useFeedArchiveEntry } from "@/features/entry/hooks/useFeedArchiveEntry";
 import { useFeedOptimisticCreate } from "@/features/entry/hooks/useFeedOptimisticCreate";
 import {
   type FeedRow,
@@ -13,7 +15,7 @@ import {
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -23,6 +25,8 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { buildFeedCardMetaHint } from "@/features/entry/utils/buildEntryMetaLine";
+import { resolveEntryHeroImageUri } from "@/features/entry/utils/resolveEntryHeroImageUri";
+import type { EntryListFilter } from "@mymemory/shared/contracts";
 import { FeedHeader } from "./components/FeedHeader";
 import { FeedListItem } from "./components/FeedListItem";
 
@@ -30,6 +34,8 @@ export default function FeedScreen() {
   const insets = useSafeAreaInsets();
   const listContentBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
   const createMutation = useCreateEntry();
+  const [feedFilter, setFeedFilter] = useState<EntryListFilter>("all");
+  const onArchiveEntry = useFeedArchiveEntry();
 
   const {
     data,
@@ -41,7 +47,7 @@ export default function FeedScreen() {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useFeedEntries();
+  } = useFeedEntries(feedFilter);
 
   const { optimisticRows, isInitialLoading, captureComposerProps } =
     useFeedOptimisticCreate({
@@ -79,11 +85,20 @@ export default function FeedScreen() {
           type={item.type}
           createdAt={item.createdAt}
           metaHint={buildFeedCardMetaHint(item)}
+          heroImageUri={resolveEntryHeroImageUri({
+            content: item.content,
+            url: item.url,
+            coverImageUrl: item.coverImageUrl,
+          })}
+          isFavorited={item.isFavorited}
+          isPinned={item.isPinned}
+          processedStatus={item.processedStatus}
           onPressEntry={onPressEntry}
+          onArchiveEntry={onArchiveEntry}
         />
       );
     },
-    [onPressEntry],
+    [onArchiveEntry, onPressEntry],
   );
 
   const refreshControl = useMemo(
@@ -143,6 +158,7 @@ export default function FeedScreen() {
               mutation: createMutation,
             }}
           />
+          <FeedFilterBar active={feedFilter} onChange={setFeedFilter} />
           <View className="gap-3 rounded-lg border border-border bg-surface-secondary p-4">
             <Text className="text-foreground font-semibold">
               Could not load feed
@@ -166,6 +182,7 @@ export default function FeedScreen() {
   return (
     <ScreenInset edges={["top"]} className="flex-1 bg-background">
       <FeedHeader captureComposerProps={captureComposerProps} />
+      <FeedFilterBar active={feedFilter} onChange={setFeedFilter} />
       <ScrollEdgeFade className="flex-1 bg-background">
         <FlatList
           className="flex-1 bg-background px-screen"

@@ -1,6 +1,8 @@
 import type { db } from "@mymemory/db";
 import {
+  embeddings,
   entries,
+  entryRelations,
   entryTags,
   entryTopics,
   tags,
@@ -8,7 +10,7 @@ import {
 } from "@mymemory/db/schema";
 import { entryDetailSchema, entrySchema } from "@mymemory/shared/contracts";
 import { ORPCError } from "@orpc/server";
-import { and, desc, eq, lt, or } from "drizzle-orm";
+import { and, desc, eq, lt, or, sql } from "drizzle-orm";
 import { z } from "zod";
 
 type Entry = z.infer<typeof entrySchema>;
@@ -18,6 +20,8 @@ type EntryRow = typeof entries.$inferSelect;
 const cursorPayloadSchema = z.object({
   createdAt: z.string(),
   id: z.guid(),
+  /** Present for `filter === "all"` (pinned-first ordering). */
+  isPinned: z.boolean().optional(),
 });
 
 function toEntry(row: EntryRow): Entry {
@@ -39,15 +43,29 @@ function toEntry(row: EntryRow): Entry {
   } as Entry;
 }
 
-function encodeCursor(row: { createdAt: Date; id: string }): string {
-  const payload = {
+function encodeCursor(
+  row: { createdAt: Date; id: string; isPinned: boolean },
+  filter: "all" | "favorites" | "pinned" | "to-review",
+): string {
+  const payload: {
+    createdAt: string;
+    id: string;
+    isPinned?: boolean;
+  } = {
     createdAt: row.createdAt.toISOString(),
     id: row.id,
   };
+  if (filter === "all") {
+    payload.isPinned = row.isPinned;
+  }
   return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
 }
 
-function decodeCursor(cursor: string): { createdAt: Date; id: string } {
+function decodeCursor(cursor: string): {
+  createdAt: Date;
+  id: string;
+  isPinned?: boolean;
+} {
   let parsed: unknown;
   try {
     parsed = JSON.parse(Buffer.from(cursor, "base64url").toString("utf8"));
@@ -61,6 +79,7 @@ function decodeCursor(cursor: string): { createdAt: Date; id: string } {
   return {
     createdAt: new Date(result.data.createdAt),
     id: result.data.id,
+    isPinned: result.data.isPinned,
   };
 }
 
@@ -68,19 +87,57 @@ export const entryService = {
   async listPaginated(
     database: typeof db,
     userId: string,
-    input: { limit: number; cursor?: string | null },
+    input: {
+      limit: number;
+      cursor?: string | null;
+      filter?: "all" | "favorites" | "pinned" | "to-review";
+    },
   ): Promise<{ items: Entry[]; nextCursor: string | null }> {
     const limit = Math.min(Math.max(Number(input.limit ?? 20), 1), 50);
     const take = limit + 1;
+    const filter = input.filter ?? "all";
 
-    let cursor: { createdAt: Date; id: string } | undefined;
+    let cursor:
+      | { createdAt: Date; id: string; isPinned?: boolean }
+      | undefined;
     if (input.cursor?.length) {
       cursor = decodeCursor(input.cursor);
     }
 
-    const whereClause = cursor
-      ? and(
-          eq(entries.userId, userId),
+    let filterClause = and(
+      eq(entries.userId, userId),
+      eq(entries.isArchived, false),
+    );
+
+    switch (filter) {
+      case "favorites":
+        filterClause = and(filterClause, eq(entries.isFavorited, true));
+        break;
+      case "pinned":
+        filterClause = and(filterClause, eq(entries.isPinned, true));
+        break;
+      case "to-review":
+        filterClause = and(filterClause, eq(entries.reviewStatus, "unreviewed"));
+        break;
+      default:
+        break;
+    }
+
+    let paginationClause;
+    if (!cursor) {
+      paginationClause = undefined;
+    } else if (filter !== "all" || cursor.isPinned === undefined) {
+      paginationClause = or(
+        lt(entries.createdAt, cursor.createdAt),
+        and(
+          eq(entries.createdAt, cursor.createdAt),
+          lt(entries.id, cursor.id),
+        ),
+      );
+    } else if (cursor.isPinned) {
+      paginationClause = or(
+        and(
+          eq(entries.isPinned, true),
           or(
             lt(entries.createdAt, cursor.createdAt),
             and(
@@ -88,14 +145,37 @@ export const entryService = {
               lt(entries.id, cursor.id),
             ),
           ),
-        )
-      : eq(entries.userId, userId);
+        ),
+        eq(entries.isPinned, false),
+      );
+    } else {
+      paginationClause = and(
+        eq(entries.isPinned, false),
+        or(
+          lt(entries.createdAt, cursor.createdAt),
+          and(
+            eq(entries.createdAt, cursor.createdAt),
+            lt(entries.id, cursor.id),
+          ),
+        ),
+      );
+    }
+
+    const whereClause =
+      paginationClause !== undefined
+        ? and(filterClause, paginationClause)
+        : filterClause;
+
+    const orderByClause =
+      filter === "all"
+        ? [desc(entries.isPinned), desc(entries.createdAt), desc(entries.id)]
+        : [desc(entries.createdAt), desc(entries.id)];
 
     const rows = await database
       .select()
       .from(entries)
       .where(whereClause)
-      .orderBy(desc(entries.createdAt), desc(entries.id))
+      .orderBy(...orderByClause)
       .limit(take);
 
     const hasMore = rows.length > limit;
@@ -105,10 +185,14 @@ export const entryService = {
     const last = slice[slice.length - 1];
     const nextCursor =
       hasMore && last
-        ? encodeCursor({
-            createdAt: last.createdAt,
-            id: last.id,
-          })
+        ? encodeCursor(
+            {
+              createdAt: last.createdAt,
+              id: last.id,
+              isPinned: last.isPinned,
+            },
+            filter,
+          )
         : null;
 
     return { items, nextCursor };
@@ -185,5 +269,154 @@ export const entryService = {
       })
       .returning();
     return toEntry(newEntry);
+  },
+
+  async toggleField(
+    database: typeof db,
+    userId: string,
+    input: {
+      id: string;
+      field: "isFavorited" | "isPinned" | "isArchived";
+      value: boolean;
+    },
+  ): Promise<Entry> {
+    const patch =
+      input.field === "isFavorited"
+        ? { isFavorited: input.value, updatedAt: new Date() }
+        : input.field === "isPinned"
+          ? { isPinned: input.value, updatedAt: new Date() }
+          : { isArchived: input.value, updatedAt: new Date() };
+
+    const [row] = await database
+      .update(entries)
+      .set(patch)
+      .where(and(eq(entries.id, input.id), eq(entries.userId, userId)))
+      .returning();
+
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
+    }
+    return toEntry(row);
+  },
+
+  async setReviewStatus(
+    database: typeof db,
+    userId: string,
+    input: {
+      id: string;
+      status: "unreviewed" | "kept" | "dismissed" | "remind";
+    },
+  ): Promise<Entry> {
+    const [row] = await database
+      .update(entries)
+      .set({
+        reviewStatus: input.status,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(entries.id, input.id), eq(entries.userId, userId)))
+      .returning();
+
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
+    }
+    return toEntry(row);
+  },
+
+  async trackRead(
+    database: typeof db,
+    userId: string,
+    input: { id: string },
+  ): Promise<Entry> {
+    const [row] = await database
+      .update(entries)
+      .set({
+        readCount: sql`${entries.readCount} + 1`,
+        lastReadAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(entries.id, input.id), eq(entries.userId, userId)))
+      .returning();
+
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
+    }
+    return toEntry(row);
+  },
+
+  async retryIngest(
+    database: typeof db,
+    userId: string,
+    input: { id: string },
+  ): Promise<Entry> {
+    const [existing] = await database
+      .select()
+      .from(entries)
+      .where(and(eq(entries.id, input.id), eq(entries.userId, userId)))
+      .limit(1);
+
+    if (!existing) {
+      throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
+    }
+    if (existing.processedStatus !== "failed") {
+      throw new ORPCError("BAD_REQUEST", {
+        message: "retryIngest is only allowed when processedStatus is failed",
+      });
+    }
+
+    await database.transaction(async (tx) => {
+      await tx.delete(embeddings).where(eq(embeddings.entryId, input.id));
+      await tx.delete(entryTags).where(eq(entryTags.entryId, input.id));
+      await tx.delete(entryTopics).where(eq(entryTopics.entryId, input.id));
+      await tx.delete(entryRelations).where(
+        or(
+          eq(entryRelations.sourceEntryId, input.id),
+          eq(entryRelations.targetEntryId, input.id),
+        ),
+      );
+
+      await tx
+        .update(entries)
+        .set({
+          processedStatus: "pending",
+          error: null,
+          summary: null,
+          keyPoints: null,
+          readableContent: null,
+          rawContent: null,
+          coverImageUrl: null,
+          metadata: null,
+          wordCount: null,
+          language: null,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(entries.id, input.id), eq(entries.userId, userId)));
+    });
+
+    const [row] = await database
+      .select()
+      .from(entries)
+      .where(and(eq(entries.id, input.id), eq(entries.userId, userId)))
+      .limit(1);
+
+    if (!row) {
+      throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
+    }
+    return toEntry(row);
+  },
+
+  async delete(
+    database: typeof db,
+    userId: string,
+    input: { id: string },
+  ): Promise<{ success: true }> {
+    const removed = await database
+      .delete(entries)
+      .where(and(eq(entries.id, input.id), eq(entries.userId, userId)))
+      .returning({ id: entries.id });
+
+    if (removed.length === 0) {
+      throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
+    }
+    return { success: true };
   },
 };

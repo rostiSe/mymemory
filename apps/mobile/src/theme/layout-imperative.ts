@@ -40,6 +40,13 @@ export const ICON_SIZE_TAB_PX = 24;
 export const ENTRY_DETAIL_HERO_MAX_HEIGHT_PX = 320;
 
 /**
+ * Feed `EntryCard` cover thumbnail height.
+ * Matches Uniwind `h-32` (8 × 0.25rem → 128px at default scale); use with `StyleSheet` because
+ * `expo-image` does not reliably apply `className` sizing on native.
+ */
+export const FEED_ENTRY_CARD_COVER_HEIGHT_PX = 128;
+
+/**
  * Max upward translate (px) for hero image parallax while scrolling.
  * Used with `ENTRY_DETAIL_HERO_MAX_HEIGHT_PX` as the scroll input range in `useEntryDetailScroll`.
  */

@@ -7,6 +7,7 @@ import {
   invalidateEntriesDomain,
   writeEntryRowToCaches,
 } from "@/features/entry/entry-query-cache";
+import type { EntryListFilter } from "@mymemory/shared/contracts";
 import {
   useInfiniteQuery,
   useMutation,
@@ -16,12 +17,13 @@ import {
 
 export const FEED_PAGE_SIZE = 10;
 
-export function useFeedEntries() {
+export function useFeedEntries(filter: EntryListFilter = "all") {
   return useInfiniteQuery({
     ...orpc.entries.list.infiniteOptions({
       input: (pageParam: string | undefined) => ({
         limit: FEED_PAGE_SIZE,
         cursor: pageParam,
+        filter,
       }),
       initialPageParam: undefined as string | undefined,
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,

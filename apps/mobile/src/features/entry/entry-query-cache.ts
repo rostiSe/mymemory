@@ -131,6 +131,23 @@ function removeEntryRowFromInfiniteListCaches(
   );
 }
 
+/**
+ * Applies a mutation result (`entrySchema` only) without dropping existing detail `tags` / `topics`.
+ */
+export function writeEntryMutationResultToCaches(
+  queryClient: QueryClient,
+  row: EntryRow,
+): void {
+  const prev = queryClient.getQueryData<EntryDetailRow | null | undefined>(
+    entryDetailQueryKey(row.id),
+  );
+  if (prev) {
+    writeEntryRowToCaches(queryClient, { ...prev, ...row });
+  } else {
+    writeEntryRowToCaches(queryClient, normalizeEntryDetailCache(row));
+  }
+}
+
 /** Sets detail cache and merges the row into cached infinite list pages (no list refetch). */
 export function writeEntryRowToCaches(
   queryClient: QueryClient,
