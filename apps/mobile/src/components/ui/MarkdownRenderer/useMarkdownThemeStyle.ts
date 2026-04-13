@@ -1,4 +1,7 @@
-import { MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX } from "@/theme/layout-imperative";
+import {
+  MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX,
+  MARKDOWN_INLINE_IMAGE_SIZE_PX,
+} from "@/theme/layout-imperative";
 import { useThemeColor } from "heroui-native";
 import { useMemo } from "react";
 import type { MarkdownStyle } from "react-native-enriched-markdown";
@@ -57,6 +60,10 @@ export function useMarkdownThemeStyle(): MarkdownStyle {
         borderRadius: 2,
         marginTop: 0,
         marginBottom: 0,
+      },
+      /** Inline `![…]()` only — square cap so icons are not blown up to the block slot. */
+      inlineImage: {
+        size: MARKDOWN_INLINE_IMAGE_SIZE_PX,
       },
     }),
     [foreground, muted, accent, border, codeSurface, codeHighlightBg],
