@@ -2,16 +2,18 @@ import type { EntryRow } from "@/features/entry/types";
 import { EntryDeleteConfirmSheet } from "@/features/entry/components/EntryDeleteConfirmSheet";
 import {
   FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
-  FEED_CARD_SWIPE_FAIL_OFFSET_Y_PX,
   FEED_CARD_SWIPE_FRICTION,
 } from "@/theme/layout-imperative";
 import type { FC } from "react";
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Swipeable } from "react-native-gesture-handler";
 import { useThemeColor } from "heroui-native";
 import EntryCard from "../EntryCard";
+import ReanimatedSwipeable, {
+  SwipeDirection,
+  type SwipeableMethods,
+} from "react-native-gesture-handler/ReanimatedSwipeable";
 
 export type FeedListItemProps = {
   entryId: string;
@@ -51,6 +53,7 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
   const accentSoftFg = useThemeColor("accent-soft-foreground");
   const dangerColor = useThemeColor("danger");
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const swipeableRef = useRef<SwipeableMethods | null>(null);
 
   const displayDate = new Date(createdAt).toLocaleDateString("de-DE", {
     day: "numeric",
@@ -88,18 +91,18 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
   );
 
   const handleSwipeableOpen = useCallback(
-    (direction: "left" | "right", row: Swipeable) => {
-      if (direction === "right") {
+    (direction: SwipeDirection.LEFT | SwipeDirection.RIGHT) => {
+      if (direction === SwipeDirection.RIGHT) {
         setDeleteOpen(true);
         queueMicrotask(() => {
-          row.close();
+          swipeableRef.current?.close();
         });
         return;
       }
-      if (direction === "left") {
+      if (direction === SwipeDirection.LEFT) {
         onToggleFavorite(entryId, isFavorited);
         queueMicrotask(() => {
-          row.close();
+          swipeableRef.current?.close();
         });
       }
     },
@@ -112,24 +115,18 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
 
   return (
     <View className="mb-4">
-      <Swipeable
+      <ReanimatedSwipeable
+        ref={swipeableRef}
         renderLeftActions={renderLeftActions}
         renderRightActions={renderRightActions}
         onSwipeableOpen={handleSwipeableOpen}
         overshootLeft={false}
         overshootRight={false}
         friction={FEED_CARD_SWIPE_FRICTION}
-        activeOffsetX={[
-          -FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
-          FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
-        ]}
-        failOffsetY={[
-          -FEED_CARD_SWIPE_FAIL_OFFSET_Y_PX,
-          FEED_CARD_SWIPE_FAIL_OFFSET_Y_PX,
-        ]}
+        dragOffsetFromLeftEdge={FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX}
+        dragOffsetFromRightEdge={FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX}
       >
         <EntryCard
-          summaryContentKey={entryId}
           title={title}
           summary={summary}
           summaryLoading={summaryLoading}
@@ -142,7 +139,7 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
           processedStatus={processedStatus}
           onPress={() => onPressEntry(entryId)}
         />
-      </Swipeable>
+      </ReanimatedSwipeable>
       <EntryDeleteConfirmSheet
         isOpen={deleteOpen}
         onOpenChange={setDeleteOpen}

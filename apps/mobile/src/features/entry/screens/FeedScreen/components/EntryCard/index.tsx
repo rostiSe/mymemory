@@ -1,10 +1,7 @@
-import { CollapsibleClamp } from "@/components/ui/CollapsibleClamp";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
+import { MaxLinesFadeClamp } from "@/components/ui/MaxLinesFadeClamp";
 import type { EntryRow } from "@/features/entry/types";
-import {
-  FEED_ENTRY_CARD_COVER_HEIGHT_PX,
-  FEED_ENTRY_CARD_COVER_MAX_HEIGHT_PX,
-} from "@/theme/layout-imperative";
+import { FEED_ENTRY_CARD_COVER_HEIGHT_PX } from "@/theme/layout-imperative";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import {
@@ -18,8 +15,6 @@ import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 interface EntryCardProps {
-  /** Stabilizes clamp behavior when summary text updates (use entry id). */
-  summaryContentKey?: string | number;
   title?: string;
   summary?: string;
   /** When true, summary lines show as shimmer placeholders (title still visible). */
@@ -38,7 +33,6 @@ interface EntryCardProps {
 }
 
 export default function EntryCard({
-  summaryContentKey,
   title,
   summary,
   summaryLoading = false,
@@ -53,14 +47,13 @@ export default function EntryCard({
 }: EntryCardProps) {
   const mutedColor = useThemeColor("muted");
   const surfaceSecondaryColor = useThemeColor("surface-secondary");
+  const surfaceTertiaryColor = useThemeColor("surface-tertiary");
   const accentColor = useThemeColor("accent");
   const dangerColor = useThemeColor("danger");
 
   const [coverLoadFailed, setCoverLoadFailed] = useState(false);
-  const [coverAspect, setCoverAspect] = useState<number | null>(null);
   useEffect(() => {
     setCoverLoadFailed(false);
-    setCoverAspect(null);
   }, [heroImageUri]);
 
   const showCover =
@@ -76,29 +69,23 @@ export default function EntryCard({
       <PressableFeedback className="flex-1" onPress={onPress}>
         <PressableFeedback.Ripple className="overflow-hidden" />
         {showCover ? (
-          <Image
-            recyclingKey={heroImageUri}
-            source={{ uri: heroImageUri }}
+          <View
             style={[
-              styles.coverWidth,
-              coverAspect != null
-                ? {
-                    aspectRatio: coverAspect,
-                    maxHeight: FEED_ENTRY_CARD_COVER_MAX_HEIGHT_PX,
-                  }
-                : { height: FEED_ENTRY_CARD_COVER_HEIGHT_PX },
+              styles.coverSlot,
+              { backgroundColor: surfaceTertiaryColor },
             ]}
-            contentFit="contain"
-            accessibilityIgnoresInvertColors
-            onLoad={(e) => {
-              const w = e.source.width;
-              const h = e.source.height;
-              if (w > 0 && h > 0) {
-                setCoverAspect(w / h);
-              }
-            }}
-            onError={() => setCoverLoadFailed(true)}
-          />
+          >
+            <Image
+              recyclingKey={heroImageUri}
+              source={{ uri: heroImageUri }}
+              style={styles.coverImage}
+              contentFit="cover"
+              placeholderContentFit="cover"
+              transition={200}
+              accessibilityIgnoresInvertColors
+              onError={() => setCoverLoadFailed(true)}
+            />
+          </View>
         ) : null}
         <Card.Body className="gap-2 px-card pt-card">
           <View className="flex-row gap-0.5 items-start justify-between">
@@ -154,21 +141,18 @@ export default function EntryCard({
               </View>
             </SkeletonGroup>
           ) : (
-            <CollapsibleClamp
-              collapseMode="fade-only"
-              contentKey={summaryContentKey ?? summary}
-              collapsedLineCount={3}
-              dimWhenCollapsed
+            <MaxLinesFadeClamp
+              lineCount={3}
+              dimContent
               showFadeGradient
-              expandHint={summary || "No summary available."}
-              fadeGradientEndColor={surfaceSecondaryColor}
+              fadeEndColor={surfaceSecondaryColor}
             >
               <MarkdownRenderer
                 variant="excerpt"
                 className="text-xs"
                 markdown={summary || "No summary available."}
               />
-            </CollapsibleClamp>
+            </MaxLinesFadeClamp>
           )}
         </Card.Body>
       </PressableFeedback>
@@ -177,7 +161,12 @@ export default function EntryCard({
 }
 
 const styles = StyleSheet.create({
-  coverWidth: {
+  coverSlot: {
     width: "100%",
+    height: FEED_ENTRY_CARD_COVER_HEIGHT_PX,
+    overflow: "hidden",
+  },
+  coverImage: {
+    ...StyleSheet.absoluteFillObject,
   },
 });
