@@ -1,6 +1,7 @@
 import {
   COLLAPSIBLE_CLAMP_EXPANDED_MAX_HEIGHT_PX,
   COLLAPSIBLE_CLAMP_FADE_HEIGHT_PX,
+  EXCERPT_CLAMP_DIM_OPACITY,
   MARKDOWN_PARAGRAPH_LINE_HEIGHT_PX,
 } from "@/theme/layout-imperative";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,7 +31,6 @@ const FALLBACK_FADE_HEIGHT_PX = 48;
 const CHEVRON_ICON_SIZE = 17;
 const CHEVRON_ROW_MIN_HEIGHT_PX = 40;
 const CHEVRON_ICON_OPACITY = 0.38;
-const DIM_WHEN_COLLAPSED_OPACITY = 0.55;
 
 /** Rough chars per visual line at typical card width — heuristic only. */
 const DEFAULT_CHARS_PER_VISUAL_LINE = 38;
@@ -100,7 +100,9 @@ function FadeOnlyClamp({
       style={{ maxHeight: collapsedPx, overflow: "hidden" }}
     >
       <View
-        style={dimWhenCollapsed ? { opacity: DIM_WHEN_COLLAPSED_OPACITY } : undefined}
+        style={
+          dimWhenCollapsed ? { opacity: EXCERPT_CLAMP_DIM_OPACITY } : undefined
+        }
       >
         {children}
       </View>
@@ -228,7 +230,7 @@ export function CollapsibleClamp({
       opacity: interpolate(
         progress.value,
         [0, 1],
-        [DIM_WHEN_COLLAPSED_OPACITY, 1],
+        [EXCERPT_CLAMP_DIM_OPACITY, 1],
         Extrapolation.CLAMP,
       ),
     };

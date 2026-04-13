@@ -40,17 +40,13 @@ export const ICON_SIZE_TAB_PX = 24;
 export const ENTRY_DETAIL_HERO_MAX_HEIGHT_PX = 320;
 
 /**
- * Feed `EntryCard` cover thumbnail height.
- * Matches Uniwind `h-32` (8 × 0.25rem → 128px at default scale); use with `StyleSheet` because
- * `expo-image` does not reliably apply `className` sizing on native.
+ * Feed `EntryCard` cover region: fixed height (full width). Image uses `contentFit="cover"` inside
+ * this slot so row height stays stable while loading. Matches Uniwind `h-32` (~128px).
  */
 export const FEED_ENTRY_CARD_COVER_HEIGHT_PX = 128;
 
-/** Max height for feed card hero when using intrinsic `aspectRatio` (contain). */
-export const FEED_ENTRY_CARD_COVER_MAX_HEIGHT_PX = 280;
-
 /**
- * Feed row `Swipeable` + `FlatList`: if vertical movement exceeds ± this many points
+ * Feed row `Swipeable` + `FlashList`: if vertical movement exceeds ± this many points
  * before the pan activates, the swipe fails so scrolling wins.
  */
 export const FEED_CARD_SWIPE_FAIL_OFFSET_Y_PX = 10;
@@ -87,6 +83,9 @@ export const MARKDOWN_IMAGE_MARGIN_BOTTOM_PX = 16;
 export const MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX = 240;
 export const COLLAPSIBLE_CLAMP_FADE_HEIGHT_PX = 48;
 export const COLLAPSIBLE_CLAMP_EXPANDED_MAX_HEIGHT_PX = 8192;
+
+/** Matches `CollapsibleClamp` dimmed collapsed opacity — feed `MaxLinesFadeClamp` uses the same value. */
+export const EXCERPT_CLAMP_DIM_OPACITY = 0.55;
 
 /**
  * Space suggestions `Dialog` + nested `FlatList`: max list height as a fraction of window height.

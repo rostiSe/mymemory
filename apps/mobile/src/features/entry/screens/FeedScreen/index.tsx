@@ -15,14 +15,17 @@ import {
   isPendingFeedRow,
 } from "@/features/entry/utils/feed-rows";
 import { resolveEntryHeroImageUri } from "@/features/entry/utils/resolveEntryHeroImageUri";
-import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
+import {
+  LAYOUT_FLOATING_TAB_CLEARANCE_PX,
+  SPACING_SCREEN_PX,
+} from "@/theme/layout-imperative";
 import type { EntryListFilter } from "@mymemory/shared/contracts";
+import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
 import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   RefreshControl,
   Text,
   View,
@@ -76,6 +79,20 @@ export default function FeedScreen() {
   }, []);
 
   const keyExtractor = useCallback((item: FeedRow) => item.id, []);
+
+  const getItemType = useCallback(
+    (item: FeedRow) => (isPendingFeedRow(item) ? "pending" : "entry"),
+    [],
+  );
+
+  const listContentContainerStyle = useMemo(
+    () => ({
+      paddingHorizontal: SPACING_SCREEN_PX,
+      paddingBottom: listContentBottomPad,
+      flexGrow: 1,
+    }),
+    [listContentBottomPad],
+  );
 
   const renderItem = useCallback(
     ({ item }: { item: FeedRow }) => {
@@ -194,17 +211,18 @@ export default function FeedScreen() {
       <FeedHeader captureComposerProps={captureComposerProps} />
       <FeedFilterBar active={feedFilter} onChange={setFeedFilter} />
       <ScrollEdgeFade className="flex-1 bg-background">
-        <FlatList
-          className="flex-1 bg-background px-screen"
+        <FlashList<FeedRow>
           data={optimisticRows}
           keyExtractor={keyExtractor}
+          getItemType={getItemType}
           renderItem={renderItem}
           ListFooterComponent={listFooter}
           ListEmptyComponent={listEmpty}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.35}
           refreshControl={refreshControl}
-          contentContainerStyle={{ paddingBottom: listContentBottomPad }}
+          contentContainerStyle={listContentContainerStyle}
+          style={{ flex: 1 }}
         />
       </ScrollEdgeFade>
     </ScreenInset>
