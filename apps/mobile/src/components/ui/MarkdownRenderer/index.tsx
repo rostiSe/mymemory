@@ -4,6 +4,7 @@ import {
   type EnrichedMarkdownTextProps,
 } from "react-native-enriched-markdown";
 import { memo, useCallback, useMemo } from "react";
+import { markdownLooksLikeLatexMath } from "./markdownLooksLikeLatexMath";
 import { useMarkdownThemeStyle } from "./useMarkdownThemeStyle";
 
 function isHttpUrl(url: string): boolean {
@@ -63,8 +64,11 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
     if (variant === "excerpt") {
       return { underline: false, latexMath: false };
     }
-    return { underline: false, latexMath: true };
-  }, [md4cFlagsProp, variant]);
+    return {
+      underline: false,
+      latexMath: markdownLooksLikeLatexMath(markdown),
+    };
+  }, [md4cFlagsProp, variant, markdown]);
 
   const onLinkPress = useCallback((event: { url: string }) => {
     if (isHttpUrl(event.url)) {

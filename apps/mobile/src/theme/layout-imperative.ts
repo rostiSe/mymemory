@@ -81,6 +81,13 @@ export const MARKDOWN_PARAGRAPH_MARGIN_BOTTOM_PX = 16;
 export const MARKDOWN_IMAGE_MARGIN_TOP_PX = 12;
 export const MARKDOWN_IMAGE_MARGIN_BOTTOM_PX = 16;
 export const MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX = 240;
+
+/**
+ * **Inline** markdown images: square size cap (`markdownStyle.inlineImage.size` in `react-native-enriched-markdown`).
+ * Use when `![alt](url)` appears **inside** a paragraph line so icons/logos stay small.
+ * Block images (usually `![alt](url)` on their own line) still span **full content width** × {@link MARKDOWN_BLOCK_IMAGE_MAX_HEIGHT_PX} — the library exposes no width / `contentFit` for those.
+ */
+export const MARKDOWN_INLINE_IMAGE_SIZE_PX = 48;
 export const COLLAPSIBLE_CLAMP_FADE_HEIGHT_PX = 48;
 export const COLLAPSIBLE_CLAMP_EXPANDED_MAX_HEIGHT_PX = 8192;
 
