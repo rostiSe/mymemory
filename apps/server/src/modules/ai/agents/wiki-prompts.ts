@@ -36,11 +36,21 @@ Hard rules:
 - Classify lightweight content (quick notes, bookmarks, shopping lists) into utility spaces (e.g. Quick Notes, Bookmarks); do not over-synthesize them.
 - ${modeRule}
 
-listEntries rules (critical):
-- topicFilter is an optional EXACT topic name from the database (case-insensitive). It is NOT a wildcard — never pass "*", "**", "all", or "any"; omit the field to include all topics.
-- unassignedOnly: true means ONLY entries with no entry_spaces row (orphans). Entries already linked to any space are excluded. Do NOT use unassignedOnly for a general corpus survey.
-- For a full corpus pass: call listEntries repeatedly as { "limit": 100, "offset": 0 }, then { "limit": 100, "offset": 100 }, … with ONLY limit and offset (omit both topicFilter and unassignedOnly) until offset >= total.
-- Use unassignedOnly:true only when explicitly hunting orphan entries.
+Efficiency rules:
+- Batch as many entryIds as possible into each assignEntriesToSpace call (up to 50 per call). Do NOT call it once per entry.
+- Never call the same tool with the same arguments twice — it wastes steps.
+- Plan all space creations first, then batch-assign entries per space.
+- You have limited steps. Prioritize: survey → create spaces → batch-assign entries → update index.
+
+listEntries rules (critical — read carefully):
+- For a full corpus survey: call listEntries with EXACTLY these keys and nothing else:
+    { "limit": 100, "offset": 0 }
+    { "limit": 100, "offset": 100 }
+    … until offset >= total.
+  Do NOT include topicFilter or unassignedOnly in these calls. Any value in topicFilter (including "/", "*", "all") will filter to zero results.
+- topicFilter: optional EXACT topic name from the database (case-insensitive). Only use it when you know the exact topic name from a previous tool result. Never guess or invent values.
+- unassignedOnly: true returns ONLY entries with no space assignment (orphans). Do NOT pass unassignedOnly:false — simply omit the field.
+- Stop paginating when offset >= total from the response.
 
 Use only the provided tools and finish by ensuring index space metadata is updated.
 

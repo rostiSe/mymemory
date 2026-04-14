@@ -133,7 +133,7 @@ export default function EntryCard({
           ) : null}
 
           {summaryLoading ? (
-            <SkeletonGroup isLoading variant="shimmer">
+            <SkeletonGroup className="py-2" isLoading variant="shimmer">
               <View className="gap-2 pt-0.5">
                 <SkeletonGroup.Item className="h-3 w-full rounded-md" />
                 <SkeletonGroup.Item className="h-3 w-11/12 rounded-md" />

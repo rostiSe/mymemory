@@ -7,5 +7,6 @@
  * never runs a follow-up model call with tool results — too low for these agents.
  */
 
-export const CURATOR_MAX_STEPS = 10;
-export const WRITER_MAX_STEPS = 5;
+export const CURATOR_MAX_STEPS = 25;
+export const WRITER_MAX_STEPS = 10;
+export const LINTER_MAX_STEPS = 10;
