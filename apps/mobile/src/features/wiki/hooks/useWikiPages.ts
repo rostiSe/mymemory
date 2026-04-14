@@ -22,5 +22,25 @@ export function useWikiPageVersions(pageId: string | undefined, limit = 50) {
 }
 
 export function useCompilationStatus() {
-  return useQuery(orpc.wiki.status.queryOptions({ input: undefined }));
+  return useQuery({
+    ...orpc.wiki.status.queryOptions({ input: undefined }),
+    refetchInterval: (query) =>
+      query.state.data?.status === "compiling" ? 3000 : false,
+  });
+}
+
+export function useWikiLogs(
+  runId: string | undefined,
+  limit: number,
+  enabled: boolean,
+) {
+  return useQuery({
+    ...orpc.wiki.logs.queryOptions({
+      input: {
+        ...(runId ? { runId } : {}),
+        limit,
+      },
+    }),
+    enabled: enabled && typeof runId === "string" && runId.length > 0,
+  });
 }

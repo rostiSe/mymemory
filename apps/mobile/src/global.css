@@ -187,6 +187,9 @@
   --color-header-foreground: var(--foreground);
   --color-share-quick-scrim: var(--share-quick-scrim);
 
+  /* Wiki compile / health UI */
+  --spacing-compile-card-padding: 16px;
+
   /* Wiki reading surfaces */
   --spacing-wiki-section-gap: 24px;
   --spacing-wiki-toc-height: 44px;
