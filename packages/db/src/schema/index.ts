@@ -1,3 +1,4 @@
+export * from './agent-logs.js';
 export * from './digests.js';
 export * from './embeddings.js';
 export * from './entries.js';
@@ -5,6 +6,8 @@ export * from './entry-notes.js';
 export * from './entry-relations.js';
 export * from './enums.js';
 export * from './space-suggestions.js';
+export * from './space-wiki-pages.js';
 export * from './spaces.js';
 export * from './tags.js';
 export * from './topics.js';
+export * from './wiki-pages.js';

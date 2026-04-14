@@ -22,6 +22,20 @@
       "when": 1775955419844,
       "tag": "0002_enriched_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776190574626,
+      "tag": "0003_t015a_wiki_agent_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1776191207676,
+      "tag": "0004_spaces_user_name_unique",
+      "breakpoints": true
     }
   ]
 }

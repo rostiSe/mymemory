@@ -9,3 +9,18 @@ export const reviewStatusEnum = pgEnum('review_status', [
   'dismissed',
   'remind',
 ]);
+
+/** Agent compilation lifecycle on a space (T-015a). */
+export const compilationStatusEnum = pgEnum('compilation_status', ['idle', 'compiling', 'failed']);
+
+/** Wiki page layout / role (T-015a). */
+export const wikiPageTypeEnum = pgEnum('wiki_page_type', [
+  'synthesis',
+  'timeline',
+  'comparison',
+  'glossary',
+  'index',
+]);
+
+/** Structured agent run logs (T-015a). */
+export const agentLogLevelEnum = pgEnum('agent_log_level', ['info', 'warn', 'error', 'action']);

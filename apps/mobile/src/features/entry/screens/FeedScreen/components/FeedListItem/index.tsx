@@ -1,11 +1,10 @@
 import type { EntryRow } from "@/features/entry/types";
-import { EntryDeleteConfirmSheet } from "@/features/entry/components/EntryDeleteConfirmSheet";
 import {
   FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
   FEED_CARD_SWIPE_FRICTION,
 } from "@/theme/layout-imperative";
 import type { FC } from "react";
-import { memo, useCallback, useRef, useState } from "react";
+import { memo, useCallback, useRef } from "react";
 import { View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useThemeColor } from "heroui-native";
@@ -30,7 +29,8 @@ export type FeedListItemProps = {
   processedStatus?: EntryRow["processedStatus"];
   onPressEntry: (id: string) => void;
   onToggleFavorite: (id: string, currentlyFavorited: boolean) => void;
-  onDeleteEntry: (id: string) => void;
+  /** Opens feed-level delete confirmation (single BottomSheet — avoids N portals with FlashList). */
+  onRequestDelete: (id: string) => void;
 };
 
 const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
@@ -47,12 +47,11 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
   processedStatus,
   onPressEntry,
   onToggleFavorite,
-  onDeleteEntry,
+  onRequestDelete,
 }) {
   const dangerFg = useThemeColor("danger-foreground");
   const accentSoftFg = useThemeColor("accent-soft-foreground");
   const dangerColor = useThemeColor("danger");
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const swipeableRef = useRef<SwipeableMethods | null>(null);
 
   const displayDate = new Date(createdAt).toLocaleDateString("de-DE", {
@@ -93,7 +92,7 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
   const handleSwipeableOpen = useCallback(
     (direction: SwipeDirection.LEFT | SwipeDirection.RIGHT) => {
       if (direction === SwipeDirection.RIGHT) {
-        setDeleteOpen(true);
+        onRequestDelete(entryId);
         queueMicrotask(() => {
           swipeableRef.current?.close();
         });
@@ -106,12 +105,8 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
         });
       }
     },
-    [entryId, isFavorited, onToggleFavorite],
+    [entryId, isFavorited, onRequestDelete, onToggleFavorite],
   );
-
-  const handleConfirmDelete = useCallback(() => {
-    onDeleteEntry(entryId);
-  }, [entryId, onDeleteEntry]);
 
   return (
     <View className="mb-4">
@@ -140,13 +135,8 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
           onPress={() => onPressEntry(entryId)}
         />
       </ReanimatedSwipeable>
-      <EntryDeleteConfirmSheet
-        isOpen={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onConfirmDelete={handleConfirmDelete}
-      />
     </View>
   );
-}
+};
 
 export const FeedListItem = memo(FeedListItemInner) as typeof FeedListItemInner;
