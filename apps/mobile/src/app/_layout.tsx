@@ -82,6 +82,27 @@ function AppShell() {
           contentStyle: { backgroundColor },
         }}
       />
+      <Stack.Screen
+        name="wiki/[id]"
+        options={{
+          headerShown: true,
+          headerTransparent: true,
+          headerTitle: "",
+          headerTintColor: foregroundColor,
+          headerStyle: { backgroundColor: "transparent" },
+          headerShadowVisible: false,
+          animation: "slide_from_right",
+          contentStyle: { backgroundColor },
+        }}
+      />
+      <Stack.Screen
+        name="wiki/versions"
+        options={{
+          title: "Version history",
+          presentation: "modal",
+          headerShadowVisible: false,
+        }}
+      />
     </Stack>
   );
 }

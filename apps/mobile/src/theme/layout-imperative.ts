@@ -105,3 +105,22 @@ export const SPACE_SUGGESTIONS_DIALOG_LIST_MAX_HEIGHT_WINDOW_FRACTION = 0.65;
  * Avoids `%` / `max-w-*` Uniwind resolution issues where the panel collapses to a thin strip.
  */
 export const SPACE_SUGGESTIONS_DIALOG_WIDTH_WINDOW_FRACTION = 0.92;
+
+/** Matches --spacing-wiki-section-gap */
+export const WIKI_SECTION_GAP_PX = 24;
+
+/** Matches --spacing-wiki-toc-height */
+export const WIKI_TOC_HEIGHT_PX = 44;
+
+/** Matches --spacing-timeline-rail-width */
+export const WIKI_TIMELINE_RAIL_WIDTH_PX = 2;
+
+/** Matches --spacing-timeline-dot-size */
+export const WIKI_TIMELINE_DOT_SIZE_PX = 12;
+
+export const WIKI_STAGGER_DELAY_MS = 60;
+
+export const WIKI_STAGGER_DURATION_MS = 400;
+
+/** Press feedback for wiki tappables */
+export const WIKI_PRESS_SCALE_MIN = 0.97;

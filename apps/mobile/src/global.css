@@ -186,4 +186,13 @@
   --color-header: var(--background);
   --color-header-foreground: var(--foreground);
   --color-share-quick-scrim: var(--share-quick-scrim);
+
+  /* Wiki reading surfaces */
+  --spacing-wiki-section-gap: 24px;
+  --spacing-wiki-toc-height: 44px;
+  --spacing-timeline-rail-width: 2px;
+  --spacing-timeline-dot-size: 12px;
+  --color-wiki-insight-border: var(--accent);
+  --color-wiki-contradiction-border: var(--warning);
+  --color-wiki-question-border: var(--muted);
 }

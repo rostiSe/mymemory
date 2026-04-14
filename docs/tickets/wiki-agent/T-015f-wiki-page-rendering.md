@@ -1,6 +1,6 @@
 # T-015f: Mobile — Wiki Page Rendering
 
-**Status:** pending
+**Status:** done
 **Phase:** Mobile
 **Type:** feature (mobile)
 **Epic:** [T-015 Wiki Agent](./T-015-wiki-agent-epic.md)
@@ -400,26 +400,26 @@ From any wiki page, users can:
 
 ## DoD (Definition of Done)
 
-- [ ] `wiki/[id]` route exists and loads wiki page by ID
-- [ ] `WikiPageShell` renders header, properties, and scroll container for all page types
-- [ ] `SynthesisRenderer` renders sections with TOC, body (via MarkdownRenderer), source chips, page links, insights, contradictions, open questions
-- [ ] `ComparisonRenderer` renders matrix table with items and criteria
-- [ ] `TimelineRenderer` renders chronological event list with visual rail
-- [ ] `GlossaryRenderer` renders term/definition accordion list
-- [ ] `IndexRenderer` renders space overview cards with counts
-- [ ] `AnimatedStaggerItem` provides staggered FadeInUp entering on section/card lists
-- [ ] `AnimatedExpandSection` provides smooth collapsible sections
-- [ ] `AnimatedPressScale` provides spring-based press feedback on tappable elements
-- [ ] Source entry chips navigate to `entry/[id]`
-- [ ] Page-to-page link chips navigate to `wiki/[id]`
-- [ ] `SpaceDetailScreen` shows wiki pages list for the space (replaces placeholder)
-- [ ] `WikiPageSkeleton` shows shimmer loading state
-- [ ] Error and not-found states render gracefully
-- [ ] Version history screen lists previous versions
-- [ ] TanStack Query hooks use `orpc.wiki.*` with proper query keys
-- [ ] All new design tokens added to `global.css` and mirrored in `layout-imperative.ts`
-- [ ] No `any` types, `tv()` variants in `index.styles.ts`, no barrel re-exports
-- [ ] `pnpm typecheck` passes
+- [x] `wiki/[id]` route exists and loads wiki page by ID
+- [x] `WikiPageShell` renders header, properties, and scroll container for all page types
+- [x] `SynthesisRenderer` renders sections with TOC, body (via MarkdownRenderer), source chips, page links, insights, contradictions, open questions
+- [x] `ComparisonRenderer` renders matrix table with items and criteria
+- [x] `TimelineRenderer` renders chronological event list with visual rail
+- [x] `GlossaryRenderer` renders term/definition accordion list
+- [x] `IndexRenderer` renders space overview cards with counts
+- [x] `AnimatedStaggerItem` provides staggered FadeInUp entering on section/card lists
+- [x] `AnimatedExpandSection` provides smooth collapsible sections
+- [x] `AnimatedPressScale` provides spring-based press feedback on tappable elements
+- [x] Source entry chips navigate to `entry/[id]`
+- [x] Page-to-page link chips navigate to `wiki/[id]`
+- [x] `SpaceDetailScreen` shows wiki pages list for the space (replaces placeholder)
+- [x] `WikiPageSkeleton` shows shimmer loading state
+- [x] Error and not-found states render gracefully
+- [x] Version history screen lists previous versions
+- [x] TanStack Query hooks use `orpc.wiki.*` with proper query keys
+- [x] All new design tokens added to `global.css` and mirrored in `layout-imperative.ts`
+- [x] No `any` types, `tv()` variants in `index.styles.ts`, no barrel re-exports
+- [x] `pnpm typecheck` passes
 
 ---
 
