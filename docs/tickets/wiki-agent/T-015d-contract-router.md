@@ -1,6 +1,6 @@
 # T-015d: oRPC Contract + Router + Service
 
-**Status:** todo
+**Status:** done
 **Phase:** Foundation (server)
 **Type:** feature (server)
 **Epic:** [T-015 Wiki Agent](./T-015-wiki-agent-epic.md)
@@ -109,16 +109,16 @@ All endpoints use `authed` middleware. Each handler delegates to `wikiService` m
 
 ## Definition of done
 
-- [ ] `wiki.contract.ts` defines all 7 endpoints with Zod input/output schemas
-- [ ] `wiki.service.ts` implements all 7 methods with correct Drizzle queries
-- [ ] `wiki.router.ts` implements the contract with `authed` on all endpoints
-- [ ] Wiki contract registered in `appContract`, router registered in `appRouter`
-- [ ] `wiki.compile` calls `runWikiCompile` and returns the result
-- [ ] `wiki.lint` calls `runWikiLint` and returns issues
-- [ ] `wiki.status` reads compilation status from the index space
-- [ ] `wiki.logs` returns agent logs filtered by userId (and optionally runId)
-- [ ] `wiki.listPages` returns pages, optionally filtered by spaceId via M2M join
-- [ ] `wiki.getPage` returns a single page by id or slug, null if not found
-- [ ] `wiki.getPageVersions` returns version history ordered by version DESC
-- [ ] All endpoints require authentication
-- [ ] `pnpm typecheck` passes
+- [x] `wiki.contract.ts` defines all 7 endpoints with Zod input/output schemas
+- [x] `wiki.service.ts` implements all 7 methods with correct Drizzle queries
+- [x] `wiki.router.ts` implements the contract with `authed` on all endpoints
+- [x] Wiki contract registered in `appContract`, router registered in `appRouter`
+- [x] `wiki.compile` calls `runWikiCompile` and returns the result
+- [x] `wiki.lint` calls `runWikiLint` and returns issues
+- [x] `wiki.status` reads compilation status from the index space
+- [x] `wiki.logs` returns agent logs filtered by userId (and optionally runId)
+- [x] `wiki.listPages` returns pages, optionally filtered by spaceId via M2M join
+- [x] `wiki.getPage` returns a single page by id or slug, null if not found
+- [x] `wiki.getPageVersions` returns version history ordered by version DESC
+- [x] All endpoints require authentication
+- [x] `pnpm typecheck` passes
