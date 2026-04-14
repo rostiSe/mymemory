@@ -1,4 +1,5 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
+import { CompileStatusCard } from "@/features/wiki/components/CompileStatusCard";
 import { SpaceSuggestionsInbox } from "@/features/space/components/SpaceSuggestionsInbox";
 import {
   useApproveSuggestion,
@@ -234,6 +235,8 @@ export default function SpacesScreen() {
   const listHeader = useMemo(
     () => (
       <View className="pb-2">
+        <CompileStatusCard />
+
         <Text className="text-muted text-sm mb-3">
           Approve quick suggestions below or create a space manually.
         </Text>

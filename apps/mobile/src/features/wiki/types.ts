@@ -11,6 +11,18 @@ export type WikiPageVersion = InferContractRouterOutputs<
 
 export type WikiPageType = WikiPage["pageType"];
 
+export type WikiCompileResult = InferContractRouterOutputs<
+  typeof appContract
+>["wiki"]["compile"];
+
+export type WikiLintResult = InferContractRouterOutputs<
+  typeof appContract
+>["wiki"]["lint"];
+
+export type WikiAgentLog = InferContractRouterOutputs<
+  typeof appContract
+>["wiki"]["logs"][number];
+
 export type WikiContentLink = { pageId: string; label: string };
 
 export type SynthesisSection = {

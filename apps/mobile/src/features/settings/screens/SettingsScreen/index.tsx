@@ -1,3 +1,5 @@
+import { useLintWiki } from "@/features/wiki/hooks/useWikiMutations";
+import { useCompilationStatus } from "@/features/wiki/hooks/useWikiPages";
 import { useAppToast } from "@/hooks/useAppToast";
 import { useAuthStore } from "@/stores/providers/auth-provider";
 import { useUIStore } from "@/stores/providers/ui-provider";
@@ -13,12 +15,30 @@ const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
   { label: "System", value: "system" },
 ];
 
+function formatWikiTimestamp(value: string | Date | null | undefined): string {
+  if (value == null) return "—";
+  try {
+    const d = typeof value === "string" ? new Date(value) : value;
+    return d.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "—";
+  }
+}
+
 export default function SettingsScreen() {
   const email = useAuthStore((s) => s.session?.user?.email);
   const signOut = useAuthStore((s) => s.signOut);
   const theme = useUIStore((s) => s.theme);
   const setTheme = useUIStore((s) => s.setTheme);
   const toast = useAppToast();
+  const { data: wikiStatus } = useCompilationStatus();
+  const lintWiki = useLintWiki();
 
   const handleSignOut = async () => {
     try {
@@ -57,6 +77,61 @@ export default function SettingsScreen() {
                 </ListGroup.ItemSuffix>
               </ListGroup.Item>
             ))}
+          </ListGroup>
+        </View>
+
+        <View className="gap-2">
+          <Text className="px-2 text-xs font-semibold uppercase tracking-widest text-muted">
+            Wiki
+          </Text>
+          <ListGroup>
+            <ListGroup.Item>
+              <ListGroup.ItemContent>
+                <ListGroup.ItemTitle>Compilation status</ListGroup.ItemTitle>
+                <ListGroup.ItemDescription>
+                  {wikiStatus?.status === "compiling"
+                    ? "Compiling…"
+                    : wikiStatus?.status === "failed"
+                      ? "Last run failed"
+                      : "Idle"}
+                </ListGroup.ItemDescription>
+              </ListGroup.ItemContent>
+            </ListGroup.Item>
+            <ListGroup.Item>
+              <ListGroup.ItemContent>
+                <ListGroup.ItemTitle>Last compiled</ListGroup.ItemTitle>
+                <ListGroup.ItemDescription>
+                  {formatWikiTimestamp(wikiStatus?.lastCompiledAt)}
+                </ListGroup.ItemDescription>
+              </ListGroup.ItemContent>
+            </ListGroup.Item>
+            <ListGroup.Item
+              onPress={() => {
+                if (lintWiki.isPending) return;
+                lintWiki.mutate(undefined, {
+                  onSuccess: (result) => {
+                    const n = result.issues.length;
+                    if (n === 0) {
+                      toast.info("Wiki health", "No issues — wiki looks healthy.");
+                    } else {
+                      toast.info(
+                        "Wiki health check",
+                        `${n} issue${n === 1 ? "" : "s"} found. Open Spaces for the full report.`,
+                      );
+                    }
+                  },
+                });
+              }}
+            >
+              <ListGroup.ItemContent>
+                <ListGroup.ItemTitle>
+                  {lintWiki.isPending ? "Running health check…" : "Run health check"}
+                </ListGroup.ItemTitle>
+                <ListGroup.ItemDescription>
+                  Lint wiki content for gaps and inconsistencies
+                </ListGroup.ItemDescription>
+              </ListGroup.ItemContent>
+            </ListGroup.Item>
           </ListGroup>
         </View>
 
