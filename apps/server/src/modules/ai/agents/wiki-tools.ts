@@ -230,6 +230,11 @@ function normalizeTopicFilter(topicFilter: string | undefined): string | undefin
     || lowered === 'any'
     || lowered === '.'
     || lowered === '..'
+    || lowered === '/'
+    || lowered === 'none'
+    || lowered === 'null'
+    || lowered === 'undefined'
+    || lowered === 'n/a'
   ) {
     return undefined;
   }

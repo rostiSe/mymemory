@@ -26,7 +26,7 @@ export function EntrySummaryCard({
           Summary
         </Text>
         {loading ? (
-          <SkeletonGroup isLoading variant="shimmer">
+          <SkeletonGroup className="py-2" isLoading variant="shimmer">
             <View className="gap-2">
               <SkeletonGroup.Item className="h-4 w-full rounded-md" />
               <SkeletonGroup.Item className="h-4 w-full rounded-md" />

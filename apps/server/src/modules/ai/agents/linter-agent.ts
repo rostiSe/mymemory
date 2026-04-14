@@ -1,8 +1,9 @@
-import { generateText } from 'ai';
+import { generateText, stepCountIs } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { db as defaultDb } from '@mymemory/db';
 import { agentLogs } from '@mymemory/db/schema';
 import { z } from 'zod';
+import { LINTER_MAX_STEPS } from './agent-step-limits.js';
 import {
   buildLinterTools,
   type Database,
@@ -78,6 +79,7 @@ export async function runLinter(
     system: buildLinterSystemPrompt(),
     prompt: buildLinterUserPrompt({ runId, userId }),
     tools: wrappedTools,
+    stopWhen: stepCountIs(LINTER_MAX_STEPS),
     onStepFinish: async ({ toolCalls, toolResults }) => {
       for (const call of toolCalls ?? []) {
         const matchingResult = (toolResults ?? []).find(
