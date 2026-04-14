@@ -46,6 +46,7 @@ Spaces is the organizational + knowledge compilation layer of mymemory. The long
 | T-012b | Schema: wiki content + JSONB properties + cross-refs | schema | TBD after T-012a |
 | T-012c | Agent runtime (background jobs / scheduling) | infra | TBD after T-012 |
 | T-012d | Mobile: wiki content rendering + property display | feature (mobile) | TBD after T-012b |
+| **T-015** | **Wiki Agent — 3-agent pipeline (Curator → Writer → Linter)** | **feature (server + schema)** | [T-015](./T-015-wiki-agent-implementation.md) |
 
 ---
 
@@ -71,10 +72,8 @@ Spaces is the organizational + knowledge compilation layer of mymemory. The long
 
 | Order | Ticket | Why |
 |-------|--------|-----|
-| 5 | **T-012a** | Prototype agent against real data — see what it creates |
-| 6 | **T-012b** | Schema based on prototype findings |
-| 7 | **T-012c** | Production runtime for the agent |
-| 8 | **T-012d** | Mobile rendering of wiki content |
+| 5 | **T-015** | Wiki agent: schema + 3-agent pipeline + background runtime |
+| 6 | **T-012d** | Mobile rendering of wiki content |
 
 **Why this order:** Phase A gives you working spaces immediately. Phase B researches in parallel so no time is wasted. Phase C builds the agent on top of real infrastructure and real research — no guessing, no refactoring. The prototype runs against real entries in the DB, so you see actual results before committing to a schema.
 

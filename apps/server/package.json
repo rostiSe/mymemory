@@ -8,7 +8,11 @@
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "smoke:analyze-content": "tsx scripts/smoke-analyze-content.ts",
-    "smoke:ingest": "tsx scripts/smoke-ingest.ts"
+    "smoke:ingest": "tsx scripts/smoke-ingest.ts",
+    "smoke:wiki-schema": "tsx scripts/smoke-wiki-schema.ts",
+    "smoke:wiki-tools": "tsx scripts/smoke-wiki-tools.ts",
+    "smoke:wiki-compile": "tsx scripts/smoke-wiki-compile.ts",
+    "trigger:dev": "pnpm dlx trigger.dev@latest dev"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.50",
@@ -16,12 +20,15 @@
     "@mymemory/db": "workspace:*",
     "@mymemory/shared": "workspace:*",
     "@orpc/server": "^1.13.13",
+    "@trigger.dev/sdk": "4.4.4",
     "ai": "^6.0.146",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.45.2",
-    "hono": "^4.12.11"
+    "hono": "^4.12.11",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@trigger.dev/build": "4.4.4",
     "@types/node": "^20.11.17",
     "tsx": "^4.7.1",
     "typescript": "^5.8.3"

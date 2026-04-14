@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "spaces_user_name_uidx" ON "spaces" USING btree ("user_id","name");

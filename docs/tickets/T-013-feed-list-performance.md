@@ -21,8 +21,23 @@ The home feed used `FlatList`, but with **more than ~15 entries** scrolling felt
 ## Non-goals (this ticket)
 
 - Removing markdown from feed entirely (optional future).
-- Shared delete `BottomSheet` at screen level (recommended follow-up in T-013 notes).
 - Changing server pagination size.
+
+## Delete confirmation — product clarification (crash hardening)
+
+**We are not removing “confirm before delete”.** Swipe-to-delete should still open a **single** blocking confirmation step (Cancel vs Delete), not delete immediately.
+
+**What changes for stability:** move that confirmation from **N copies** (one `EntryDeleteConfirmSheet` / `BottomSheet.Portal` per list row) to **one** controlled instance owned by [`FeedScreen`](apps/mobile/src/features/entry/screens/FeedScreen/index.tsx), keyed by `pendingDeleteEntryId`. Rows only call `onRequestDelete(id)`.
+
+**Bottom sheet vs dialog (same safety, different chrome):**
+
+| Surface | Role |
+|--------|------|
+| **Bottom sheet** (current `EntryDeleteConfirmSheet`) | Same copy and destructive primary button; one instance at screen level is enough for confirmation. |
+| **Dialog / Modal** (HeroUI or RN `Modal`) | **Equivalent** for confirmation: user must choose Cancel or Delete. Use if a device still misbehaves with `BottomSheet` + FlashList (different native path, still one portal). |
+| **`Alert.alert`** | Also confirms, but least flexible for branding; fallback only if needed. |
+
+So: **dialog is not “less safe” than sheet** — both can enforce explicit confirmation. The fix is **one** confirm UI, not **zero**.
 
 ## Technical design
 
@@ -78,11 +93,11 @@ The home feed used `FlatList`, but with **more than ~15 entries** scrolling felt
 
 ### Phase 2 (follow-ups — still open)
 
-- [ ] Shared delete sheet at feed level; stable cover height; optional plain excerpt (see backlog above).
+- [ ] **Single shared delete confirmation** on `FeedScreen` (keep sheet **or** swap to Dialog — same confirm UX); stable cover height; optional plain excerpt (see backlog above).
 
 ## Follow-up backlog (not blocking)
 
-- [ ] Single shared **`EntryDeleteConfirmSheet`** on `FeedScreen` (one portal).
+- [ ] Single shared **delete confirmation** on `FeedScreen` (one `EntryDeleteConfirmSheet` **or** one `Dialog` with identical title/body/Delete/Cancel).
 - [ ] Fixed-height feed cover (`contentFit="cover"`) to avoid `onLoad` height jumps.
 - [ ] Plain-text or truncated excerpt without full markdown on feed cards.
 

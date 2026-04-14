@@ -1,6 +1,6 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
-import { ScrollEdgeFade } from "@/components/layout/ScrollEdgeFade";
 import { SkeletonListItem } from "@/components/ui/SkeletonListItem";
+import { EntryDeleteConfirmSheet } from "@/features/entry/components/EntryDeleteConfirmSheet";
 import { FeedFilterBar } from "@/features/entry/components/FeedFilterBar";
 import {
   useCreateEntry,
@@ -21,6 +21,7 @@ import {
 } from "@/theme/layout-imperative";
 import type { EntryListFilter } from "@mymemory/shared/contracts";
 import { FlashList } from "@shopify/flash-list";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
 import { useCallback, useMemo, useState } from "react";
@@ -39,6 +40,9 @@ export default function FeedScreen() {
   const listContentBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
   const createMutation = useCreateEntry();
   const [feedFilter, setFeedFilter] = useState<EntryListFilter>("all");
+  const [pendingDeleteEntryId, setPendingDeleteEntryId] = useState<
+    string | null
+  >(null);
   const deleteEntry = useDeleteEntry();
   const onToggleFavorite = useFeedFavoriteToggle();
 
@@ -68,6 +72,20 @@ export default function FeedScreen() {
       isPending,
     });
 
+  const listExtraData = useMemo(
+    () =>
+      `${feedFilter}:${optimisticRows.length}:${isRefetching ? 1 : 0}:${isFetchingNextPage ? 1 : 0}`,
+    [feedFilter, optimisticRows.length, isRefetching, isFetchingNextPage],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        setPendingDeleteEntryId(null);
+      };
+    }, []),
+  );
+
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage();
@@ -76,6 +94,10 @@ export default function FeedScreen() {
 
   const onPressEntry = useCallback((id: string) => {
     router.push({ pathname: "/entry/[id]", params: { id } });
+  }, []);
+
+  const onRequestDelete = useCallback((id: string) => {
+    setPendingDeleteEntryId(id);
   }, []);
 
   const keyExtractor = useCallback((item: FeedRow) => item.id, []);
@@ -121,11 +143,11 @@ export default function FeedScreen() {
           processedStatus={item.processedStatus}
           onPressEntry={onPressEntry}
           onToggleFavorite={onToggleFavorite}
-          onDeleteEntry={onDeleteEntry}
+          onRequestDelete={onRequestDelete}
         />
       );
     },
-    [onPressEntry, onToggleFavorite, onDeleteEntry],
+    [onPressEntry, onRequestDelete, onToggleFavorite],
   );
 
   const refreshControl = useMemo(
@@ -176,6 +198,17 @@ export default function FeedScreen() {
     );
   }, [isInitialLoading]);
 
+  const handleDeleteSheetOpenChange = useCallback((open: boolean) => {
+    if (!open) setPendingDeleteEntryId(null);
+  }, []);
+
+  const handleConfirmPendingDelete = useCallback(() => {
+    if (pendingDeleteEntryId != null) {
+      onDeleteEntry(pendingDeleteEntryId);
+    }
+    setPendingDeleteEntryId(null);
+  }, [onDeleteEntry, pendingDeleteEntryId]);
+
   if (isError) {
     return (
       <ScreenInset className="flex-1 bg-background">
@@ -210,9 +243,14 @@ export default function FeedScreen() {
     <ScreenInset edges={["top"]} className="flex-1 bg-background">
       <FeedHeader captureComposerProps={captureComposerProps} />
       <FeedFilterBar active={feedFilter} onChange={setFeedFilter} />
-      <ScrollEdgeFade className="flex-1 bg-background">
+      {/*
+        Plain View: ScrollShadow + FlashList stressed native layout on some devices
+        when switching tabs / rapid refresh (see T-013).
+      */}
+      <View className="flex-1 bg-background">
         <FlashList<FeedRow>
           data={optimisticRows}
+          extraData={listExtraData}
           keyExtractor={keyExtractor}
           getItemType={getItemType}
           renderItem={renderItem}
@@ -222,9 +260,16 @@ export default function FeedScreen() {
           onEndReachedThreshold={0.35}
           refreshControl={refreshControl}
           contentContainerStyle={listContentContainerStyle}
+          drawDistance={200}
+          maintainVisibleContentPosition={{ disabled: true }}
           style={{ flex: 1 }}
         />
-      </ScrollEdgeFade>
+      </View>
+      <EntryDeleteConfirmSheet
+        isOpen={pendingDeleteEntryId != null}
+        onOpenChange={handleDeleteSheetOpenChange}
+        onConfirmDelete={handleConfirmPendingDelete}
+      />
     </ScreenInset>
   );
 }
