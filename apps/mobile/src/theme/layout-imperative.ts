@@ -122,5 +122,11 @@ export const WIKI_STAGGER_DELAY_MS = 60;
 
 export const WIKI_STAGGER_DURATION_MS = 400;
 
-/** Press feedback for wiki tappables */
+/** Press feedback for wiki tappables (`AnimatedPressScale` — Reanimated `withSpring`). */
 export const WIKI_PRESS_SCALE_MIN = 0.97;
+
+/** Reanimated `withSpring` damping for wiki press scale feedback. */
+export const WIKI_PRESS_SCALE_DAMPING = 15;
+
+/** Reanimated `withSpring` stiffness for wiki press scale feedback. */
+export const WIKI_PRESS_SCALE_STIFFNESS = 400;

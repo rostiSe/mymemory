@@ -1,6 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { db as defaultDb } from "@mymemory/db";
-import { agentLogs } from "@mymemory/db/schema";
+import { agentLogs } from "@mymemory/db/schema/agent-logs";
 import { generateText, stepCountIs } from "ai";
 import { z } from "zod";
 import { CURATOR_MAX_STEPS } from "./agent-step-limits.js";

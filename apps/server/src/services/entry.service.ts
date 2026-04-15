@@ -1,13 +1,9 @@
 import type { db } from "@mymemory/db";
-import {
-  embeddings,
-  entries,
-  entryRelations,
-  entryTags,
-  entryTopics,
-  tags,
-  topics,
-} from "@mymemory/db/schema";
+import { embeddings } from "@mymemory/db/schema/embeddings";
+import { entries } from "@mymemory/db/schema/entries";
+import { entryRelations } from "@mymemory/db/schema/entry-relations";
+import { entryTags, tags } from "@mymemory/db/schema/tags";
+import { entryTopics, topics } from "@mymemory/db/schema/topics";
 import { entryDetailSchema, entrySchema } from "@mymemory/shared/contracts";
 import { ORPCError } from "@orpc/server";
 import { and, desc, eq, getTableColumns, lt, or, sql } from "drizzle-orm";

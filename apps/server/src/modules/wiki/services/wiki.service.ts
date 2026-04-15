@@ -1,11 +1,8 @@
 import type { db } from "@mymemory/db";
-import {
-  agentLogs,
-  spaceWikiPages,
-  spaces,
-  wikiPageVersions,
-  wikiPages,
-} from "@mymemory/db/schema";
+import { agentLogs } from "@mymemory/db/schema/agent-logs";
+import { spaceWikiPages } from "@mymemory/db/schema/space-wiki-pages";
+import { spaces } from "@mymemory/db/schema/spaces";
+import { wikiPageVersions, wikiPages } from "@mymemory/db/schema/wiki-pages";
 import { ORPCError } from "@orpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
 import {

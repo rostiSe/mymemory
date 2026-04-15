@@ -4,7 +4,7 @@ import { useAppToast } from "@/hooks/useAppToast";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useThemeColor } from "heroui-native";
 import { Button, Chip } from "heroui-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -44,15 +44,19 @@ export function LintResultsSheet({ open, onOpenChange }: LintResultsSheetProps) 
   const toast = useAppToast();
   const lint = useLintWiki();
   const [finishedAt, setFinishedAt] = useState<Date | null>(null);
+  const isOpenRef = useRef(false);
 
   useEffect(() => {
     if (!open) {
+      isOpenRef.current = false;
       lint.reset();
       setFinishedAt(null);
       return;
     }
+    isOpenRef.current = true;
     lint.mutate(undefined, {
       onSuccess: (result) => {
+        if (!isOpenRef.current) return;
         setFinishedAt(new Date());
         const n = result.issues.length;
         if (n === 0) {

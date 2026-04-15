@@ -1,9 +1,6 @@
 import type { db } from "@mymemory/db";
-import {
-  entries,
-  entrySpaces,
-  spaces,
-} from "@mymemory/db/schema";
+import { entries } from "@mymemory/db/schema/entries";
+import { entrySpaces, spaces } from "@mymemory/db/schema/spaces";
 import {
   entrySchema,
   type spaceSchema,

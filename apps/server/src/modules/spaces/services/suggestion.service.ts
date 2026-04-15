@@ -1,10 +1,7 @@
 import type { db } from "@mymemory/db";
-import {
-  entries,
-  entrySpaces,
-  spaceSuggestions,
-  spaces,
-} from "@mymemory/db/schema";
+import { entries } from "@mymemory/db/schema/entries";
+import { spaceSuggestions } from "@mymemory/db/schema/space-suggestions";
+import { entrySpaces, spaces } from "@mymemory/db/schema/spaces";
 import type { spaceSchema } from "@mymemory/shared/contracts";
 import { ORPCError } from "@orpc/server";
 import { and, desc, eq } from "drizzle-orm";

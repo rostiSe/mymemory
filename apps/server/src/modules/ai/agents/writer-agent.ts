@@ -1,6 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { and, db as defaultDb, eq } from "@mymemory/db";
-import { agentLogs, spaces } from "@mymemory/db/schema";
+import { agentLogs } from "@mymemory/db/schema/agent-logs";
+import { spaces } from "@mymemory/db/schema/spaces";
 import { generateText, stepCountIs } from "ai";
 import { z } from "zod";
 import { WRITER_MAX_STEPS } from "./agent-step-limits.js";

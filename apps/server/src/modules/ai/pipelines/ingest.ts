@@ -1,14 +1,10 @@
 import { db, eq, and } from "@mymemory/db";
-import {
-  embeddings,
-  entries,
-  entryRelations,
-  entryTags,
-  entryTopics,
-  spaceSuggestions,
-  tags,
-  topics,
-} from "@mymemory/db/schema";
+import { embeddings } from "@mymemory/db/schema/embeddings";
+import { entries } from "@mymemory/db/schema/entries";
+import { entryRelations } from "@mymemory/db/schema/entry-relations";
+import { spaceSuggestions } from "@mymemory/db/schema/space-suggestions";
+import { entryTags, tags } from "@mymemory/db/schema/tags";
+import { entryTopics, topics } from "@mymemory/db/schema/topics";
 import {
   extractMediumArticleWithFirecrawl,
   isMediumArticleUrl,

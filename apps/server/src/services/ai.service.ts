@@ -1,5 +1,5 @@
 import type { db } from "@mymemory/db";
-import { entries } from "@mymemory/db/schema";
+import { entries } from "@mymemory/db/schema/entries";
 import { entrySchema } from "@mymemory/shared/contracts";
 import { eq } from "drizzle-orm";
 import { z } from "zod";

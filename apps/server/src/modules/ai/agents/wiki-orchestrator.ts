@@ -1,13 +1,9 @@
 import { and, asc, eq, inArray } from '@mymemory/db';
 import { db as defaultDb } from '@mymemory/db';
-import {
-  agentLogs,
-  entries,
-  entrySpaces,
-  entryTopics,
-  spaces,
-  topics,
-} from '@mymemory/db/schema';
+import { agentLogs } from '@mymemory/db/schema/agent-logs';
+import { entries } from '@mymemory/db/schema/entries';
+import { entrySpaces, spaces } from '@mymemory/db/schema/spaces';
+import { entryTopics, topics } from '@mymemory/db/schema/topics';
 import type { Database } from './wiki-tools.js';
 import { runCurator, type CuratorResult } from './curator-agent.js';
 import {

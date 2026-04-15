@@ -14,7 +14,7 @@
 import 'dotenv/config';
 
 import { closeDb, db, eq } from '@mymemory/db';
-import { entries } from '@mymemory/db/schema';
+import { entries } from '@mymemory/db/schema/entries';
 import { processEntry } from '../src/modules/ai/pipelines/ingest.js';
 
 class UsageError extends Error {
