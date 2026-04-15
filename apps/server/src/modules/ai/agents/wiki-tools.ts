@@ -3,7 +3,7 @@ import type { db as databaseClient } from '@mymemory/db';
 import { tool } from 'ai';
 import { agentLogs } from '@mymemory/db/schema/agent-logs';
 import { entries } from '@mymemory/db/schema/entries';
-import { entrySpaces, spaces } from '@mymemory/db/schema/spaces';
+import { entrySpaces, spaceRelations, spaces } from '@mymemory/db/schema/spaces';
 import { spaceWikiPages } from '@mymemory/db/schema/space-wiki-pages';
 import { entryTags, tags } from '@mymemory/db/schema/tags';
 import { entryTopics, topics } from '@mymemory/db/schema/topics';
@@ -235,6 +235,67 @@ function normalizeTopicFilter(topicFilter: string | undefined): string | undefin
   return trimmed;
 }
 
+async function setSpaceParentInternal(
+  db: Database,
+  userId: string,
+  childSpaceId: string,
+  parentSpaceId: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (childSpaceId === parentSpaceId) {
+    return { success: false, error: 'A space cannot be its own parent.' };
+  }
+
+  const [childSpace] = await db
+    .select({ id: spaces.id, isIndex: spaces.isIndex })
+    .from(spaces)
+    .where(and(eq(spaces.id, childSpaceId), eq(spaces.userId, userId)))
+    .limit(1);
+  if (!childSpace) {
+    return { success: false, error: 'Child space not found.' };
+  }
+  if (childSpace.isIndex) {
+    return { success: false, error: 'Index space cannot be a child.' };
+  }
+
+  const [parentSpace] = await db
+    .select({ id: spaces.id })
+    .from(spaces)
+    .where(and(eq(spaces.id, parentSpaceId), eq(spaces.userId, userId)))
+    .limit(1);
+  if (!parentSpace) {
+    return { success: false, error: 'Parent space not found.' };
+  }
+
+  const [parentIsChild] = await db
+    .select({ parentSpaceId: spaceRelations.parentSpaceId })
+    .from(spaceRelations)
+    .where(eq(spaceRelations.childSpaceId, parentSpaceId))
+    .limit(1);
+  if (parentIsChild) {
+    return { success: false, error: 'Parent is already a child of another space — max depth is 2 levels.' };
+  }
+
+  const [childIsParent] = await db
+    .select({ childSpaceId: spaceRelations.childSpaceId })
+    .from(spaceRelations)
+    .where(eq(spaceRelations.parentSpaceId, childSpaceId))
+    .limit(1);
+  if (childIsParent) {
+    return { success: false, error: 'Child space already has children — max depth is 2 levels.' };
+  }
+
+  await db
+    .delete(spaceRelations)
+    .where(eq(spaceRelations.childSpaceId, childSpaceId));
+
+  await db
+    .insert(spaceRelations)
+    .values({ parentSpaceId, childSpaceId })
+    .onConflictDoNothing();
+
+  return { success: true };
+}
+
 function createTools(db: Database, userId: string, runId: string) {
   const listEntries = makeTool(
     'List processed entries with compact metadata. topicFilter: optional exact topic name (case-insensitive); omit for all topics — never use * as wildcard (ignored if sent). unassignedOnly:true returns ONLY entries with no entry_spaces row (orphans); omit it to include entries already linked to spaces.',
@@ -379,7 +440,7 @@ function createTools(db: Database, userId: string, runId: string) {
   );
 
   const listSpaces = makeTool(
-    'List spaces with entry/page counts.',
+    'List spaces with entry/page counts and hierarchy info (parentSpaceId, childSpaceIds).',
     z.object({}),
     async () => {
       const rows = await db
@@ -402,16 +463,36 @@ function createTools(db: Database, userId: string, runId: string) {
         .groupBy(spaces.id)
         .orderBy(spaces.sortOrder, spaces.name);
 
+      const parentRows = await db
+        .select({
+          childSpaceId: spaceRelations.childSpaceId,
+          parentSpaceId: spaceRelations.parentSpaceId,
+        })
+        .from(spaceRelations)
+        .innerJoin(spaces, eq(spaces.id, spaceRelations.childSpaceId))
+        .where(eq(spaces.userId, userId));
+
+      const parentByChild = new Map<string, string>();
+      const childrenByParent = new Map<string, string[]>();
+      for (const rel of parentRows) {
+        parentByChild.set(rel.childSpaceId, rel.parentSpaceId);
+        const children = childrenByParent.get(rel.parentSpaceId) ?? [];
+        children.push(rel.childSpaceId);
+        childrenByParent.set(rel.parentSpaceId, children);
+      }
+
       return rows.map((row) => ({
         ...row,
         entryCount: Number(row.entryCount),
         pageCount: Number(row.pageCount),
+        parentSpaceId: parentByChild.get(row.id) ?? null,
+        childSpaceIds: childrenByParent.get(row.id) ?? [],
       }));
     },
   );
 
   const createOrUpdateSpace = makeTool(
-    'Create or update a space by unique user/name.',
+    'Create or update a space by unique user/name. Optionally set parentSpaceId to nest under a parent space.',
     z.object({
       name: z.string().trim().min(1).max(255),
       description: z.string().optional(),
@@ -419,6 +500,7 @@ function createTools(db: Database, userId: string, runId: string) {
       content: optionalJsonSchema,
       properties: optionalJsonSchema,
       sortOrder: z.number().int().optional(),
+      parentSpaceId: uuidSchema.optional(),
     }),
     async (input) => {
       const [existingSpace] = await db
@@ -445,6 +527,10 @@ function createTools(db: Database, userId: string, runId: string) {
             `User already has index space "${existingIndexSpace.name}".`,
           );
         }
+      }
+
+      if (input.isIndex === true && input.parentSpaceId) {
+        throw new Error('Index space cannot have a parent.');
       }
 
       const updateSet: {
@@ -487,11 +573,26 @@ function createTools(db: Database, userId: string, runId: string) {
         throw new Error('Failed to upsert space');
       }
 
+      if (input.parentSpaceId) {
+        await setSpaceParentInternal(db, userId, upserted.id, input.parentSpaceId);
+      }
+
       return {
         id: upserted.id,
         name: upserted.name,
         isNew: !existingSpace,
       };
+    },
+  );
+
+  const setSpaceParent = makeTool(
+    'Set a parent-child relationship between two spaces. The child becomes a sub-space of the parent. Max 2 levels deep (parent → child, no grandchildren). Replaces any existing parent for the child.',
+    z.object({
+      childSpaceId: uuidSchema,
+      parentSpaceId: uuidSchema,
+    }),
+    async ({ childSpaceId, parentSpaceId }) => {
+      return setSpaceParentInternal(db, userId, childSpaceId, parentSpaceId);
     },
   );
 
@@ -754,6 +855,7 @@ function createTools(db: Database, userId: string, runId: string) {
     readEntryContent,
     listSpaces,
     createOrUpdateSpace,
+    setSpaceParent,
     assignEntriesToSpace,
     listWikiPages,
     createOrUpdateWikiPage,
@@ -769,6 +871,7 @@ export function buildCuratorTools(db: Database, userId: string, runId: string): 
     listEntries: tools.listEntries,
     listSpaces: tools.listSpaces,
     createOrUpdateSpace: tools.createOrUpdateSpace,
+    setSpaceParent: tools.setSpaceParent,
     assignEntriesToSpace: tools.assignEntriesToSpace,
     listWikiPages: tools.listWikiPages,
     assignPageToSpaces: tools.assignPageToSpaces,

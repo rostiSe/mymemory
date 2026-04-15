@@ -16,6 +16,8 @@ export const spaceSchema = z.object({
 
 export const spaceWithCountSchema = spaceSchema.extend({
   entryCount: z.number().int(),
+  parentSpaceId: z.uuid().nullable().optional(),
+  childSpaceIds: z.array(z.uuid()).optional(),
 });
 
 export const spaceSuggestionSchema = z.object({

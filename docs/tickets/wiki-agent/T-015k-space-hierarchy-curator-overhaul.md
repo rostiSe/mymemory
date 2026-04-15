@@ -1,6 +1,6 @@
 # T-015k: Space Hierarchy + Curator Overhaul
 
-**Status:** pending  
+**Status:** done  
 **Phase:** Server + Mobile (curator pipeline + SpacesScreen)  
 **Type:** feature  
 **Epic:** [T-015 Wiki Agent](./T-015-wiki-agent-epic.md)  

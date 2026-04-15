@@ -1,6 +1,6 @@
 import type { db } from "@mymemory/db";
 import { entries } from "@mymemory/db/schema/entries";
-import { entrySpaces, spaces } from "@mymemory/db/schema/spaces";
+import { entrySpaces, spaceRelations, spaces } from "@mymemory/db/schema/spaces";
 import {
   entrySchema,
   type spaceSchema,
@@ -68,6 +68,24 @@ export const spaceService = {
       .where(eq(spaces.userId, userId))
       .groupBy(spaces.id);
 
+    const relRows = await database
+      .select({
+        childSpaceId: spaceRelations.childSpaceId,
+        parentSpaceId: spaceRelations.parentSpaceId,
+      })
+      .from(spaceRelations)
+      .innerJoin(spaces, eq(spaces.id, spaceRelations.childSpaceId))
+      .where(eq(spaces.userId, userId));
+
+    const parentByChild = new Map<string, string>();
+    const childrenByParent = new Map<string, string[]>();
+    for (const rel of relRows) {
+      parentByChild.set(rel.childSpaceId, rel.parentSpaceId);
+      const children = childrenByParent.get(rel.parentSpaceId) ?? [];
+      children.push(rel.childSpaceId);
+      childrenByParent.set(rel.parentSpaceId, children);
+    }
+
     return rows.map((r) => ({
       id: r.id,
       userId: r.userId,
@@ -77,6 +95,8 @@ export const spaceService = {
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       entryCount: r.entryCount,
+      parentSpaceId: parentByChild.get(r.id) ?? null,
+      childSpaceIds: childrenByParent.get(r.id) ?? [],
     }));
   },
 

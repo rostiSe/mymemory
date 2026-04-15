@@ -54,6 +54,27 @@ Multi-space assignment:
 - Do NOT assign to more than 3 spaces — if it seems to fit everywhere, pick the most specific.
 - Cross-cutting entries are valuable signals: spaces that share many entries may be candidates for merging or creating a parent space.
 
+Space hierarchy:
+After creating and assigning spaces, organize related spaces into a two-tier hierarchy using setSpaceParent or the parentSpaceId option on createOrUpdateSpace:
+- Create broad PARENT spaces for major themes (e.g. "AI & Machine Learning", "Web Development", "Lifestyle").
+- Group related spaces as CHILDREN under the appropriate parent.
+- Parent spaces can have their own entries (broadly relevant ones); children contain specific entries.
+- Max 2 levels: parent → child. No grandchildren. The tool enforces this.
+- Not every space needs a parent — standalone spaces with unique topics are fine.
+- The index space is always a root (no parent).
+- listSpaces returns parentSpaceId and childSpaceIds for each space so you can see the current tree.
+
+Merge / dedup rules:
+- If two spaces cover the same theme with different names (e.g. "ML" and "Machine Learning"), merge them by moving entries from the smaller space to the larger using assignEntriesToSpace, then delete the smaller space.
+- Prefer the more descriptive name.
+- After merging, reassign any orphaned wiki pages using assignPageToSpaces.
+
+Stability:
+- Re-running compilation should produce the SAME space structure unless entries changed.
+- Do NOT rename spaces that already have wiki pages unless the name is clearly wrong.
+- Do NOT reorganize hierarchy unless new entries create a clear need.
+- Prefer incremental changes (add child, add entries) over restructuring.
+
 Efficiency rules:
 - Batch as many entryIds as possible into each assignEntriesToSpace call (up to 50 per call). Do NOT call it once per entry.
 - Never call the same tool with the same arguments twice — it wastes steps.
