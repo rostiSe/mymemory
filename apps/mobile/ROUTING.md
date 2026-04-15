@@ -1,177 +1,279 @@
-# Routing
+# T-015i: Wiki Organization Improvements
 
-> This document defines routing conventions for this Expo Router project. For folder structure and component conventions, see [STRUCTURE.md](./STRUCTURE.md).
+## Context
+
+The wiki agent (T-015a–g) works end-to-end but the **organization layer is weak**:
+
+- 14 spaces from 59 entries — too many, unstructured, flat list
+- No auto-assignment after ingest — entries sit unassigned until manual compile
+- SpacesScreen is a flat list with no visual hierarchy
+- No quality signals — user can't tell if the AI did well
+- space_suggestions from ingest are disconnected from the curator
+
+This ticket improves organization without adding schema tiers or complex hierarchy. T-015h (delete operations) remains a separate ticket.
+
+**Decisions made:**
+
+- Auto-assign: Single LLM call per entry after ingest (~$0.0001, more accurate)
+- Space count: Curator decides freely, but merge overlapping spaces (>40% shared entries)
+- Background compile: Deferred to future ticket
+- Ticket structure: New T-015i (this), T-015h stays for deletes
 
 ---
 
-## Core Principle — `app/` is for Routing Only
+## Scope
 
-The `app/` directory is owned by Expo Router and is the **only** place that defines navigation structure. Files in `app/` are thin wrappers — they import a screen from `features/` and render it. No logic, no state, no JSX beyond the screen component itself.
+### 1. Curator prompt improvements (`wiki-prompts.ts`)
 
-```ts
-// app/(auth)/login.tsx
-import LoginScreen from '@/features/auth/screens/LoginScreen'
+**Changes to curator system prompt:**
 
-export default function LoginRoute() {
-  return <LoginScreen />
+- **Merge rule**: "After organizing, review your spaces. If two spaces share more than 40% of their entries, merge them into one broader space. Prefer fewer, broader spaces over many narrow ones."
+- **Naming**: "Use 2-3 word descriptive names. Bad: 'AI'. Good: 'AI Research'. Bad: 'Street Food Festivals'. Good: 'Food & Dining'. Bad: 'Cultural Art History'. Good: 'Art & Culture'."
+- **Stability (incremental)**: "On incremental compile, strongly prefer existing spaces. Only create a new space if 5+ unassigned entries share a clear theme not covered by any existing space. Never rename existing spaces unless merging."
+- **Minimum entries**: Keep at 2 (current), but add: "If a space would have only 1 entry, assign that entry to the most relevant existing space instead."
+- **Remove the hard 'lightweight content → utility spaces' rule** — let the curator decide organically, but mention: "Group entries by theme, not by content depth. A recipe bookmark and a detailed cooking article belong in the same food space."
+
+These are prompt-only changes. No schema or tool modifications needed.
+
+**File:** `apps/server/src/modules/ai/agents/wiki-prompts.ts`
+
+### 2. Auto-assign after ingest (`ingest.ts` + new utility)
+
+After the ingest pipeline enriches an entry (topics, summary, embedding extracted), make a single LLM call to assign it to existing spaces.
+
+#### New function: `autoAssignEntry`
+
+**File:** `apps/server/src/modules/ai/tools/auto-assign-entry.ts`
+
+```typescript
+async function autoAssignEntry(
+  db: Db,
+  userId: string,
+  entry: { id: string; title: string; summary: string; topics: string[] },
+): Promise<{ assignedSpaceIds: string[]; assignedSpaceNames: string[] }>;
+```
+
+**Logic:**
+
+1. Load existing spaces for user: `SELECT id, name, description FROM spaces WHERE userId = ? AND isIndex = false`
+2. If no spaces exist → return empty (nothing to assign to, compile will handle it)
+3. Call gpt-4o-mini with structured output:
+   - System: "You assign entries to existing knowledge spaces. Pick 1-3 spaces that best match the entry's topics. If no space fits well, return an empty array."
+   - User: entry title + summary + topics + list of space names with descriptions
+   - Output schema: `z.object({ spaceIds: z.array(z.string().uuid()) })`
+4. Insert `entrySpaces` records for matched spaces (ON CONFLICT DO NOTHING)
+5. Delete the `spaceSuggestion` for this entry (auto-handled)
+6. Return assigned space names for logging
+
+**Cost:** ~500 tokens per entry × $0.15/M = ~$0.0001 per entry. Negligible.
+
+**Error handling:** If LLM call fails, log warning and continue — entry stays unassigned, curator picks it up on next compile. Never block ingest for auto-assign failure.
+
+#### Integration in ingest pipeline
+
+**File:** `apps/server/src/modules/ai/pipelines/ingest.ts`
+
+After the enrichment transaction commits (topics, tags, embedding all saved), call:
+
+```typescript
+// After transaction commit, line ~250
+try {
+  const topics = extractedTopics.map((t) => t.name);
+  await autoAssignEntry(db, userId, {
+    id: entryId,
+    title: analysis.title ?? entry.title ?? "",
+    summary: analysis.summary ?? "",
+    topics,
+  });
+} catch (error) {
+  logger.warn("Auto-assign failed, entry will be assigned on next compile", {
+    entryId,
+    error,
+  });
 }
 ```
 
-If you find yourself writing hooks, conditionals, or JSX inside an `app/` file, that code belongs in the feature screen instead.
+This runs **outside** the main transaction so failures don't roll back the enrichment.
+
+### 3. SpacesScreen UI improvements
+
+#### A. Pinned spaces section
+
+**Schema change:** Add `isPinned boolean default false` to `spaces` table.
+
+**File:** `packages/db/src/schema/spaces.ts` — add column
+**File:** New migration via `drizzle-kit generate`
+
+**SpacesScreen layout:**
+
+```
+CompileStatusCard
+─────────────────────
+[Pinned]  (section, only if any pinned spaces)
+  AI Research        12 entries · 3 pages
+  Web Development     8 entries · 2 pages
+─────────────────────
+[All Wiki Pages]  (card, top 5 by updatedAt)
+  Recent page 1       synthesis · 2h ago
+  Recent page 2       timeline · 1d ago
+  ...
+  "View all →"
+─────────────────────
+[Spaces]  (section)
+  Food & Dining        6 entries · 2 pages
+  Notes & Ideas        4 entries · 1 page
+  ...
+─────────────────────
+[hint + New space button]
+```
+
+**Pin/unpin UX:** Long-press on space card → context menu with "Pin to top" / "Unpin". Or: small pin icon in SpaceDetailScreen header.
+
+**File:** `features/space/screens/SpacesScreen/index.tsx` — split list into sections
+**File:** `features/space/hooks/useSpaces.ts` — add `isPinned` to space type, add `useToggleSpacePin` mutation
+
+#### B. Sorted spaces
+
+Sort non-pinned spaces by entry count descending (most populated first). The existing `sortOrder` column can be used, or sort client-side.
+
+#### C. All Wiki Pages preview card
+
+From T-015h scope — move it here since it's a UI improvement:
+
+- Shows top 5 most recently updated wiki pages
+- Each row: title + PageTypeBadge + relative time
+- "View all" navigates to `wiki/all` screen
+- Uses `useWikiPages()` (no spaceId → all pages), sorted client-side by `updatedAt` desc
+
+**New files:**
+
+- `features/wiki/screens/AllWikiPagesScreen/index.tsx` — full list
+- `app/wiki/all.tsx` — route
+
+**Modified:**
+
+- `features/space/screens/SpacesScreen/index.tsx` — add preview card
+- `app/_layout.tsx` — register `wiki/all` route
+
+### 4. Space pin contract + server
+
+**Contract addition** (`packages/shared/src/contracts/space.contract.ts`):
+
+```typescript
+togglePin: oc.input(z.object({ id: z.uuid(), isPinned: z.boolean() })).output(
+  spaceSchema,
+);
+```
+
+**Router** (`apps/server/src/router/space.router.ts`):
+Wire `togglePin` → update `spaces` set `isPinned` where id + userId.
+
+### 5. Quality signals (lightweight)
+
+#### A. Freshness on page cards
+
+In SpaceDetailScreen page cards and AllWikiPagesScreen, show relative time with color:
+
+- Updated today → green text
+- Updated this week → default text
+- Updated > 1 week ago → muted text
+
+No backend change — `updatedAt` already exists on wiki pages.
+
+#### B. Entry coverage on SpaceDetailScreen
+
+Show: "8 of 12 entries synthesized" — compare `space.entryCount` vs count of unique sourceEntryIds across the space's pages.
+
+Client-side calculation from existing data (useWikiPages returns sourceEntryIds).
+
+#### C. Health score on CompileStatusCard
+
+After lint runs, cache the issue count. Show: "Wiki health: Good" / "3 issues" as a small badge.
+
+Store last lint issue count in `useCompilationStatus` query data or MMKV.
 
 ---
 
-## Directory Structure
+## File Changes Summary
 
-```
-app/
-├── _layout.tsx               # Root layout — providers, global navigation shell
-├── (auth)/
-│   ├── _layout.tsx           # Auth stack layout
-│   ├── login.tsx
-│   └── signup.tsx
-├── (tabs)/
-│   ├── _layout.tsx           # Tab navigator config
-│   ├── index.tsx             # Feed tab
-│   ├── search.tsx
-│   ├── spaces.tsx
-│   ├── digestion.tsx
-│   └── settings.tsx
-├── entry/
-│   └── [id].tsx
-├── digest/
-│   └── [id].tsx
-├── space/
-│   └── [id].tsx
-├── debug.tsx
-└── template-test.tsx
-```
+### Server — new files
 
-### Route groups `(group)`
+| File                                                    | What                                |
+| ------------------------------------------------------- | ----------------------------------- |
+| `apps/server/src/modules/ai/tools/auto-assign-entry.ts` | LLM-based entry-to-space assignment |
 
-Use route groups to scope layouts without affecting the URL path. Every group gets its own `_layout.tsx`.
+### Server — modified files
 
-- `(auth)` — unauthenticated flows (login, signup, onboarding)
-- `(tabs)` — main authenticated tab navigation
-- Add new groups only when you need a distinct layout or navigation shell
+| File                                                | Change                                                      |
+| --------------------------------------------------- | ----------------------------------------------------------- |
+| `apps/server/src/modules/ai/agents/wiki-prompts.ts` | Curator prompt: merge rules, naming, stability, min entries |
+| `apps/server/src/modules/ai/pipelines/ingest.ts`    | Call autoAssignEntry after enrichment                       |
+| `packages/db/src/schema/spaces.ts`                  | Add `isPinned` column                                       |
+| `packages/shared/src/contracts/space.contract.ts`   | Add `togglePin` endpoint                                    |
+| `apps/server/src/router/space.router.ts`            | Wire `togglePin` handler                                    |
 
-### Layouts `_layout.tsx`
+### Mobile — new files
 
-Layouts configure navigators and inject any route-group-scoped logic (e.g. auth guards). They do not render screen content.
+| File                                                       | What                                       |
+| ---------------------------------------------------------- | ------------------------------------------ |
+| `features/wiki/screens/AllWikiPagesScreen/index.tsx`       | Full list of all wiki pages sorted by date |
+| `features/wiki/screens/AllWikiPagesScreen/index.styles.ts` | Styles                                     |
+| `app/wiki/all.tsx`                                         | Route                                      |
 
-```ts
-// app/(auth)/_layout.tsx
-import { Stack } from 'expo-router'
+### Mobile — modified files
 
-export default function AuthLayout() {
-  return (
-    <Stack screenOptions={{ headerShown: false }} />
-  )
-}
-```
+| File                                                   | Change                                             |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| `features/space/screens/SpacesScreen/index.tsx`        | Pinned section, sorted spaces, All Wiki Pages card |
+| `features/space/screens/SpaceDetailScreen/index.tsx`   | Entry coverage indicator, pin button               |
+| `features/space/hooks/useSpaces.ts`                    | Add `useToggleSpacePin` mutation                   |
+| `features/wiki/components/CompileStatusCard/index.tsx` | Health score badge                                 |
+| `app/_layout.tsx`                                      | Register `wiki/all` route                          |
 
-The root `app/_layout.tsx` is also where global providers are composed (for example under `stores/providers/` in this app).
+### Migration
 
-```ts
-// app/_layout.tsx (pattern — match actual provider imports in the repo)
-import { Stack } from 'expo-router'
-import { AuthStoreProvider } from '@/stores/providers/auth-provider'
-import { UIStoreProvider } from '@/stores/providers/ui-provider'
-
-export default function RootLayout() {
-  return (
-    <AuthStoreProvider>
-      <UIStoreProvider>
-        <Stack />
-      </UIStoreProvider>
-    </AuthStoreProvider>
-  )
-}
-```
+| File                  | What                                           |
+| --------------------- | ---------------------------------------------- |
+| New drizzle migration | Add `isPinned` boolean default false to spaces |
 
 ---
 
-## Route File Rules
+## Edge Cases
 
-| Rule                                    | Why                                       |
-| --------------------------------------- | ----------------------------------------- |
-| Route files are `.tsx`, not `.ts`       | Expo Router requires a default JSX export |
-| Default export only — no named exports  | Expo Router convention                    |
-| No hooks or logic in route files        | Belongs in the feature screen             |
-| One screen import per route file        | Keeps routing intent clear                |
-| Route filename matches the path segment | Predictable, no surprises                 |
+1. **Auto-assign with 0 spaces**: Skip LLM call entirely. Entry stays unassigned.
+2. **Auto-assign LLM returns invalid spaceId**: Validate UUIDs against loaded spaces. Ignore invalid ones.
+3. **Auto-assign during compile**: If compile is running, auto-assign still works — it only INSERTs entrySpaces (idempotent). No conflict.
+4. **Pinning the index space**: Disallow — index space is system-managed, hidden from list.
+5. **Merge rule in curator**: Curator should list all spaces with entry overlap before deciding merges. This is prompt guidance, not enforced server-side.
 
 ---
 
-## Screen → Route Mapping
+## DoD
 
-Every screen in `features/` that needs a route gets a corresponding thin file in `app/`. The mapping is always 1:1 at the **route** level; **multiple routes may import different screens from the same feature** (prefer that over one feature per screen).
-
-```
-features/auth/screens/LoginScreen/       →   app/(auth)/login.tsx
-features/auth/screens/SignupScreen/    →   app/(auth)/signup.tsx
-features/entry/screens/FeedScreen/      →   app/(tabs)/index.tsx
-features/entry/screens/EntryDetailScreen/ → app/entry/[id].tsx
-features/space/screens/SpacesScreen/    →   app/(tabs)/spaces.tsx
-features/space/screens/SpaceDetailScreen/ → app/space/[id].tsx
-features/settings/screens/SettingsScreen/ → app/(tabs)/settings.tsx
-```
-
-Screens that are navigated to programmatically within a feature (e.g. a modal, a detail view) still need a route file if they are part of the Expo Router tree.
-
-**Feature granularity:** Keep routes thin; group related screens under one feature folder (e.g. `entry`, `space`) when they share components and hooks. Do not add a new top-level feature for every screen by default.
-
----
-
-## Navigation Between Routes
-
-Use Expo Router's `router` or `Link` — never pass navigation props down through components.
-
-```ts
-import { router } from 'expo-router'
-
-// Imperative navigation
-router.push('/(auth)/login')
-router.replace('/(tabs)/')
-
-// Link component
-import { Link } from 'expo-router'
-<Link href="/(auth)/signup">Create account</Link>
-```
-
-Route params are typed via `expo-router`'s generated types. Do not type them manually.
+- [ ] Curator prompt updated with merge rules, naming guidelines, stability rules
+- [ ] `autoAssignEntry` function created with structured LLM output
+- [ ] Ingest pipeline calls autoAssignEntry after enrichment (non-blocking)
+- [ ] `isPinned` column added to spaces with migration
+- [ ] `togglePin` contract + server endpoint
+- [ ] SpacesScreen shows pinned section, sorted spaces, All Wiki Pages card
+- [ ] AllWikiPagesScreen at `wiki/all` with full sorted list, pull-to-refresh
+- [ ] SpaceDetailScreen shows entry coverage ("X of Y entries synthesized")
+- [ ] CompileStatusCard shows health score from last lint
+- [ ] Page cards show freshness-colored relative time
+- [ ] Auto-assign errors don't block ingest pipeline
+- [ ] No `any` types, `tv()` variants where applicable
+- [ ] `pnpm typecheck` passes (server + mobile)
+- [ ] Full compile produces fewer, broader spaces than before (manual verification)
 
 ---
 
-## Auth Guard Pattern
+## Verification
 
-Auth guards live in the layout, not in individual screens.
-
-```ts
-// app/(tabs)/_layout.tsx
-import { Redirect } from 'expo-router'
-import { useAuthStore } from '@/stores/providers/auth-provider'
-
-export default function TabsLayout() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-
-  if (!isAuthenticated) {
-    return <Redirect href="/(auth)/login" />
-  }
-
-  return <Tabs />
-}
-```
-
-This means screens inside `(tabs)` never need to handle unauthenticated state — the layout guarantees it.
-
----
-
-## Adding a New Route — Checklist
-
-1. Create the screen in `features/[feature]/screens/ScreenName/index.tsx` (default export the screen — not a barrel file).
-2. Create the route file in `app/` — **one** default export that imports the screen from its **concrete path** (e.g. `@/features/.../screens/ScreenName`) and renders it; no other logic.
-3. If the route needs a new group or layout, add `_layout.tsx` to that group.
-4. If the route is protected, add the auth guard to the group layout — not the screen.
-
-**Do not** add `features/<feature>/index.ts` (or similar) only to re-export screens for shorter imports — see [STRUCTURE.md](./STRUCTURE.md#no-barrel-files).
+1. **Curator improvements**: Run full compile on existing 59 entries → verify spaces are broader and better named than the 14 from benchmark
+2. **Auto-assign**: Create a new entry via API → verify it appears in a space without manual compile
+3. **Auto-assign failure**: Mock LLM failure → verify entry still ingests successfully
+4. **SpacesScreen**: Open app → see pinned section (if any), sorted spaces, All Wiki Pages card
+5. **Pin/unpin**: Long-press space → pin → verify it moves to pinned section
+6. **AllWikiPagesScreen**: Tap "View all" → see all pages sorted by date, pull to refresh
+7. **Quality signals**: Check page cards for freshness color, SpaceDetailScreen for coverage, CompileStatusCard for health
+8. **Typecheck**: `pnpm typecheck` passes

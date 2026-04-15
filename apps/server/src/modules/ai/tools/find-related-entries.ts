@@ -1,5 +1,6 @@
 import { db, sql } from '@mymemory/db';
-import { entries, embeddings } from '@mymemory/db/schema';
+import { embeddings } from '@mymemory/db/schema/embeddings';
+import { entries } from '@mymemory/db/schema/entries';
 
 /**
  * Finds the most semantically related entries to a given embedding.

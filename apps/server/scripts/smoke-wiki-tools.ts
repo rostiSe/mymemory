@@ -7,7 +7,9 @@
 import 'dotenv/config';
 
 import { closeDb, db, eq } from '@mymemory/db';
-import { entries, spaces, wikiPages } from '@mymemory/db/schema';
+import { entries } from '@mymemory/db/schema/entries';
+import { spaces } from '@mymemory/db/schema/spaces';
+import { wikiPages } from '@mymemory/db/schema/wiki-pages';
 import {
   buildCuratorTools,
   buildLinterTools,

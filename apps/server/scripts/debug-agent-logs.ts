@@ -5,7 +5,8 @@
 import "dotenv/config";
 import { db, eq, and, desc } from "@mymemory/db";
 import { closeDb } from "@mymemory/db";
-import { agentLogs, entries } from "@mymemory/db/schema";
+import { agentLogs } from "@mymemory/db/schema/agent-logs";
+import { entries } from "@mymemory/db/schema/entries";
 
 async function main() {
   const userId = process.argv[2];

@@ -33,7 +33,7 @@ export function AgentLogViewer({ runId }: AgentLogViewerProps) {
   const [limit, setLimit] = useState(100);
   const [levels, setLevels] = useState(() => new Set<WikiAgentLog["level"]>(ALL_LEVELS));
 
-  const { data: logs = [], isPending } = useWikiLogs(runId, limit, true);
+  const { data: logs, isPending, error } = useWikiLogs(runId, limit, true);
 
   const toggleLevel = useCallback((lvl: WikiAgentLog["level"]) => {
     setLevels((prev) => {
@@ -45,7 +45,7 @@ export function AgentLogViewer({ runId }: AgentLogViewerProps) {
   }, []);
 
   const filtered = useMemo(
-    () => logs.filter((row) => levels.has(row.level)),
+    () => (logs ?? []).filter((row) => levels.has(row.level)),
     [logs, levels],
   );
 
@@ -74,7 +74,14 @@ export function AgentLogViewer({ runId }: AgentLogViewerProps) {
         ))}
       </View>
 
-      {isPending ? (
+      {error ? (
+        <View className="rounded-lg border border-border bg-surface-secondary p-4">
+          <Text className="text-foreground font-semibold">Could not load logs</Text>
+          <Text className="text-sm text-muted" selectable>
+            {error instanceof Error ? error.message : "Request failed"}
+          </Text>
+        </View>
+      ) : isPending ? (
         <ActivityIndicator className="py-4" />
       ) : filtered.length === 0 ? (
         <Text className="text-muted py-4 text-sm">No log lines for this filter.</Text>

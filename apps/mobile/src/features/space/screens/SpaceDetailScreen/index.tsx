@@ -1,13 +1,15 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
 import { MaturityBadge } from "@/features/wiki/components/MaturityBadge";
 import { PageTypeBadge } from "@/features/wiki/components/PageTypeBadge";
-import { useCompilationStatus } from "@/features/wiki/hooks/useWikiPages";
+import {
+  useCompilationStatus,
+  useWikiPages,
+} from "@/features/wiki/hooks/useWikiPages";
 import {
   estimateSectionCount,
   readMaturityFromProperties,
 } from "@/features/wiki/types";
 import { useSpace } from "@/features/space/hooks/useSpaces";
-import { useWikiPages } from "@/features/wiki/hooks/useWikiPages";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Card, Chip } from "heroui-native";
 import { Pressable, Text, View } from "react-native";
@@ -23,7 +25,8 @@ export default function SpaceDetailScreen() {
   const router = useRouter();
   const { data: space, isPending: spacePending, isError: spaceError, error: spaceErr } =
     useSpace(spaceId);
-  const { data: pages = [], isPending: pagesPending } = useWikiPages(spaceId);
+  const { data: pages, isPending: pagesPending, error: pagesError } =
+    useWikiPages(spaceId);
   const { data: compileStatus } = useCompilationStatus();
 
   if (!spaceId) {
@@ -83,15 +86,22 @@ export default function SpaceDetailScreen() {
         ) : null}
 
         <Text className="text-foreground mt-6 text-sm font-semibold">Wiki pages</Text>
-        {pagesPending ? (
+        {pagesError ? (
+          <View className="mt-2 rounded-lg border border-border bg-surface-secondary p-4">
+            <Text className="text-foreground font-semibold">Could not load wiki pages</Text>
+            <Text className="text-sm text-muted" selectable>
+              {pagesError instanceof Error ? pagesError.message : "Request failed"}
+            </Text>
+          </View>
+        ) : pagesPending ? (
           <Text className="text-muted mt-2 text-sm">Loading pages…</Text>
-        ) : pages.length === 0 ? (
+        ) : (pages?.length ?? 0) === 0 ? (
           <Text className="text-muted mt-2 text-sm" selectable>
             No wiki pages yet. Compile your wiki to generate pages.
           </Text>
         ) : (
           <View className="mt-3 gap-3">
-            {pages.map((page) => {
+            {(pages ?? []).map((page) => {
               const maturity = readMaturityFromProperties(page.properties);
               const sections = estimateSectionCount(page);
               return (

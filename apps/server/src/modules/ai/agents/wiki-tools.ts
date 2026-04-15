@@ -1,19 +1,13 @@
 import { and, desc, eq, inArray, ne, sql } from '@mymemory/db';
 import type { db as databaseClient } from '@mymemory/db';
 import { tool } from 'ai';
-import {
-  agentLogs,
-  entries,
-  entrySpaces,
-  entryTags,
-  entryTopics,
-  spaceWikiPages,
-  spaces,
-  tags,
-  topics,
-  wikiPageVersions,
-  wikiPages,
-} from '@mymemory/db/schema';
+import { agentLogs } from '@mymemory/db/schema/agent-logs';
+import { entries } from '@mymemory/db/schema/entries';
+import { entrySpaces, spaces } from '@mymemory/db/schema/spaces';
+import { spaceWikiPages } from '@mymemory/db/schema/space-wiki-pages';
+import { entryTags, tags } from '@mymemory/db/schema/tags';
+import { entryTopics, topics } from '@mymemory/db/schema/topics';
+import { wikiPageVersions, wikiPages } from '@mymemory/db/schema/wiki-pages';
 import { z } from 'zod';
 import type {
   ComparisonContent,

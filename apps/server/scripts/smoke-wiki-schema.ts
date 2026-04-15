@@ -10,7 +10,9 @@
 import 'dotenv/config';
 
 import { and, closeDb, db, eq, or } from '@mymemory/db';
-import { spaceWikiPages, spaces, wikiPageVersions, wikiPages } from '@mymemory/db/schema';
+import { spaceWikiPages } from '@mymemory/db/schema/space-wiki-pages';
+import { spaces } from '@mymemory/db/schema/spaces';
+import { wikiPageVersions, wikiPages } from '@mymemory/db/schema/wiki-pages';
 
 class UsageError extends Error {
   constructor() {

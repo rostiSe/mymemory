@@ -14,6 +14,12 @@ export default defineConfig({
   // You can override this on an individual task.
   // See https://trigger.dev/docs/runs/max-duration
   maxDuration: 3600,
+  build: {
+    autoDetectExternal: true,
+    keepNames: true,
+    minify: false,
+    extensions: [],
+  },
   retries: {
     enabledInDev: true,
     default: {
@@ -25,4 +31,22 @@ export default defineConfig({
     },
   },
   dirs: ["./src/trigger"],
+  /**
+   * Global lifecycle hooks on `defineConfig` use `onStart` (first task execution per run).
+   * Per-retry `onStartAttempt` is registered via `tasks.onStartAttempt` in task code, not here.
+   * @see https://trigger.dev/docs/config/config-file#lifecycle-functions
+   */
+  onStart: async (run) => {
+    void run.ctx.run.id;
+    void run.payload;
+    void run.task;
+  },
+  onSuccess: async (run) => {
+    void run.ctx.run.id;
+    void run.output;
+  },
+  onFailure: async (run) => {
+    void run.ctx.run.id;
+    void run.error;
+  },
 });
