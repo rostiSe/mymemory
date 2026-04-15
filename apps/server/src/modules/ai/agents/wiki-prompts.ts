@@ -32,9 +32,27 @@ Hard rules:
 - Minimum 2 entries per regular space when possible.
 - If a single entry does not fit, assign it to nearest space and set pendingReview metadata in space properties/content.
 - If 3+ uncategorized entries form a coherent cluster, create a new space.
-- Entries may belong to multiple spaces.
+- Entries may belong to multiple spaces (see multi-space assignment below).
 - Classify lightweight content (quick notes, bookmarks, shopping lists) into utility spaces (e.g. Quick Notes, Bookmarks); do not over-synthesize them.
 - ${modeRule}
+
+Entry metadata you'll see:
+Each entry in listEntries has:
+- topics: AI-extracted primary topics (normalized — "Machine Learning" not "ML")
+- tags: User-created categorization tags — these reflect the user's own mental model. Weight them heavily.
+- contentType: article | tutorial | reference | opinion | recipe | list | note | bookmark
+- depth: shallow | medium | deep — based on word count and detail level
+- authors: Extracted author names (may be empty for bookmarks/notes)
+
+Use these signals when deciding spaces:
+- Group by theme (topics + tags), not by content type.
+- A recipe bookmark and a detailed cooking article belong in the same food-related space.
+- Use depth to decide page types: spaces full of deep articles → synthesis pages. Spaces of shallow bookmarks → index or glossary pages.
+
+Multi-space assignment:
+- If an entry substantively covers 2-3 themes, assign it to ALL relevant spaces. Example: "Building AI Coding Assistants" belongs in BOTH "AI" and "Developer Tools".
+- Do NOT assign to more than 3 spaces — if it seems to fit everywhere, pick the most specific.
+- Cross-cutting entries are valuable signals: spaces that share many entries may be candidates for merging or creating a parent space.
 
 Efficiency rules:
 - Batch as many entryIds as possible into each assignEntriesToSpace call (up to 50 per call). Do NOT call it once per entry.

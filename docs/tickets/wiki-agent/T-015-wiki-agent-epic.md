@@ -60,6 +60,8 @@ User presses "Compile Wiki"
 
 ## Child tickets
 
+### Foundation phase
+
 | ID | Ticket | Type | Phase |
 |----|--------|------|-------|
 | [T-015a](./T-015a-schema-migration.md) | Schema + Migration + Content Versioning | schema | Foundation |
@@ -67,21 +69,46 @@ User presses "Compile Wiki"
 | [T-015c](./T-015c-agents-orchestrator.md) | 3 Agent Prompts + Orchestrator | feature (server) | Foundation |
 | [T-015d](./T-015d-contract-router.md) | oRPC Contract + Router + Service | feature (server) | Foundation |
 | [T-015e](./T-015e-smoke-test.md) | Smoke Test + Iteration | validation | Validation |
-| [T-015f](./T-015f-mobile-wiki-rendering.md) | Mobile: Wiki Page Rendering | feature (mobile) | Mobile |
-| [T-015g](./T-015g-mobile-compile-lint-ui.md) | Mobile: Compile/Lint UI | feature (mobile) | Mobile |
-| [T-015h](./T-015h-mobile-properties-editor.md) | Mobile: Properties Editor | feature (mobile) | Mobile |
+
+### Mobile phase
+
+| ID | Ticket | Type | Phase |
+|----|--------|------|-------|
+| [T-015f](./T-015f-wiki-page-rendering.md) | Mobile: Wiki Page Rendering | feature (mobile) | Mobile |
+| [T-015g](./T-015g-compile-lint-ui.md) | Mobile: Compile/Lint UI | feature (mobile) | Mobile |
+| [T-015h](./T-015h-delete-ops-wiki-listing.md) | Mobile: Delete Ops + Wiki Listing | feature (mobile) | Mobile |
+
+### Quality phase
+
+| ID | Ticket | Type | Phase |
+|----|--------|------|-------|
+| [T-015i](./T-015i-metadata-foundation.md) | Metadata Foundation (authors, contentType, depth, topic normalization, reset script) | enhancement (server) | Quality |
+| T-015j | Auto-Assign + Review Queue | feature (server + mobile) | Quality |
+| [T-015k](./T-015k-space-hierarchy-curator-overhaul.md) | Space Hierarchy + Curator Overhaul | feature (server + mobile) | Quality |
+| T-015l | SpacesScreen Redesign (grouped by parent, quality signals) | feature (mobile) | Quality |
+| T-015m | Delete Operations (space, page, section) | feature (mobile) | Quality |
 
 ### Dependency flow
 
 ```
-T-015a (Schema)
-  └→ T-015b (Tools + Templates)
-       └→ T-015c (3 Agents + Orchestrator)
-            └→ T-015d (Contract + Router)
-                 └→ T-015e (Smoke Test)
-                      └→ T-015f (Mobile: Rendering)
-                           ├→ T-015g (Mobile: Compile/Lint)
-                           └→ T-015h (Mobile: Properties)
+Foundation:
+  T-015a (Schema)
+    └→ T-015b (Tools + Templates)
+         └→ T-015c (3 Agents + Orchestrator)
+              └→ T-015d (Contract + Router)
+                   └→ T-015e (Smoke Test)
+
+Mobile:
+  T-015e └→ T-015f (Mobile: Rendering)
+              ├→ T-015g (Mobile: Compile/Lint)
+              └→ T-015h (Mobile: Delete Ops + Wiki Listing)
+
+Quality:
+  T-015g └→ T-015i (Metadata Foundation)
+              ├→ T-015j (Auto-Assign + Review Queue)
+              └→ T-015k (Space Hierarchy + Curator Overhaul)
+                   └→ T-015l (SpacesScreen Redesign)
+  T-015j + T-015k └→ T-015m (Delete Operations)
 ```
 
 ---

@@ -98,12 +98,11 @@ export async function processEntry(entryId: string, userId: string) {
     const [existingTagRows, existingTopicRows] = await Promise.all([
       db.select({ name: tags.name }).from(tags).where(eq(tags.userId, userId)),
       db
-        .select({ name: topics.name })
+        .select({ name: topics.name, description: topics.description })
         .from(topics)
         .where(eq(topics.userId, userId)),
     ]);
     const existingTags = existingTagRows.map((t) => t.name);
-    const existingTopics = existingTopicRows.map((t) => t.name);
 
     const imageUrls = collectImageUrls(extractionMetadata, rawMarkdown);
 
@@ -111,7 +110,7 @@ export async function processEntry(entryId: string, userId: string) {
       analyzeContent({
         markdown: readableContent,
         existingTags,
-        existingTopics,
+        existingTopics: existingTopicRows,
         imageUrls,
       }),
       generateEmbedding(readableContent),
@@ -125,6 +124,9 @@ export async function processEntry(entryId: string, userId: string) {
       language,
       title: generatedTitle,
       heroImageUrl,
+      contentType,
+      depth,
+      authors,
     } = analysis;
 
     const extractedCover = extractCoverImage(extractionMetadata, rawMarkdown);
@@ -169,6 +171,9 @@ export async function processEntry(entryId: string, userId: string) {
           summary,
           wordCount,
           language: language ?? null,
+          contentType,
+          depth,
+          authors,
           processedStatus: "done",
         })
         .where(eq(entries.id, entryId));

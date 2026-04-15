@@ -36,6 +36,13 @@
       "when": 1776191207676,
       "tag": "0004_spaces_user_name_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776289864425,
+      "tag": "0005_0005_t015i_entry_metadata",
+      "breakpoints": true
     }
   ]
 }

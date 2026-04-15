@@ -61,13 +61,19 @@ a concise descriptive headline (not the site name or a URL — a real headline c
 a concise summary, key takeaways (specific claims, numbers, or techniques — not vague restatements),
 relevant tags for categorization, the primary topics discussed, the ISO 639-1 language code (e.g. en, es, de, fr),
 and the URL of the best content image if one exists (not logos, avatars, or icons).
-When existing tags or topics are provided, prefer reusing them over inventing new ones.`;
+Classify the content type (article, tutorial, reference, opinion, recipe, list, note, bookmark)
+and depth (shallow/medium/deep based on word count and detail level).
+Extract author names from bylines or metadata when available.
+When existing tags are provided, prefer reusing them over inventing new ones.
+When existing topics are listed with descriptions, you MUST reuse an existing topic name when it covers the same
+concept — even if you'd phrase it differently. "ML" and "Machine Learning" are the same topic;
+use whichever already exists (exact spelling of the existing name). Only create a new topic when no existing one covers the concept.`;
 }
 
 export type AnalyzeContentUserPromptOpts = {
   markdown: string;
   existingTags?: string[];
-  existingTopics?: string[];
+  existingTopics?: Array<{ name: string; description: string | null }>;
   /** Image URLs found in the page (OG + markdown); model picks the best hero or null. */
   imageUrls?: string[];
 };
@@ -78,7 +84,7 @@ export function analyzeContentUserPrompt(
 ): string {
   const content = opts.markdown.slice(0, MAX_CONTENT_CHARS);
   const existingTags = opts.existingTags ?? [];
-  const existingTopics = opts.existingTopics ?? [];
+  const existingTopicsWithDescriptions = opts.existingTopics ?? [];
   const sections: string[] = [];
 
   if (existingTags.length > 0) {
@@ -86,9 +92,14 @@ export function analyzeContentUserPrompt(
       `Existing tags in the system (prefer reusing these if relevant): ${existingTags.join(", ")}`,
     );
   }
-  if (existingTopics.length > 0) {
+  if (existingTopicsWithDescriptions.length > 0) {
+    const topicList = existingTopicsWithDescriptions
+      .map((t) => `- "${t.name}": ${t.description ?? 'no description'}`)
+      .join('\n');
     sections.push(
-      `Existing topics in the system (prefer reusing names if relevant): ${existingTopics.join(", ")}`,
+      'Existing topics in the system. You MUST reuse an existing topic name when the meaning matches, '
+        + 'even if the wording differs (e.g. use "Machine Learning" instead of creating "ML"):\n'
+        + topicList,
     );
   }
 

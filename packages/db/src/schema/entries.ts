@@ -47,6 +47,13 @@ export const entries = pgTable('entries', {
   // Content metrics
   wordCount: integer('word_count'),
   language: varchar('language', { length: 10 }),
+
+  /** AI-extracted content classification (see analyzeContent schema). */
+  contentType: varchar('content_type', { length: 20 }),
+  /** AI-extracted depth: shallow | medium | deep. */
+  depth: varchar('depth', { length: 10 }),
+  /** Up to 5 author names from bylines / metadata. */
+  authors: jsonb('authors').$type<string[]>(),
 });
 
 // Zod schemas for easy API validation

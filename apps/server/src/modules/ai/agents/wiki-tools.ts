@@ -282,6 +282,9 @@ function createTools(db: Database, userId: string, runId: string) {
           summary: entries.summary,
           wordCount: entries.wordCount,
           type: entries.type,
+          contentType: entries.contentType,
+          depth: entries.depth,
+          authors: entries.authors,
           createdAt: entries.createdAt,
         })
         .from(entries)
@@ -335,6 +338,9 @@ function createTools(db: Database, userId: string, runId: string) {
           tags: tagsByEntry.get(row.id) ?? [],
           wordCount: row.wordCount,
           type: row.type,
+          contentType: row.contentType,
+          depth: row.depth,
+          authors: row.authors,
           createdAt: row.createdAt,
         })),
         total: Number(totalRow?.total ?? 0),

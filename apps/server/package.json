@@ -13,6 +13,7 @@
     "smoke:wiki-tools": "tsx scripts/smoke-wiki-tools.ts",
     "smoke:wiki-compile": "tsx scripts/smoke-wiki-compile.ts",
     "smoke:wiki-lint": "tsx scripts/smoke-wiki-lint.ts",
+    "reset:wiki": "tsx scripts/reset-wiki-data.ts",
     "trigger:dev": "pnpm dlx trigger.dev@latest dev"
   },
   "dependencies": {

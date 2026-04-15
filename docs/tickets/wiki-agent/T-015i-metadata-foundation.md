@@ -1,6 +1,6 @@
 # T-015i: Enhanced Entry Metadata + Topic Normalization
 
-**Status:** pending  
+**Status:** in-progress  
 **Phase:** Server (ingest pipeline + curator tools)  
 **Type:** enhancement  
 **Epic:** [T-015 Wiki Agent](./T-015-wiki-agent-epic.md)  
@@ -22,7 +22,8 @@ The wiki agent's organization quality is bottlenecked by **weak entry metadata**
 Entry created → extract content → clean → analyzeContent() → generateEmbedding → findRelatedEntries
                                             ↓
                                   summary, keyPoints, tags, topics (1-5),
-                                  language, title, heroImageUrl
+                                  language, title, heroImageUrl,
+                                  authors, contentType, depth
                                             ↓
                                   Transaction: save tags, topics, embedding,
                                   space_suggestion, entry_relations
@@ -47,6 +48,7 @@ Entry created → extract content → clean → analyzeContent() → generateEmb
 | **Topic normalization** | "ML", "Machine Learning", "machine learning" are 3 separate topics. 59 entries produce ~80 fragmented topics. Curator sees noise. |
 | **Content type** | `url \| note` is useless. A recipe bookmark and a deep AI paper get identical treatment. |
 | **Depth signal** | No way to distinguish a 200-word bookmark from a 5000-word analysis. |
+| **Authors** | No way to know who wrote the content. The curator can't recognize "3 entries by Karpathy" or attribute insights in wiki pages. |
 | **Tags in curator** | User's own mental model (tags) is invisible to the curator. |
 | **contentType + depth in curator** | Curator can't decide "this space is all shallow bookmarks, write an index" vs "this space is deep articles, write a synthesis". |
 
@@ -62,7 +64,7 @@ Returns per entry: `id, title, summary, topics[], tags[], wordCount, type, creat
 
 ## Scope
 
-### 1. Extend `analyzeContent` schema — add `contentType` and `depth`
+### 1. Extend `analyzeContent` schema — add `contentType`, `depth`, and `authors`
 
 **File:** `apps/server/src/modules/ai/tools/analyze-content.ts`
 
@@ -87,6 +89,11 @@ depth: z.enum(['shallow', 'medium', 'deep']).describe(
   + '"medium" = 500-2000 words, moderate detail. '
   + '"deep" = 2000+ words, thorough analysis, research, or detailed guide.'
 ),
+authors: z.array(z.string()).max(5).describe(
+  'Author names extracted from bylines, "written by", or metadata. '
+  + 'Use full names when available (e.g. "Andrej Karpathy", not "karpathy"). '
+  + 'Empty array if no author is identifiable.'
+),
 ```
 
 **Zero extra cost** — same LLM call, more structured output fields.
@@ -98,9 +105,10 @@ Update `analyzeContentSystemPrompt()` to mention the new fields:
 ```
 ... and classify the content type (article, tutorial, reference, opinion, recipe, list, note, bookmark)
 and depth (shallow/medium/deep based on word count and detail level).
+Extract author names from bylines or metadata when available.
 ```
 
-### 2. Add `contentType` and `depth` columns to entries table
+### 2. Add `contentType`, `depth`, and `authors` columns to entries table
 
 **File:** `packages/db/src/schema/entries.ts`
 
@@ -108,6 +116,7 @@ and depth (shallow/medium/deep based on word count and detail level).
 // New columns
 contentType: varchar('content_type', { length: 20 }),  // nullable — old entries won't have it
 depth: varchar('depth', { length: 10 }),                // nullable — old entries won't have it
+authors: jsonb('authors').$type<string[]>(),            // nullable — old entries won't have it
 ```
 
 **File:** `packages/db/src/schema/enums.ts`
@@ -116,9 +125,9 @@ Add enums (or use varchar — varchar is simpler since these are analysis output
 
 Decision: Use **varchar** (not pgEnum) because these are AI-extracted classifications that may evolve. Enums require migrations to add values; varchar is flexible. Zod validates at the application layer.
 
-**Migration:** `drizzle-kit generate` → new migration adding two nullable varchar columns.
+**Migration:** `drizzle-kit generate` → new migration adding three nullable columns.
 
-### 3. Save contentType and depth in ingest pipeline
+### 3. Save contentType, depth, and authors in ingest pipeline
 
 **File:** `apps/server/src/modules/ai/pipelines/ingest.ts`
 
@@ -127,6 +136,7 @@ In the transaction where the entry is updated (line ~162-178), add:
 ```typescript
 contentType: analysis.contentType,
 depth: analysis.depth,
+authors: analysis.authors,
 ```
 
 ### 4. Topic normalization via LLM (in analyzeContent prompt)
@@ -193,20 +203,22 @@ concept — even if you'd phrase it differently. "ML" and "Machine Learning" are
 use whichever already exists. Only create a new topic when no existing one covers the concept.
 ```
 
-### 5. Feed tags + contentType + depth to curator's `listEntries` tool
+### 5. Feed tags + contentType + depth + authors to curator's `listEntries` tool
 
 **File:** `apps/server/src/modules/ai/agents/wiki-tools.ts`
 
-In the `listEntries` tool, the SELECT already fetches `type`. Add `contentType` and `depth`:
+In the `listEntries` tool, the SELECT already fetches `type`. Add `contentType`, `depth`, and `authors`:
 
 ```typescript
 // In the select (line ~284-291):
 contentType: entries.contentType,
 depth: entries.depth,
+authors: entries.authors,
 
 // In the return mapping (line ~336-348):
 contentType: row.contentType,
 depth: row.depth,
+authors: row.authors,
 ```
 
 Tags are already fetched and returned. No change needed there.
@@ -225,11 +237,20 @@ Each entry in listEntries has:
 - **tags**: User-created categorization tags — these reflect the user's own mental model. Weight them heavily.
 - **contentType**: article | tutorial | reference | opinion | recipe | list | note | bookmark
 - **depth**: shallow | medium | deep — based on word count and detail level
+- **authors**: Extracted author names (may be empty for bookmarks/notes)
 
 Use these signals when deciding spaces:
 - Group by theme (topics + tags), not by content type
 - A recipe bookmark and a detailed cooking article belong in the same food-related space
 - Use depth to decide page types: spaces full of deep articles → synthesis pages. Spaces of shallow bookmarks → index or glossary pages.
+
+## Multi-space assignment
+
+- If an entry substantively covers 2-3 themes, assign it to ALL relevant spaces.
+  Example: "Building AI Coding Assistants" belongs in BOTH "AI" and "Developer Tools".
+- Do NOT assign to more than 3 spaces — if it seems to fit everywhere, pick the most specific.
+- Cross-cutting entries are valuable signals: spaces that share many entries may be candidates
+  for merging or creating a parent space (future capability).
 ```
 
 ### 7. Wiki data reset script
@@ -271,23 +292,23 @@ Use these signals when deciding spaces:
 
 | File | Change |
 |------|--------|
-| `apps/server/src/modules/ai/tools/analyze-content.ts` | Add `contentType`, `depth` to schema; change `existingTopics` type to include descriptions |
+| `apps/server/src/modules/ai/tools/analyze-content.ts` | Add `contentType`, `depth`, `authors` to schema; change `existingTopics` type to include descriptions |
 | `apps/server/src/modules/ai/prompts.ts` | Update `analyzeContentSystemPrompt` and `analyzeContentUserPrompt` for new fields + topic normalization instructions |
-| `apps/server/src/modules/ai/pipelines/ingest.ts` | Save `contentType`, `depth`; pass topic descriptions to `analyzeContent` |
-| `apps/server/src/modules/ai/agents/wiki-tools.ts` | Add `contentType`, `depth` to `listEntries` tool output |
-| `apps/server/src/modules/ai/agents/wiki-prompts.ts` | Document new metadata fields in curator prompt |
+| `apps/server/src/modules/ai/pipelines/ingest.ts` | Save `contentType`, `depth`, `authors`; pass topic descriptions to `analyzeContent` |
+| `apps/server/src/modules/ai/agents/wiki-tools.ts` | Add `contentType`, `depth`, `authors` to `listEntries` tool output |
+| `apps/server/src/modules/ai/agents/wiki-prompts.ts` | Document new metadata fields + multi-assignment guidance in curator prompt |
 
 ### Schema — modified files
 
 | File | Change |
 |------|--------|
-| `packages/db/src/schema/entries.ts` | Add `contentType` (varchar 20) and `depth` (varchar 10) columns, both nullable |
+| `packages/db/src/schema/entries.ts` | Add `contentType` (varchar 20), `depth` (varchar 10), and `authors` (jsonb) columns, all nullable |
 
 ### Migration
 
 | File | What |
 |------|------|
-| New drizzle migration | Add `content_type` and `depth` columns to `entries` table |
+| New drizzle migration | Add `content_type`, `depth`, and `authors` columns to `entries` table |
 
 ---
 
@@ -319,16 +340,17 @@ Use these signals when deciding spaces:
 
 ## DoD
 
-- [ ] `analyzeContent` schema includes `contentType` (8 values) and `depth` (3 values)
-- [ ] `analyzeContentSystemPrompt` mentions content classification and depth
+- [ ] `analyzeContent` schema includes `contentType` (8 values), `depth` (3 values), and `authors` (string[], max 5)
+- [ ] `analyzeContentSystemPrompt` mentions content classification, depth, and author extraction
 - [ ] `analyzeContentUserPrompt` passes existing topics with descriptions (not just names)
 - [ ] Prompt instructs LLM to reuse existing topic names when meanings match
-- [ ] `entries` table has nullable `content_type` and `depth` varchar columns
+- [ ] `entries` table has nullable `content_type`, `depth`, and `authors` columns
 - [ ] Migration generated and runs cleanly
-- [ ] `ingest.ts` saves `contentType` and `depth` to entry record
+- [ ] `ingest.ts` saves `contentType`, `depth`, and `authors` to entry record
 - [ ] `ingest.ts` queries topic descriptions and passes them to `analyzeContent`
-- [ ] `listEntries` wiki tool returns `contentType` and `depth` per entry
+- [ ] `listEntries` wiki tool returns `contentType`, `depth`, and `authors` per entry
 - [ ] Curator prompt documents the new metadata fields and how to use them
+- [ ] Curator prompt includes multi-space assignment guidance (2-3 spaces max for cross-cutting entries)
 - [ ] `reset-wiki-data.ts` script exists with `--confirm` safety flag
 - [ ] No `any` types introduced
 - [ ] `pnpm typecheck` passes (server + shared)
@@ -339,9 +361,9 @@ Use these signals when deciding spaces:
 
 Verification is minimal for this ticket (infrastructure only). Full validation happens in T-015k (curator overhaul + recompile + benchmark).
 
-1. **Ingest a new test entry** → verify `contentType` and `depth` are saved on the entry record
+1. **Ingest a new test entry** → verify `contentType`, `depth`, and `authors` are saved on the entry record
 2. **Check topic creation** → if an entry's topics match existing ones, verify the LLM reuses existing names (check `topics` table for new duplicates)
-3. **Run `listEntries` via wiki tools** → verify `contentType` and `depth` appear in output
+3. **Run `listEntries` via wiki tools** → verify `contentType`, `depth`, and `authors` appear in output
 4. **Run `reset-wiki-data --confirm`** → verify all wiki data is deleted for the user
 5. **Typecheck**: `pnpm typecheck` passes
 
@@ -351,16 +373,16 @@ Verification is minimal for this ticket (infrastructure only). Full validation h
 
 ```
 T-015i  Metadata Foundation (this ticket)
-  → Topic normalization, contentType, depth, curator data enrichment, reset script
+  → Topic normalization, contentType, depth, authors, curator data enrichment, multi-assignment guidance, reset script
 
 T-015j  Auto-Assign + Review Queue
   → LLM auto-assign after ingest, confidence scoring, review queue UI
 
-T-015k  Curator Overhaul + Recompile + Benchmark
-  → Merge rules, naming, stability prompts, reset, full compile, compare to old benchmark
+T-015k  Space Hierarchy + Curator Overhaul
+  → setSpaceParent tool, space_relations population, merge rules, naming stability, recompile + benchmark
 
 T-015l  SpacesScreen Redesign
-  → Pinned spaces, sorted list, All Wiki Pages card, quality signals
+  → Grouped by parent spaces, pinned spaces, sorted list, All Wiki Pages card, quality signals
 
 T-015m  Delete Operations (current T-015h content)
   → Delete space/page/section, danger confirmation sheets

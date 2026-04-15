@@ -55,6 +55,36 @@ export const analyzeContentSchema = z.object({
         + 'EXCLUDE: site logos, favicons, author avatars, social media icons, '
         + 'tracking pixels, ads, and generic stock banners.',
     ),
+  contentType: z
+    .enum([
+      'article',
+      'tutorial',
+      'reference',
+      'opinion',
+      'recipe',
+      'list',
+      'note',
+      'bookmark',
+    ])
+    .describe(
+      'What kind of content this is. "bookmark" if there is very little readable text (< 200 words). '
+        + '"note" for personal unstructured writing. Pick the most specific type that fits.',
+    ),
+  depth: z
+    .enum(['shallow', 'medium', 'deep'])
+    .describe(
+      'Content depth: "shallow" = surface-level, < 500 words, brief overview or bookmark. '
+        + '"medium" = 500-2000 words, moderate detail. '
+        + '"deep" = 2000+ words, thorough analysis, research, or detailed guide.',
+    ),
+  authors: z
+    .array(z.string())
+    .max(5)
+    .describe(
+      'Author names extracted from bylines, "written by", or metadata. '
+        + 'Use full names when available (e.g. "Andrej Karpathy", not "karpathy"). '
+        + 'Empty array if no author is identifiable.',
+    ),
 });
 
 export type AnalyzeContentResult = z.infer<typeof analyzeContentSchema>;
@@ -73,7 +103,7 @@ function normalizeHeroImageUrl(value: string | null): string | null {
 export async function analyzeContent(opts: {
   markdown: string;
   existingTags?: string[];
-  existingTopics?: string[];
+  existingTopics?: Array<{ name: string; description: string | null }>;
   imageUrls?: string[];
 }): Promise<AnalyzeContentResult> {
   try {
