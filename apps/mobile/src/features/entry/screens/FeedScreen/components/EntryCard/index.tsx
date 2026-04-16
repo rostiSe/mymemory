@@ -1,7 +1,10 @@
-import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
 import { MaxLinesFadeClamp } from "@/components/ui/MaxLinesFadeClamp";
 import type { EntryRow } from "@/features/entry/types";
-import { FEED_ENTRY_CARD_COVER_HEIGHT_PX } from "@/theme/layout-imperative";
+import { stripMarkdownToPlainText } from "@/features/entry/utils/stripMarkdownToPlainText";
+import {
+  FEED_ENTRY_CARD_COVER_HEIGHT_PX,
+  MARKDOWN_PARAGRAPH_LINE_HEIGHT_PX,
+} from "@/theme/layout-imperative";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import {
@@ -11,7 +14,7 @@ import {
   SkeletonGroup,
   useThemeColor,
 } from "heroui-native";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 interface EntryCardProps {
@@ -63,6 +66,13 @@ export default function EntryCard({
 
   const showProcessingChip =
     processedStatus === "pending" || processedStatus === "processing";
+
+  // Plain-text summary: native markdown view was the primary Android crash source
+  // under FlashList recycling (T-013 follow-up). Feed cards now render a simple Text.
+  const plainSummary = useMemo(
+    () => stripMarkdownToPlainText(summary ?? ""),
+    [summary],
+  );
 
   return (
     <Card className="bg-surface-secondary overflow-hidden rounded-md border border-accent-soft p-0 ">
@@ -147,11 +157,13 @@ export default function EntryCard({
               showFadeGradient
               fadeEndColor={surfaceSecondaryColor}
             >
-              <MarkdownRenderer
-                variant="excerpt"
-                className="text-xs"
-                markdown={summary || "No summary available."}
-              />
+              <Text
+                className="text-foreground text-xs"
+                style={styles.summaryText}
+                numberOfLines={4}
+              >
+                {plainSummary || "No summary available."}
+              </Text>
             </MaxLinesFadeClamp>
           )}
         </Card.Body>
@@ -168,5 +180,8 @@ const styles = StyleSheet.create({
   },
   coverImage: {
     ...StyleSheet.absoluteFillObject,
+  },
+  summaryText: {
+    lineHeight: MARKDOWN_PARAGRAPH_LINE_HEIGHT_PX,
   },
 });

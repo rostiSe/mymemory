@@ -285,6 +285,12 @@ export function useDeleteSpace() {
       );
       return { previousSpaces };
     },
+    onSuccess: (_data, _variables) => {
+      void queryClient.invalidateQueries({
+        predicate: (query) =>
+          JSON.stringify(query.queryKey).includes("relatedSpaces"),
+      });
+    },
     onError: (_err, _variables, context) => {
       if (context?.previousSpaces !== undefined) {
         queryClient.setQueryData(spacesListKey, context.previousSpaces);

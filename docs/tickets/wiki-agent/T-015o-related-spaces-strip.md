@@ -1,6 +1,6 @@
 # T-015o: Related Spaces Strip (shared wiki pages)
 
-**Status:** pending
+**Status:** done
 **Phase:** Quality
 **Type:** feature (server + mobile)
 **Epic:** [T-015 Wiki Agent](./T-015-wiki-agent-epic.md)
@@ -248,17 +248,17 @@ Behavior:
 
 ## DoD
 
-- [ ] `relatedSpaceSchema` + `relatedSpacesInputSchema` exported from `space.contract.ts`.
-- [ ] `spaces.relatedSpaces` endpoint present in contract and router; `authed` middleware applied.
-- [ ] `spaceService.getRelatedSpaces` enforces `user_id` equality on the joined space; excludes self; ordered by `sharedPageCount DESC, name ASC`; respects `limit` (default 5, max 20).
-- [ ] `useRelatedSpaces(spaceId)` disabled when `spaceId` is falsy; `staleTime` set.
-- [ ] `RelatedSpaceCard` uses `rounded-card`, reuses the `SpaceListRow` compile-dot color logic, shows `${sharedPageCount} shared` chip, accessible.
-- [ ] `RelatedSpacesStrip` silently renders nothing when the result array is empty.
-- [ ] `SpaceDetailScreen` renders the strip after the Wiki pages list.
-- [ ] Tapping a related card navigates to that space's detail.
+- [x] `relatedSpaceSchema` + `relatedSpacesInputSchema` exported from `space.contract.ts`.
+- [x] `spaces.relatedSpaces` endpoint present in contract and router; `authed` middleware applied.
+- [x] `spaceService.getRelatedSpaces` enforces `user_id` equality on the joined space; excludes self; ordered by `sharedPageCount DESC, name ASC`; respects `limit` (default 5, max 20).
+- [x] `useRelatedSpaces(spaceId)` disabled when `spaceId` is falsy; `staleTime` set.
+- [x] `RelatedSpaceCard` uses `rounded-card`, reuses the `SpaceListRow` compile-dot color logic, shows `${sharedPageCount} shared` chip, accessible.
+- [x] `RelatedSpacesStrip` silently renders nothing when the result array is empty.
+- [x] `SpaceDetailScreen` renders the strip after the Wiki pages list.
+- [x] Tapping a related card navigates to that space's detail.
 - [ ] No cross-user leakage — manual verification with two users sharing a common entry title but no linked pages.
-- [ ] `pnpm -w run typecheck` clean.
-- [ ] Epic Quality table links T-015o to this file.
+- [x] `pnpm -w run typecheck` clean.
+- [x] Epic Quality table links T-015o to this file.
 
 ---
 

@@ -1,5 +1,7 @@
 import {
   entryListOutputSchema,
+  relatedSpaceSchema,
+  relatedSpacesInputSchema,
   spaceContract,
   spaceListEntriesInputSchema,
   spaceMutationOkSchema,
@@ -27,6 +29,17 @@ export const spaceRouter = implement(spaceContract)
       .output(spaceSchema.nullable())
       .handler(async ({ input, context }) => {
         return spaceService.getById(context.db, context.user!.id, input);
+      }),
+    relatedSpaces: authed
+      .input(relatedSpacesInputSchema)
+      .output(z.array(relatedSpaceSchema))
+      .handler(async ({ input, context }) => {
+        return spaceService.getRelatedSpaces(
+          context.db,
+          context.user!.id,
+          input.spaceId,
+          input.limit,
+        );
       }),
     create: authed
       .input(z.object({ name: z.string(), description: z.string().optional() }))

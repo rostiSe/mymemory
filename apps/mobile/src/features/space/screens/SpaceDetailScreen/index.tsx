@@ -9,6 +9,7 @@ import {
   estimateSectionCount,
   readMaturityFromProperties,
 } from "@/features/wiki/types";
+import { RelatedSpacesStrip } from "@/features/space/components/RelatedSpacesStrip";
 import { useSpace } from "@/features/space/hooks/useSpaces";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Card, Chip } from "heroui-native";
@@ -138,6 +139,8 @@ export default function SpaceDetailScreen() {
             })}
           </View>
         )}
+
+        <RelatedSpacesStrip spaceId={spaceId} />
       </View>
     </ScreenInset>
   );

@@ -44,9 +44,23 @@ export const spaceListEntriesInputSchema = z.object({
 
 export const spaceMutationOkSchema = z.object({ success: z.literal(true) });
 
+export const relatedSpaceSchema = z.object({
+  space: spaceSchema,
+  sharedPageCount: z.number().int().positive(),
+});
+export type RelatedSpace = z.infer<typeof relatedSpaceSchema>;
+
+export const relatedSpacesInputSchema = z.object({
+  spaceId: z.uuid(),
+  limit: z.number().int().min(1).max(20).default(5).optional(),
+});
+
 export const spaceContract = oc.router({
   list: oc.output(z.array(spaceWithCountSchema)),
   getById: oc.input(z.object({ id: z.uuid() })).output(spaceSchema.nullable()),
+  relatedSpaces: oc
+    .input(relatedSpacesInputSchema)
+    .output(z.array(relatedSpaceSchema)),
   create: oc
     .input(
       z.object({

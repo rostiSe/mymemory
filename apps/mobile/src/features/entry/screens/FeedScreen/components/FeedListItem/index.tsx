@@ -3,16 +3,16 @@ import {
   FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
   FEED_CARD_SWIPE_FRICTION,
 } from "@/theme/layout-imperative";
-import type { FC } from "react";
-import { memo, useCallback, useRef } from "react";
-import { View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useThemeColor } from "heroui-native";
-import EntryCard from "../EntryCard";
+import type { FC } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
+import { View } from "react-native";
 import ReanimatedSwipeable, {
   SwipeDirection,
   type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
+import EntryCard from "../EntryCard";
 
 export type FeedListItemProps = {
   entryId: string;
@@ -53,6 +53,12 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
   const accentSoftFg = useThemeColor("accent-soft-foreground");
   const dangerColor = useThemeColor("danger");
   const swipeableRef = useRef<SwipeableMethods | null>(null);
+
+  // FlashList recycles row instances: close any in-flight swipe when the underlying
+  // entry changes so the gesture native state can't dispatch against a stale row.
+  useEffect(() => {
+    swipeableRef.current?.close();
+  }, [entryId]);
 
   const displayDate = new Date(createdAt).toLocaleDateString("de-DE", {
     day: "numeric",
@@ -107,6 +113,10 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
     },
     [entryId, isFavorited, onRequestDelete, onToggleFavorite],
   );
+
+  const handlePress = useCallback(() => {
+    onPressEntry(entryId);
+  }, [entryId, onPressEntry]);
 
   return (
     <View className="mb-4">

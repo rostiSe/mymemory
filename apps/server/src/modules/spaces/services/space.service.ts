@@ -1,14 +1,17 @@
 import type { db } from "@mymemory/db";
 import { entries } from "@mymemory/db/schema/entries";
+import { spaceWikiPages } from "@mymemory/db/schema/space-wiki-pages";
 import { entrySpaces, spaceRelations, spaces } from "@mymemory/db/schema/spaces";
 import {
   entrySchema,
+  type RelatedSpace,
   type spaceSchema,
   type spaceWithCountSchema,
 } from "@mymemory/shared/contracts";
 import { toEntry } from "../../../services/entry.service.js";
 import { ORPCError } from "@orpc/server";
-import { and, desc, eq, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, lt, ne, or, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 type Space = z.infer<typeof spaceSchema>;
@@ -123,6 +126,81 @@ export const spaceService = {
       description: row.description ?? undefined,
       centroidVector: row.centroidVector ?? undefined,
     };
+  },
+
+  async getRelatedSpaces(
+    database: typeof db,
+    userId: string,
+    spaceId: string,
+    limit = 5,
+  ): Promise<RelatedSpace[]> {
+    const [owned] = await database
+      .select({ id: spaces.id })
+      .from(spaces)
+      .where(and(eq(spaces.id, spaceId), eq(spaces.userId, userId)))
+      .limit(1);
+
+    if (!owned) {
+      return [];
+    }
+
+    const clampedLimit = Math.min(Math.max(Number(limit), 1), 20);
+    const swpB = alias(spaceWikiPages, "swp_b");
+    const otherSpace = alias(spaces, "other_space");
+
+    const rows = await database
+      .select({
+        id: otherSpace.id,
+        userId: otherSpace.userId,
+        name: otherSpace.name,
+        origin: otherSpace.origin,
+        description: otherSpace.description,
+        centroidVector: otherSpace.centroidVector,
+        compilationStatus: otherSpace.compilationStatus,
+        lastCompiledAt: otherSpace.lastCompiledAt,
+        createdAt: otherSpace.createdAt,
+        updatedAt: otherSpace.updatedAt,
+        sharedPageCount:
+          sql<number>`count(distinct ${swpB.wikiPageId})::int`.as(
+            "shared_page_count",
+          ),
+      })
+      .from(spaceWikiPages)
+      .innerJoin(
+        swpB,
+        and(
+          eq(spaceWikiPages.wikiPageId, swpB.wikiPageId),
+          ne(spaceWikiPages.spaceId, swpB.spaceId),
+        ),
+      )
+      .innerJoin(otherSpace, eq(otherSpace.id, swpB.spaceId))
+      .where(
+        and(eq(spaceWikiPages.spaceId, spaceId), eq(otherSpace.userId, userId)),
+      )
+      .groupBy(otherSpace.id)
+      .orderBy(
+        desc(
+          sql`count(distinct ${swpB.wikiPageId})::int`,
+        ),
+        otherSpace.name,
+      )
+      .limit(clampedLimit);
+
+    return rows.map((r) => ({
+      space: {
+        id: r.id,
+        userId: r.userId,
+        name: r.name,
+        origin: r.origin,
+        description: r.description ?? undefined,
+        centroidVector: r.centroidVector ?? undefined,
+        compilationStatus: r.compilationStatus,
+        lastCompiledAt: r.lastCompiledAt ?? undefined,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      },
+      sharedPageCount: r.sharedPageCount,
+    }));
   },
 
   async create(

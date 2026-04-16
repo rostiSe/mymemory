@@ -20,17 +20,12 @@ import {
   SPACING_SCREEN_PX,
 } from "@/theme/layout-imperative";
 import type { EntryListFilter } from "@mymemory/shared/contracts";
-import { FlashList } from "@shopify/flash-list";
 import { useFocusEffect } from "@react-navigation/native";
+import { FlashList } from "@shopify/flash-list";
 import { router } from "expo-router";
 import { Button } from "heroui-native";
 import { useCallback, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  RefreshControl,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, RefreshControl, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FeedHeader } from "./components/FeedHeader";
 import { FeedListItem } from "./components/FeedListItem";

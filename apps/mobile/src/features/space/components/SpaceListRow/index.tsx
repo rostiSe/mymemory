@@ -1,4 +1,5 @@
 import type { useSpaces } from "@/features/space/hooks/useSpaces";
+import { compileStatusDotClassName } from "@/features/space/utils/compileStatusDotClassName";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Chip } from "heroui-native";
 import { memo, useMemo } from "react";
@@ -34,16 +35,6 @@ function formatCompiledAgo(iso: string | Date | undefined): string | null {
   return `${w}w ago`;
 }
 
-function compileDotClassName(
-  status: SpaceRow["compilationStatus"],
-  lastCompiledAt: SpaceRow["lastCompiledAt"],
-): string {
-  if (status === "compiling") return "bg-warning";
-  if (status === "failed") return "bg-danger";
-  if (status === "idle" && lastCompiledAt) return "bg-success";
-  return "bg-muted";
-}
-
 export const SpaceListRow = memo(function SpaceListRow({
   item,
   rowVariant,
@@ -60,10 +51,10 @@ export const SpaceListRow = memo(function SpaceListRow({
     () => formatCompiledAgo(item.lastCompiledAt ?? undefined),
     [item.lastCompiledAt],
   );
-  const compileDot = compileDotClassName(
-    item.compilationStatus,
-    item.lastCompiledAt,
-  );
+  const compileDot = compileStatusDotClassName({
+    compilationStatus: item.compilationStatus,
+    lastCompiledAt: item.lastCompiledAt,
+  });
   const originLabel =
     origin === "user" ? "Your space" : "Agent-created space";
 
