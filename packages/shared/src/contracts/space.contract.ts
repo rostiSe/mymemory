@@ -10,7 +10,7 @@ export const spaceSchema = z.object({
   name: z.string(),
   description: z.string().nullable().optional(),
   centroidVector: z.array(z.number()).nullable().optional(),
-  createdAt: dateSchema,
+  createdAt: dateSchema,  
   updatedAt: dateSchema,
 });
 
@@ -25,6 +25,8 @@ export const spaceSuggestionSchema = z.object({
   entryId: z.uuid(),
   entryTitle: z.string(),
   suggestedName: z.string(),
+  suggestedSpaceId: z.uuid().nullable().optional(),
+  confidence: z.number().nullable().optional(),
   reason: z.string().nullable().optional(),
   createdAt: dateSchema,
 });
@@ -54,6 +56,7 @@ export const spaceContract = oc.router({
       z.object({
         suggestionId: z.uuid(),
         spaceName: z.string().optional(),
+        spaceId: z.uuid().optional(),
       }),
     )
     .output(spaceSchema),

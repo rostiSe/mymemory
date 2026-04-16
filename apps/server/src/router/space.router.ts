@@ -48,6 +48,7 @@ export const spaceRouter = implement(spaceContract)
         z.object({
           suggestionId: z.uuid(),
           spaceName: z.string().optional(),
+          spaceId: z.uuid().optional(),
         }),
       )
       .output(spaceSchema)

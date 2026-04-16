@@ -23,18 +23,49 @@ type SuggestionRow = InferContractRouterOutputs<
 export type SpaceSuggestionsInboxProps = {
   suggestions: SuggestionRow[];
   busySuggestionId: string | null;
-  onApprove: (suggestionId: string, spaceName: string) => void;
+  onApprove: (
+    suggestionId: string,
+    input: { spaceName?: string; spaceId?: string },
+  ) => void;
   onReject: (suggestionId: string) => void;
 };
 
-function line2(s: SuggestionRow): string {
-  const name = s.suggestedName.trim() || "New Space";
+type ConfidenceBucket = "high" | "medium" | "low" | "none";
+
+function bucketForConfidence(value: number | null | undefined): ConfidenceBucket {
+  if (value === null || value === undefined) return "none";
+  if (value >= 0.9) return "high";
+  if (value >= 0.7) return "medium";
+  return "low";
+}
+
+function confidenceChipColor(
+  bucket: ConfidenceBucket,
+): "success" | "accent" | "warning" | "default" {
+  switch (bucket) {
+    case "high":
+      return "success";
+    case "medium":
+      return "accent";
+    case "low":
+      return "warning";
+    case "none":
+      return "default";
+  }
+}
+
+function confidenceLabel(bucket: ConfidenceBucket, value: number | null | undefined): string {
+  if (bucket === "none" || value === null || value === undefined) return "AI";
+  const pct = Math.round(value * 100);
+  return `${pct}% match`;
+}
+
+function secondaryLine(s: SuggestionRow): string {
   const reason = s.reason?.trim();
   if (reason) {
-    const short = reason.length > 80 ? `${reason.slice(0, 77)}…` : reason;
-    return `Space: ${name} · ${short}`;
+    return reason.length > 90 ? `${reason.slice(0, 87)}…` : reason;
   }
-  return `Space: ${name}`;
+  return `Suggested: ${s.suggestedName.trim() || "New Space"}`;
 }
 
 const SuggestionReviewCard = memo(function SuggestionReviewCard({
@@ -45,16 +76,36 @@ const SuggestionReviewCard = memo(function SuggestionReviewCard({
 }: {
   suggestion: SuggestionRow;
   busy: boolean;
-  onApprove: (suggestionId: string, spaceName: string) => void;
+  onApprove: (
+    suggestionId: string,
+    input: { spaceName?: string; spaceId?: string },
+  ) => void;
   onReject: (suggestionId: string) => void;
 }) {
+  const hasExistingSpace = Boolean(suggestion.suggestedSpaceId);
+  const bucket = bucketForConfidence(suggestion.confidence);
+
   const approve = useCallback(() => {
-    onApprove(suggestion.id, suggestion.suggestedName.trim() || "New Space");
-  }, [onApprove, suggestion.id, suggestion.suggestedName]);
+    if (hasExistingSpace && suggestion.suggestedSpaceId) {
+      onApprove(suggestion.id, { spaceId: suggestion.suggestedSpaceId });
+      return;
+    }
+    onApprove(suggestion.id, {
+      spaceName: suggestion.suggestedName.trim() || "New Space",
+    });
+  }, [
+    hasExistingSpace,
+    onApprove,
+    suggestion.id,
+    suggestion.suggestedName,
+    suggestion.suggestedSpaceId,
+  ]);
 
   const reject = useCallback(() => {
     onReject(suggestion.id);
   }, [onReject, suggestion.id]);
+
+  const approveLabel = hasExistingSpace ? "Assign" : "Create";
 
   return (
     <Alert status="accent" className="mb-3 items-stretch">
@@ -63,8 +114,26 @@ const SuggestionReviewCard = memo(function SuggestionReviewCard({
         <Alert.Title className="text-sm" numberOfLines={1}>
           {suggestion.entryTitle}
         </Alert.Title>
-        <Alert.Description className="text-xs" numberOfLines={2}>
-          {line2(suggestion)}
+        <View className="flex-row items-center gap-1.5 mt-0.5 flex-wrap">
+          <Chip size="sm" variant="soft" color={confidenceChipColor(bucket)}>
+            <Chip.Label className="text-[10px] font-semibold">
+              {confidenceLabel(bucket, suggestion.confidence)}
+            </Chip.Label>
+          </Chip>
+          <Chip
+            size="sm"
+            variant={hasExistingSpace ? "soft" : "tertiary"}
+            color={hasExistingSpace ? "accent" : "default"}
+            className="shrink"
+          >
+            <Chip.Label className="text-[10px]" numberOfLines={1}>
+              {hasExistingSpace ? "→ " : "+ "}
+              {suggestion.suggestedName.trim() || "New Space"}
+            </Chip.Label>
+          </Chip>
+        </View>
+        <Alert.Description className="text-xs mt-1" numberOfLines={2}>
+          {secondaryLine(suggestion)}
         </Alert.Description>
       </Alert.Content>
       <View className="flex-row gap-1 shrink-0 self-center pl-1">
@@ -72,7 +141,7 @@ const SuggestionReviewCard = memo(function SuggestionReviewCard({
           Skip
         </Button>
         <Button size="sm" variant="primary" onPress={approve} isDisabled={busy}>
-          Add
+          {approveLabel}
         </Button>
       </View>
     </Alert>
@@ -165,7 +234,7 @@ export function SpaceSuggestionsInbox({
                   <Text className="text-muted text-xs mt-0.5" numberOfLines={1}>
                     {count === 1
                       ? top
-                        ? line2(top)
+                        ? secondaryLine(top)
                         : "Tap to review"
                       : `${count} pending · tap to open`}
                   </Text>
@@ -191,7 +260,7 @@ export function SpaceSuggestionsInbox({
           <View className="mb-3 gap-1.5 pr-2">
             <Dialog.Title>Suggestions</Dialog.Title>
             <Dialog.Description>
-              Approve a suggested space for each entry, or skip.
+              Assign each entry to the suggested space, create a new one, or skip.
             </Dialog.Description>
           </View>
           <View className="w-full" style={{ maxHeight: listMaxHeight }}>

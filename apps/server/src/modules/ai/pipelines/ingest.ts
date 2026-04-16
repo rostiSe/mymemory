@@ -1,8 +1,9 @@
-import { db, eq, and } from "@mymemory/db";
+import { db, eq, and, sql } from "@mymemory/db";
 import { embeddings } from "@mymemory/db/schema/embeddings";
 import { entries } from "@mymemory/db/schema/entries";
 import { entryRelations } from "@mymemory/db/schema/entry-relations";
 import { spaceSuggestions } from "@mymemory/db/schema/space-suggestions";
+import { entrySpaces, spaces } from "@mymemory/db/schema/spaces";
 import { entryTags, tags } from "@mymemory/db/schema/tags";
 import { entryTopics, topics } from "@mymemory/db/schema/topics";
 import {
@@ -18,6 +19,11 @@ import {
 import { looksLikeBoilerplate, looksLikeUrl } from "../utils/title-quality.js";
 import { analyzeContent } from "../tools/analyze-content.js";
 import { cleanContent } from "../tools/clean-content.js";
+import {
+  AUTO_ASSIGN_CONFIDENCE_THRESHOLD,
+  classifyEntryToSpaces,
+  type ClassifyEntryResult,
+} from "../tools/classify-entry.js";
 import { generateEmbedding } from "../tools/generate-embedding.js";
 import { findRelatedEntries } from "../tools/find-related-entries.js";
 
@@ -157,6 +163,64 @@ export async function processEntry(entryId: string, userId: string) {
       entryId,
     );
 
+    let classification: ClassifyEntryResult | null = null;
+    const existingSpaceRows = await db
+      .select({
+        id: spaces.id,
+        name: spaces.name,
+        description: spaces.description,
+      })
+      .from(spaces)
+      .where(eq(spaces.userId, userId));
+
+    if (existingSpaceRows.length > 0) {
+      const spaceCountRows = await db
+        .select({
+          spaceId: entrySpaces.spaceId,
+          count: sql<number>`count(*)::int`.as("count"),
+        })
+        .from(entrySpaces)
+        .innerJoin(spaces, eq(spaces.id, entrySpaces.spaceId))
+        .where(eq(spaces.userId, userId))
+        .groupBy(entrySpaces.spaceId);
+
+      const countBySpaceId = new Map(
+        spaceCountRows.map((r) => [r.spaceId, r.count]),
+      );
+
+      try {
+        classification = await classifyEntryToSpaces({
+          entry: {
+            title: resolvedTitle ?? entry.title ?? null,
+            summary,
+            topics: extractedTopics.map((t) => t.name),
+            tags: generatedTags,
+            contentType,
+            depth,
+          },
+          existingSpaces: existingSpaceRows.map((s) => ({
+            id: s.id,
+            name: s.name,
+            description: s.description ?? null,
+            entryCount: countBySpaceId.get(s.id) ?? 0,
+          })),
+        });
+      } catch (classifyError: unknown) {
+        console.warn(
+          `[ingest] classifyEntryToSpaces failed for entry ${entryId}; falling back to suggestion:`,
+          classifyError instanceof Error
+            ? classifyError.message
+            : classifyError,
+        );
+        classification = null;
+      }
+    }
+
+    const autoAssignments =
+      classification?.assignments.filter(
+        (a) => a.confidence >= AUTO_ASSIGN_CONFIDENCE_THRESHOLD,
+      ) ?? [];
+
     await db.transaction(async (tx) => {
       await tx
         .update(entries)
@@ -232,13 +296,29 @@ export async function processEntry(entryId: string, userId: string) {
         }
       }
 
-      await tx.insert(spaceSuggestions).values({
-        userId,
-        entryId,
-        suggestedName: extractedTopics[0]?.name || "New Space",
-        reason:
-          "Suggested from extracted topics; approve in Spaces to create or assign.",
-      });
+      if (autoAssignments.length > 0) {
+        for (const assignment of autoAssignments) {
+          await tx
+            .insert(entrySpaces)
+            .values({ entryId, spaceId: assignment.spaceId })
+            .onConflictDoNothing();
+        }
+      } else {
+        const bestSuggestion = classification?.assignments[0];
+        await tx.insert(spaceSuggestions).values({
+          userId,
+          entryId,
+          suggestedName:
+            bestSuggestion?.spaceName
+            ?? extractedTopics[0]?.name
+            ?? "New Space",
+          suggestedSpaceId: bestSuggestion?.spaceId ?? null,
+          confidence: bestSuggestion?.confidence ?? null,
+          reason:
+            bestSuggestion?.reason
+            ?? "Suggested from extracted topics; approve in Spaces to create or assign.",
+        });
+      }
 
       for (const rel of relatedEntries) {
         if (rel.similarity > 0.5) {

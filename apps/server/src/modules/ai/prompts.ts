@@ -113,6 +113,72 @@ export function analyzeContentUserPrompt(
   return sections.join("\n\n");
 }
 
+/** System prompt for `classifyEntryToSpaces` in `tools/classify-entry.ts`. */
+export function classifyEntrySystemPrompt(): string {
+  return `You are a librarian organizing a personal knowledge base. Given an entry's metadata
+and a list of existing spaces (categories), determine which space(s) the entry belongs to.
+
+Rules:
+- Return 0-3 space assignments.
+- Only assign when genuinely relevant — don't force-fit.
+- Cross-cutting entries (e.g. "AI Coding Assistants") can belong to 2-3 spaces.
+- Confidence 0.0-1.0: how certain you are the entry belongs in that space.
+  - 0.9-1.0: obvious, direct match (React tutorial → "React" space)
+  - 0.7-0.9: strong match, related topic
+  - 0.5-0.7: loose match, tangentially related
+  - Below 0.5: don't assign
+- If no space fits, return an empty assignments array.
+- Prefer specific spaces over broad parent spaces when both exist.
+- Only return spaceIds that appear in the provided spaces list. Never invent new ones.`;
+}
+
+export type ClassifyEntryUserPromptOpts = {
+  entry: {
+    title: string | null;
+    summary: string | null;
+    topics: string[];
+    tags: string[];
+    contentType: string | null;
+    depth: string | null;
+  };
+  existingSpaces: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    entryCount: number;
+  }>;
+};
+
+/** User prompt for `classifyEntryToSpaces`. */
+export function classifyEntryUserPrompt(
+  opts: ClassifyEntryUserPromptOpts,
+): string {
+  const { entry, existingSpaces } = opts;
+  const sections: string[] = [];
+
+  const entryLines = [
+    `Title: ${entry.title ?? "(no title)"}`,
+    `Summary: ${entry.summary ?? "(no summary)"}`,
+    `Topics: ${entry.topics.length > 0 ? entry.topics.join(", ") : "(none)"}`,
+    `Tags: ${entry.tags.length > 0 ? entry.tags.join(", ") : "(none)"}`,
+    `Content type: ${entry.contentType ?? "(unknown)"}`,
+    `Depth: ${entry.depth ?? "(unknown)"}`,
+  ];
+  sections.push(`Entry:\n${entryLines.join("\n")}`);
+
+  const spaceLines = existingSpaces.map((s) => {
+    const desc = s.description?.trim() ? ` — ${s.description.trim()}` : "";
+    return `- [${s.id}] "${s.name}" (${s.entryCount} entries)${desc}`;
+  });
+  sections.push(`Existing spaces:\n${spaceLines.join("\n")}`);
+
+  sections.push(
+    "Return 0-3 assignments. Only use spaceIds from the list above.",
+  );
+
+  return sections.join("\n\n");
+}
+
 /** System prompt for `cleanContent` in `tools/clean-content.ts`. */
 export function cleanContentSystemPrompt(): string {
   return `You are an expert content cleaner. Given raw scraped markdown from a web page,

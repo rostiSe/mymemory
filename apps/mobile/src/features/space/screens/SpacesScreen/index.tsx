@@ -162,13 +162,19 @@ export default function SpacesScreen() {
   }, [refetchSpaces, refetchSuggestions]);
 
   const handleApprove = useCallback(
-    (suggestionId: string, spaceName: string) => {
+    (
+      suggestionId: string,
+      input: { spaceName?: string; spaceId?: string },
+    ) => {
       setBusySuggestionId(suggestionId);
       approveSuggestion.mutate(
-        { suggestionId, spaceName },
+        { suggestionId, ...input },
         {
           onSuccess: (space) => {
-            toast.success("Space ready", space.name);
+            toast.success(
+              input.spaceId ? "Entry assigned" : "Space ready",
+              space.name,
+            );
           },
           onError: (e) => {
             toast.error(

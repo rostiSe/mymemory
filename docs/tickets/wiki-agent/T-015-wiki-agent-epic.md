@@ -83,7 +83,7 @@ User presses "Compile Wiki"
 | ID | Ticket | Type | Phase |
 |----|--------|------|-------|
 | [T-015i](./T-015i-metadata-foundation.md) | Metadata Foundation (authors, contentType, depth, topic normalization, reset script) | enhancement (server) | Quality |
-| T-015j | Auto-Assign + Review Queue | feature (server + mobile) | Quality |
+| [T-015j](./T-015j-auto-assign-review-queue.md) | Auto-Assign + Review Queue | feature (server + mobile) | Quality |
 | [T-015k](./T-015k-space-hierarchy-curator-overhaul.md) | Space Hierarchy + Curator Overhaul | feature (server + mobile) | Quality |
 | T-015l | SpacesScreen Redesign (grouped by parent, quality signals) | feature (mobile) | Quality |
 | T-015m | Delete Operations (space, page, section) | feature (mobile) | Quality |
