@@ -447,6 +447,7 @@ function createTools(db: Database, userId: string, runId: string) {
         .select({
           id: spaces.id,
           name: spaces.name,
+          origin: spaces.origin,
           description: spaces.description,
           isIndex: spaces.isIndex,
           compilationStatus: spaces.compilationStatus,
@@ -557,6 +558,7 @@ function createTools(db: Database, userId: string, runId: string) {
         .values({
           userId,
           name: input.name,
+          origin: 'agent',
           description: input.description ?? null,
           isIndex: input.isIndex ?? false,
           content: (input.content ?? {}) as SpaceContent,

@@ -1,6 +1,11 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
-import { CompileStatusCard } from "@/features/wiki/components/CompileStatusCard";
-import { SpaceSuggestionsInbox } from "@/features/space/components/SpaceSuggestionsInbox";
+import { SpaceListRow } from "@/features/space/components/SpaceListRow";
+import type { SpaceRow } from "@/features/space/components/SpaceListRow";
+import { SpacesSearchField } from "@/features/space/components/SpacesSearchField";
+import {
+  SpaceSuggestionsInbox,
+  type SpaceSuggestionsInboxProps,
+} from "@/features/space/components/SpaceSuggestionsInbox";
 import {
   useApproveSuggestion,
   useCreateSpace,
@@ -12,15 +17,7 @@ import { useAppToast } from "@/hooks/useAppToast";
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import {
-  Button,
-  Card,
-  Chip,
-  Input,
-  Label,
-  TextField,
-  useThemeColor,
-} from "heroui-native";
+import { Button, Input, Label, TextField, useThemeColor } from "heroui-native";
 import { memo, useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -32,64 +29,179 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CompileStatusCard } from "@/features/wiki/components/CompileStatusCard";
 
-type SpaceRow = NonNullable<ReturnType<typeof useSpaces>["data"]>[number];
+type ListEntry =
+  | { kind: "header"; key: string; title: string }
+  | {
+      kind: "row";
+      key: string;
+      space: SpaceRow;
+      rowVariant: "default" | "child";
+    };
 
-const SpaceListRow = memo(function SpaceListRow({
-  item,
-  onPressSpace,
-  accentColor,
-  mutedColor,
+function filterSpacesByQuery(rows: SpaceRow[], q: string): SpaceRow[] {
+  const n = q.trim().toLowerCase();
+  if (!n) return rows;
+  return rows.filter((s) => {
+    const name = s.name.toLowerCase();
+    const desc = (s.description ?? "").toLowerCase();
+    return name.includes(n) || desc.includes(n);
+  });
+}
+
+function buildListEntries(
+  spaces: SpaceRow[],
+  debouncedQuery: string,
+): ListEntry[] {
+  const matching = filterSpacesByQuery(spaces, debouncedQuery);
+  const byId = new Map(spaces.map((s) => [s.id, s]));
+
+  if (debouncedQuery.trim().length > 0) {
+    return matching
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((s) => ({
+        kind: "row" as const,
+        key: s.id,
+        space: s,
+        rowVariant: s.parentSpaceId ? "child" : "default",
+      }));
+  }
+
+  const hasGroupedParents = spaces.some(
+    (s) => (s.childSpaceIds?.length ?? 0) > 0,
+  );
+  if (!hasGroupedParents) {
+    return matching
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((s) => ({
+        kind: "row" as const,
+        key: s.id,
+        space: s,
+        rowVariant: s.parentSpaceId ? "child" : "default",
+      }));
+  }
+
+  const parentSpaces = spaces
+    .filter((s) => (s.childSpaceIds?.length ?? 0) > 0)
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const used = new Set<string>();
+  const out: ListEntry[] = [];
+
+  for (const p of parentSpaces) {
+    const children = matching
+      .filter((c) => c.parentSpaceId === p.id)
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name));
+    const includeParent = matching.some((m) => m.id === p.id);
+    if (children.length === 0 && !includeParent) continue;
+
+    out.push({ kind: "header", key: `h-${p.id}`, title: p.name });
+    if (includeParent) {
+      const row = byId.get(p.id);
+      if (row) {
+        out.push({ kind: "row", key: p.id, space: row, rowVariant: "default" });
+        used.add(p.id);
+      }
+    }
+    for (const c of children) {
+      if (!used.has(c.id)) {
+        out.push({ kind: "row", key: c.id, space: c, rowVariant: "child" });
+        used.add(c.id);
+      }
+    }
+  }
+
+  const standalone = matching
+    .filter(
+      (s) =>
+        !s.parentSpaceId &&
+        (s.childSpaceIds?.length ?? 0) === 0 &&
+        !used.has(s.id),
+    )
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  if (standalone.length > 0) {
+    out.push({ kind: "header", key: "h-standalone", title: "Standalone" });
+    for (const s of standalone) {
+      out.push({ kind: "row", key: s.id, space: s, rowVariant: "default" });
+    }
+  }
+
+  return out;
+}
+
+const ListHeader = memo(function ListHeader({
+  spacesError,
+  spacesErrMessage,
+  suggestionsPending,
+  pendingCount,
+  suggestionList,
+  busySuggestionId,
+  onApprove,
+  onReject,
+  onQueryChange,
 }: {
-  item: SpaceRow;
-  onPressSpace: (id: string) => void;
-  accentColor: string;
-  mutedColor: string;
+  spacesError: boolean;
+  spacesErrMessage: string;
+  suggestionsPending: boolean;
+  pendingCount: number;
+  suggestionList: SpaceSuggestionsInboxProps["suggestions"];
+  busySuggestionId: string | null;
+  onApprove: SpaceSuggestionsInboxProps["onApprove"];
+  onReject: SpaceSuggestionsInboxProps["onReject"];
+  onQueryChange: (q: string) => void;
 }) {
   return (
-    <Pressable
-      onPress={() => onPressSpace(item.id)}
-      accessibilityRole="button"
-      accessibilityLabel={`Open space ${item.name}`}
-    >
-      <Card className="mb-3 border border-border bg-surface-secondary">
-        <Card.Body className="flex-row items-center gap-3 py-3">
-          <View className="size-10 items-center justify-center rounded-full bg-accent/15">
-            <MaterialIcons name="folder" size={22} color={accentColor} />
-          </View>
-          <View className="min-w-0 flex-1">
-            <Text
-              className="text-foreground text-base font-semibold"
-              numberOfLines={1}
-            >
-              {item.name}
-            </Text>
-            <View className="flex-row items-center gap-2 mt-0.5 flex-wrap">
-              <Chip size="sm" variant="soft" color="default" className="self-start">
-                <Chip.Label className="text-xs">
-                  {item.entryCount === 1 ? "1 entry" : `${item.entryCount} entries`}
-                </Chip.Label>
-              </Chip>
-              {item.description ? (
-                <Text className="text-muted text-sm flex-1" numberOfLines={1}>
-                  {item.description}
-                </Text>
-              ) : null}
-            </View>
-          </View>
-          <MaterialIcons name="chevron-right" size={22} color={mutedColor} />
-        </Card.Body>
-      </Card>
-    </Pressable>
+    <View className="pb-2">
+      <CompileStatusCard />
+
+      <Text className="text-muted text-sm mb-3">
+        Approve quick suggestions below or use the New space action.
+      </Text>
+
+      <SpacesSearchField
+        onQueryChange={onQueryChange}
+        className="mb-3"
+      />
+
+      {spacesError ? (
+        <Text className="text-danger text-sm mb-3">{spacesErrMessage}</Text>
+      ) : null}
+
+      {!suggestionsPending && pendingCount === 0 ? (
+        <Text className="text-muted text-sm mb-3">
+          No pending suggestions. New saves may add some after ingest.
+        </Text>
+      ) : null}
+
+      {pendingCount > 0 ? (
+        suggestionsPending ? (
+          <ActivityIndicator className="py-4 mb-2" />
+        ) : (
+          <SpaceSuggestionsInbox
+            suggestions={suggestionList}
+            busySuggestionId={busySuggestionId}
+            onApprove={onApprove}
+            onReject={onReject}
+          />
+        )
+      ) : null}
+    </View>
   );
 });
 
 export default function SpacesScreen() {
   const insets = useSafeAreaInsets();
-  const listBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
+  const listBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX + 56;
   const toast = useAppToast();
   const mutedColor = useThemeColor("muted");
-  const accentColor = useThemeColor("accent");
+  const accentForeground = useThemeColor("accent-foreground");
 
   const {
     data: spaces,
@@ -113,11 +225,22 @@ export default function SpacesScreen() {
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [busySuggestionId, setBusySuggestionId] = useState<string | null>(null);
-  /** Only true while the user is pulling to refresh — avoids spinner on tab focus / background refetch. */
   const [pullRefreshing, setPullRefreshing] = useState(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  const onQueryChange = useCallback((q: string) => {
+    setDebouncedQuery(q);
+  }, []);
 
   const suggestionList = useMemo(() => suggestions ?? [], [suggestions]);
   const pendingCount = suggestionList.length;
+
+  const spaceRows = useMemo(() => spaces ?? [], [spaces]);
+
+  const listData = useMemo(
+    () => buildListEntries(spaceRows, debouncedQuery),
+    [spaceRows, debouncedQuery],
+  );
 
   const closeCreate = useCallback(() => {
     setCreateOpen(false);
@@ -143,7 +266,8 @@ export default function SpacesScreen() {
           closeCreate();
         },
         onError: (e) => {
-          const message = e instanceof Error ? e.message : "Could not create space.";
+          const message =
+            e instanceof Error ? e.message : "Could not create space.";
           toast.error("Create failed", message);
         },
       },
@@ -215,21 +339,37 @@ export default function SpacesScreen() {
     [rejectSuggestion, toast],
   );
 
-  const keyExtractor = useCallback((item: SpaceRow) => item.id, []);
+  const keyExtractor = useCallback((item: ListEntry) => item.key, []);
 
   const renderItem = useCallback(
-    ({ item }: { item: SpaceRow }) => (
-      <SpaceListRow
-        item={item}
-        onPressSpace={onPressSpace}
-        accentColor={accentColor}
-        mutedColor={mutedColor}
-      />
-    ),
-    [accentColor, mutedColor, onPressSpace],
+    ({ item }: { item: ListEntry }) => {
+      if (item.kind === "header") {
+        return (
+          <Text className="text-xs uppercase tracking-wide text-muted mt-4 mb-1 px-1">
+            {item.title}
+          </Text>
+        );
+      }
+      return (
+        <SpaceListRow
+          item={item.space}
+          rowVariant={item.rowVariant}
+          onPressSpace={onPressSpace}
+          mutedColor={mutedColor}
+        />
+      );
+    },
+    [mutedColor, onPressSpace],
   );
 
-  const listEmpty = !spacesPending && (spaces?.length ?? 0) === 0;
+  const totalSpaces = spaceRows.length;
+  const listEmptyNoSpaces = !spacesPending && totalSpaces === 0;
+  const searchActive = debouncedQuery.trim().length > 0;
+  const filterEmpty =
+    !spacesPending &&
+    totalSpaces > 0 &&
+    listData.length === 0 &&
+    searchActive;
 
   const refreshControl = useMemo(
     () => (
@@ -238,78 +378,57 @@ export default function SpacesScreen() {
     [onRefresh, pullRefreshing],
   );
 
+  const spacesErrMessage =
+    spacesErr instanceof Error ? spacesErr.message : "Could not load spaces.";
+
   const listHeader = useMemo(
     () => (
-      <View className="pb-2">
-        <CompileStatusCard />
-
-        <Text className="text-muted text-sm mb-3">
-          Approve quick suggestions below or create a space manually.
-        </Text>
-
-        <Button
-          variant="primary"
-          className="mb-4"
-          onPress={() => setCreateOpen(true)}
-        >
-          New space
-        </Button>
-
-        {spacesError ? (
-          <Text className="text-danger text-sm mb-3">
-            {spacesErr instanceof Error ? spacesErr.message : "Could not load spaces."}
-          </Text>
-        ) : null}
-
-        {!suggestionsPending && pendingCount === 0 ? (
-          <Text className="text-muted text-sm mb-3">
-            No pending suggestions. New saves may add some after ingest.
-          </Text>
-        ) : null}
-
-        {pendingCount > 0 ? (
-          suggestionsPending ? (
-            <ActivityIndicator className="py-4 mb-2" />
-          ) : (
-            <SpaceSuggestionsInbox
-              suggestions={suggestionList}
-              busySuggestionId={busySuggestionId}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          )
-        ) : null}
-
-        {(spaces?.length ?? 0) > 0 ? (
-          <Text className="text-foreground text-sm font-semibold mb-2 mt-2">
-            Your spaces
-          </Text>
-        ) : null}
-      </View>
+      <ListHeader
+        spacesError={spacesError}
+        spacesErrMessage={spacesErrMessage}
+        suggestionsPending={suggestionsPending}
+        pendingCount={pendingCount}
+        suggestionList={suggestionList}
+        busySuggestionId={busySuggestionId}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onQueryChange={onQueryChange}
+      />
     ),
     [
       busySuggestionId,
       handleApprove,
       handleReject,
+      onQueryChange,
       pendingCount,
-      spaces?.length,
-      spacesErr,
+      spacesErrMessage,
       spacesError,
       suggestionList,
       suggestionsPending,
     ],
   );
 
+  const emptyMessage = useMemo(() => {
+    if (filterEmpty) {
+      return `No spaces match "${debouncedQuery.trim()}"`;
+    }
+    return null;
+  }, [debouncedQuery, filterEmpty]);
+
+  const fabBottom = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX - 8;
+
   return (
     <ScreenInset className="flex-1 bg-background" edges={["top", "left", "right"]}>
       <View className="flex-1 px-screen pt-3">
-        <FlatList
-          data={spaces ?? []}
+        <FlatList<ListEntry>
+          data={listData}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           ListHeaderComponent={listHeader}
-          extraData={busySuggestionId}
+          extraData={`${busySuggestionId}-${debouncedQuery}`}
           refreshControl={refreshControl}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
             flexGrow: 1,
             paddingBottom: listBottomPad,
@@ -319,7 +438,7 @@ export default function SpacesScreen() {
           ListEmptyComponent={
             spacesPending ? (
               <ActivityIndicator className="py-8" />
-            ) : listEmpty ? (
+            ) : listEmptyNoSpaces ? (
               <View className="py-8 px-2">
                 <Text className="text-foreground text-center text-base font-medium">
                   No spaces yet
@@ -328,9 +447,26 @@ export default function SpacesScreen() {
                   Approve a suggestion above or tap New space.
                 </Text>
               </View>
+            ) : filterEmpty ? (
+              <View className="py-8 px-2">
+                <Text className="text-muted text-center text-sm">
+                  {emptyMessage}
+                </Text>
+              </View>
             ) : null
           }
         />
+
+        <Pressable
+          onPress={() => setCreateOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="New space"
+          className="absolute rounded-card bg-accent px-3 py-2.5 flex-row items-center gap-1.5 shadow-sm"
+          style={{ right: 16, bottom: fabBottom }}
+        >
+          <MaterialIcons name="add" size={22} color={accentForeground} />
+          <Text className="text-background text-sm font-semibold">New space</Text>
+        </Pressable>
       </View>
 
       <Modal
@@ -346,10 +482,12 @@ export default function SpacesScreen() {
           accessibilityLabel="Dismiss"
         >
           <Pressable
-            className="rounded-t-2xl bg-surface px-screen pt-4 pb-8 border-t border-border"
+            className="rounded-t-card bg-surface px-screen pt-4 pb-8 border-t border-border"
             onPress={(e) => e.stopPropagation()}
           >
-            <Text className="text-foreground text-lg font-semibold mb-3">New space</Text>
+            <Text className="text-foreground text-lg font-semibold mb-3">
+              New space
+            </Text>
             <TextField className="mb-3">
               <Label>Name</Label>
               <Input
@@ -357,6 +495,7 @@ export default function SpacesScreen() {
                 onChangeText={setNewName}
                 placeholder="e.g. Reading, Work"
                 autoFocus
+                className="rounded-card"
               />
             </TextField>
             <TextField className="mb-4">
@@ -365,6 +504,7 @@ export default function SpacesScreen() {
                 value={newDescription}
                 onChangeText={setNewDescription}
                 placeholder="Short note"
+                className="rounded-card"
               />
             </TextField>
             <View className="flex-row gap-2">
@@ -373,7 +513,7 @@ export default function SpacesScreen() {
               </Button>
               <Button
                 variant="primary"
-                className="flex-1"
+                className="flex-1 rounded-card"
                 onPress={handleCreateSpace}
                 isDisabled={createSpace.isPending}
               >

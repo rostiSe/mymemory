@@ -4,13 +4,18 @@ import { entryListOutputSchema } from "./entry.contract.js";
 
 const dateSchema = z.string().or(z.date());
 
+export const spaceCompilationStatusSchema = z.enum(['idle', 'compiling', 'failed']);
+
 export const spaceSchema = z.object({
   id: z.uuid(),
   userId: z.uuid(),
   name: z.string(),
+  origin: z.enum(['user', 'agent']).optional(),
   description: z.string().nullable().optional(),
   centroidVector: z.array(z.number()).nullable().optional(),
-  createdAt: dateSchema,  
+  compilationStatus: spaceCompilationStatusSchema.optional(),
+  lastCompiledAt: dateSchema.nullable().optional(),
+  createdAt: dateSchema,
   updatedAt: dateSchema,
 });
 

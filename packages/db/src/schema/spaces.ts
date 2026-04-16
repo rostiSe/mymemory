@@ -13,7 +13,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { compilationStatusEnum } from './enums.js';
+import { compilationStatusEnum, spaceOriginEnum } from './enums.js';
 import { entries } from './entries.js';
 
 const vector = customType<{ data: number[]; driverData: string }>({
@@ -34,6 +34,7 @@ export const spaces = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     userId: uuid('user_id').notNull(),
     name: varchar('name', { length: 255 }).notNull(),
+    origin: spaceOriginEnum('origin').notNull().default('user'),
     description: text('description'),
     centroidVector: vector('centroid_vector'),
     isIndex: boolean('is_index').notNull().default(false),

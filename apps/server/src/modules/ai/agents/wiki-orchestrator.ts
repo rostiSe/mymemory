@@ -52,6 +52,7 @@ async function ensureIndexSpace(db: Database, userId: string): Promise<{ id: str
     .values({
       userId,
       name: 'Index',
+      origin: 'agent',
       description: 'System index space managed by wiki orchestrator',
       isIndex: true,
       content: {},

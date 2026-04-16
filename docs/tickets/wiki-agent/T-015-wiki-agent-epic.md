@@ -53,7 +53,7 @@ User presses "Compile Wiki"
 - **Page type templates**: Different content JSONB shapes per type (synthesis, comparison, timeline, glossary, index)
 - **Agent decides content weight** — no schema changes for entry types; Curator classifies via prompts
 - **Interconnections**: `entry_spaces` M2M (existing) + `space_wiki_pages` M2M (new) + JSONB links (page↔page) + computed strength (shared pages between spaces)
-- **Manual trigger only** for MVP. Event-driven + cron deferred.
+- **Manual trigger only** for MVP. Auto-compile (threshold + nightly cron) infrastructure dark-shipped in [T-015p](./T-015p-auto-compile-infrastructure.md); disabled by default until compiler strengthening lands.
 - **Model: gpt-4o-mini** (cheapest). Writer upgradeable independently.
 
 ---
@@ -85,8 +85,11 @@ User presses "Compile Wiki"
 | [T-015i](./T-015i-metadata-foundation.md) | Metadata Foundation (authors, contentType, depth, topic normalization, reset script) | enhancement (server) | Quality |
 | [T-015j](./T-015j-auto-assign-review-queue.md) | Auto-Assign + Review Queue | feature (server + mobile) | Quality |
 | [T-015k](./T-015k-space-hierarchy-curator-overhaul.md) | Space Hierarchy + Curator Overhaul | feature (server + mobile) | Quality |
-| T-015l | SpacesScreen Redesign (grouped by parent, quality signals) | feature (mobile) | Quality |
-| T-015m | Delete Operations (space, page, section) | feature (mobile) | Quality |
+| [T-015n](./T-015n-user-space-awareness.md) | User-Created Space Awareness (origin column + curator protection) | enhancement (server) | Quality |
+| [T-015l](./T-015l-spaces-screen-redesign.md) | SpacesScreen Redesign (hierarchy, search, quality signals) | feature (mobile) | Quality |
+| [T-015m](./T-015m-delete-operations.md) | Delete Operations (space, page, section) | feature (server + mobile) | Quality |
+| [T-015o](./T-015o-related-spaces-strip.md) | Related Spaces Strip (shared wiki pages aggregate) | feature (server + mobile) | Quality |
+| [T-015p](./T-015p-auto-compile-infrastructure.md) | Auto-Compile Infrastructure (dark ship: settings, threshold, cron) | feature (server + mobile) | Quality |
 
 ### Dependency flow
 
@@ -107,8 +110,11 @@ Quality:
   T-015g └→ T-015i (Metadata Foundation)
               ├→ T-015j (Auto-Assign + Review Queue)
               └→ T-015k (Space Hierarchy + Curator Overhaul)
-                   └→ T-015l (SpacesScreen Redesign)
+  T-015j + T-015k └→ T-015n (User-Created Space Awareness)
+                         └→ T-015l (SpacesScreen Redesign)
   T-015j + T-015k └→ T-015m (Delete Operations)
+  T-015a + T-015f └→ T-015o (Related Spaces Strip)
+  T-015c + T-015g └→ T-015p (Auto-Compile Infrastructure — dark ship)
 ```
 
 ---

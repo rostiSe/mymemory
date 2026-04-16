@@ -1,4 +1,4 @@
-import { orpc } from "@/lib/orpc";
+import { orpc, orpcClient } from "@/lib/orpc";
 import type { appContract } from "@mymemory/shared";
 import type { InferContractRouterOutputs } from "@orpc/contract";
 import {
@@ -33,12 +33,25 @@ function spaceRowFromServer(
     ...row,
     description: row.description ?? undefined,
     centroidVector: row.centroidVector ?? undefined,
+    lastCompiledAt: row.lastCompiledAt ?? undefined,
     entryCount,
   };
 }
 
 export function useSpaces() {
-  return useQuery(orpc.spaces.list.queryOptions({ input: undefined }));
+  const options = orpc.spaces.list.queryOptions({ input: undefined });
+  return useQuery({
+    ...options,
+    queryFn: async (ctx) => {
+      const data = await options.queryFn(ctx);
+      if (data === undefined) {
+        throw new Error(
+          "Spaces list returned no data. Check your connection and API URL.",
+        );
+      }
+      return data;
+    },
+  });
 }
 
 export function useSpace(id: string | undefined) {
@@ -51,7 +64,14 @@ export function useSpace(id: string | undefined) {
 }
 
 export function useSpaceSuggestions() {
-  return useQuery(orpc.spaces.listSuggestions.queryOptions({ input: undefined }));
+  const options = orpc.spaces.listSuggestions.queryOptions({ input: undefined });
+  return useQuery({
+    ...options,
+    queryFn: async ({ signal }) => {
+      const data = await orpcClient.spaces.listSuggestions(undefined, { signal });
+      return data ?? [];
+    },
+  });
 }
 
 export function useCreateSpace() {
@@ -72,8 +92,11 @@ export function useCreateSpace() {
         id: optimisticId,
         userId,
         name: input.name,
+        origin: "user",
         description: input.description ?? undefined,
         centroidVector: undefined,
+        compilationStatus: "idle",
+        lastCompiledAt: undefined,
         createdAt: now,
         updatedAt: now,
         entryCount: 0,
@@ -155,8 +178,11 @@ export function useApproveSuggestion() {
             id: optimisticSpaceId,
             userId,
             name: resolvedSpaceName,
+            origin: "user",
             description: undefined,
             centroidVector: undefined,
+            compilationStatus: "idle",
+            lastCompiledAt: undefined,
             createdAt: now,
             updatedAt: now,
             entryCount: 1,
@@ -186,6 +212,8 @@ export function useApproveSuggestion() {
                   name: newSpace.name,
                   description: newSpace.description ?? undefined,
                   centroidVector: newSpace.centroidVector ?? undefined,
+                  compilationStatus: newSpace.compilationStatus,
+                  lastCompiledAt: newSpace.lastCompiledAt ?? undefined,
                   updatedAt: newSpace.updatedAt,
                 }
               : s,

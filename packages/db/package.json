@@ -19,6 +19,7 @@
   },
   "scripts": {
     "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "generate": "pnpm run build && drizzle-kit generate",
     "push": "drizzle-kit push",
     "studio": "drizzle-kit studio"

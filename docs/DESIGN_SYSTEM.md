@@ -116,7 +116,12 @@ Then use: `<View className="bg-my-custom" />`
 | `--font-size-xs` … `--font-size-3xl` | Typography scale |
 | `--line-height-tight` / `normal` / `relaxed` | Line height multipliers |
 | `--radius-sm` … `--radius-full` | Corner radii |
+| `--radius-card` | Tight “square card” radius (~2px) for **Spaces** list rows, search field, and create modal surfaces (`rounded-card` / `rounded-t-card` in Uniwind) |
 | `--icon-size-tab` | Tab bar icon size |
+
+### Space list surfaces (T-015l)
+
+**Spaces** uses a slightly **squarer** look than default cards: prefer **`rounded-card`** (backed by `--radius-card`) on space rows, the search field shell, and the create-space sheet so hierarchy reads through typography and dividers rather than large corner radii. **`rounded-full`** is reserved for small status dots (compile / origin), not row chrome. Other screens can adopt the same token over time for consistency.
 
 ### Runtime safe area
 

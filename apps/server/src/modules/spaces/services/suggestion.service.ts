@@ -142,6 +142,7 @@ export const suggestionService = {
           .values({
             userId,
             name: rawName,
+            origin: "user",
           })
           .returning();
 

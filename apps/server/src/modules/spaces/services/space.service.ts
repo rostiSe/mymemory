@@ -57,8 +57,11 @@ export const spaceService = {
         id: spaces.id,
         userId: spaces.userId,
         name: spaces.name,
+        origin: spaces.origin,
         description: spaces.description,
         centroidVector: spaces.centroidVector,
+        compilationStatus: spaces.compilationStatus,
+        lastCompiledAt: spaces.lastCompiledAt,
         createdAt: spaces.createdAt,
         updatedAt: spaces.updatedAt,
         entryCount: sql<number>`coalesce(count(${entrySpaces.entryId})::int, 0)`,
@@ -90,8 +93,11 @@ export const spaceService = {
       id: r.id,
       userId: r.userId,
       name: r.name,
+      origin: r.origin,
       description: r.description ?? undefined,
       centroidVector: r.centroidVector ?? undefined,
+      compilationStatus: r.compilationStatus,
+      lastCompiledAt: r.lastCompiledAt ?? undefined,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       entryCount: r.entryCount,
@@ -131,6 +137,7 @@ export const spaceService = {
       .values({
         userId,
         name,
+        origin: "user",
         description: description || null,
       })
       .returning();

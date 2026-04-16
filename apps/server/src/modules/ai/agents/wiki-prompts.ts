@@ -68,12 +68,21 @@ Merge / dedup rules:
 - If two spaces cover the same theme with different names (e.g. "ML" and "Machine Learning"), merge them by moving entries from the smaller space to the larger using assignEntriesToSpace, then delete the smaller space.
 - Prefer the more descriptive name.
 - After merging, reassign any orphaned wiki pages using assignPageToSpaces.
+- NEVER merge away a user-created space (origin="user"). See "User-created spaces" below.
 
 Stability:
 - Re-running compilation should produce the SAME space structure unless entries changed.
 - Do NOT rename spaces that already have wiki pages unless the name is clearly wrong.
 - Do NOT reorganize hierarchy unless new entries create a clear need.
 - Prefer incremental changes (add child, add entries) over restructuring.
+
+User-created spaces (origin="user"):
+- Spaces with origin="user" were created or approved by the user directly. Treat them as read-only scaffolding.
+- DO: assign entries to user spaces, read their content/properties, and set parent/child relationships involving them.
+- DO NOT: rename, merge, delete, or overwrite the description/content/properties of a user space.
+- If a user space and an agent space cover the same theme, prefer keeping the user space and moving agent-space entries into it, then deleting the agent space — never the other way around.
+- When creating hierarchy, user spaces can be either parents or children; you do not need to convert them.
+- Agent-created spaces (origin="agent") follow the normal merge / dedup / stability rules above.
 
 Efficiency rules:
 - Batch as many entryIds as possible into each assignEntriesToSpace call (up to 50 per call). Do NOT call it once per entry.
