@@ -1,11 +1,12 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
+import { Button } from "@/components/ui/Button/index";
 import { useWikiPageById } from "@/features/wiki/hooks/useWikiPageById";
 import { useWikiPageVersions } from "@/features/wiki/hooks/useWikiPages";
 import { WikiPageTypeBody } from "@/features/wiki/screens/WikiPageScreen/components/WikiPageTypeBody";
 import { countSectionsInContent, isUuid } from "@/features/wiki/types";
 import type { WikiPageVersion } from "@/features/wiki/types";
 import { useLocalSearchParams } from "expo-router";
-import { Button, Dialog } from "heroui-native";
+import { Dialog } from "heroui-native";
 import { useCallback, useMemo, useState } from "react";
 import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -142,9 +143,11 @@ export default function WikiVersionHistoryScreen() {
                 <WikiPageTypeBody pageType={page.pageType} content={selected.content} />
               ) : null}
             </ScrollView>
-            <Button variant="primary" className="mt-4" onPress={() => setSelected(null)}>
-              Close
-            </Button>
+            <View className="mt-4">
+              <Button tone="primary" fullWidth onPress={() => setSelected(null)}>
+                Close
+              </Button>
+            </View>
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog>

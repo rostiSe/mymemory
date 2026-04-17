@@ -16,6 +16,7 @@ import { UIStoreProvider, useUIStore } from "@/stores/providers/ui-provider";
 import { Uniwind } from "uniwind";
 import * as SystemUI from "expo-system-ui";
 import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import { heroUIConfig } from "@/theme/heroui";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
@@ -115,7 +116,7 @@ export default function RootLayout() {
         <AuthStoreProvider>
           <UIStoreProvider>
             <QueryClientProvider client={queryClient}>
-              <HeroUINativeProvider>
+              <HeroUINativeProvider config={heroUIConfig}>
                 <ErrorBoundary>
                   <AppShell />
                 </ErrorBoundary>

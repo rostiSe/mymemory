@@ -41,9 +41,9 @@ export const ENTRY_DETAIL_HERO_MAX_HEIGHT_PX = 320;
 
 /**
  * Feed `EntryCard` cover region: fixed height (full width). Image uses `contentFit="cover"` inside
- * this slot so row height stays stable while loading. Matches Uniwind `h-32` (~128px).
+ * this slot so row height stays stable while loading. Matches `--layout-entry-card-cover-height` in global.css.
  */
-export const FEED_ENTRY_CARD_COVER_HEIGHT_PX = 128;
+export const FEED_ENTRY_CARD_COVER_HEIGHT_PX = 150;
 
 /**
  * Feed row `Swipeable` + `FlashList`: if vertical movement exceeds ± this many points
@@ -105,9 +105,6 @@ export const SPACE_SUGGESTIONS_DIALOG_LIST_MAX_HEIGHT_WINDOW_FRACTION = 0.65;
  * Avoids `%` / `max-w-*` Uniwind resolution issues where the panel collapses to a thin strip.
  */
 export const SPACE_SUGGESTIONS_DIALOG_WIDTH_WINDOW_FRACTION = 0.92;
-
-/** Matches --spacing-wiki-section-gap */
-export const WIKI_SECTION_GAP_PX = 24;
 
 /** Matches --spacing-wiki-toc-height */
 export const WIKI_TOC_HEIGHT_PX = 44;

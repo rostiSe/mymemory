@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/Button/index";
 import {
   SPACE_SUGGESTIONS_DIALOG_LIST_MAX_HEIGHT_WINDOW_FRACTION,
   SPACE_SUGGESTIONS_DIALOG_WIDTH_WINDOW_FRACTION,
@@ -5,7 +6,7 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import type { appContract } from "@mymemory/shared";
 import type { InferContractRouterOutputs } from "@orpc/contract";
-import { Alert, Button, Chip, Dialog, useThemeColor } from "heroui-native";
+import { Alert, Chip, Dialog, useThemeColor } from "heroui-native";
 import { memo, useCallback, useState } from "react";
 import {
   FlatList,
@@ -137,10 +138,10 @@ const SuggestionReviewCard = memo(function SuggestionReviewCard({
         </Alert.Description>
       </Alert.Content>
       <View className="flex-row gap-1 shrink-0 self-center pl-1">
-        <Button size="sm" variant="ghost" onPress={reject} isDisabled={busy}>
+        <Button size="sm" tone="ghost" onPress={reject} isDisabled={busy}>
           Skip
         </Button>
-        <Button size="sm" variant="primary" onPress={approve} isDisabled={busy}>
+        <Button size="sm" tone="primary" onPress={approve} isDisabled={busy}>
           {approveLabel}
         </Button>
       </View>

@@ -1,3 +1,4 @@
+import { EntryCard } from "@/components/ui/Card/variants/EntryCard/index";
 import type { EntryRow } from "@/features/entry/types";
 import {
   FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
@@ -12,7 +13,6 @@ import ReanimatedSwipeable, {
   SwipeDirection,
   type SwipeableMethods,
 } from "react-native-gesture-handler/ReanimatedSwipeable";
-import EntryCard from "../EntryCard";
 
 export type FeedListItemProps = {
   entryId: string;
@@ -132,17 +132,20 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
         dragOffsetFromRightEdge={FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX}
       >
         <EntryCard
-          title={title}
-          summary={summary}
+          item={{
+            id: entryId,
+            title,
+            summary,
+            type,
+            date: displayDate,
+            metaHint,
+            heroImageUri,
+            isFavorited,
+            isPinned,
+            processedStatus,
+          }}
           summaryLoading={summaryLoading}
-          type={type}
-          date={displayDate}
-          metaHint={metaHint}
-          heroImageUri={heroImageUri}
-          isFavorited={isFavorited}
-          isPinned={isPinned}
-          processedStatus={processedStatus}
-          onPress={() => onPressEntry(entryId)}
+          onPress={handlePress}
         />
       </ReanimatedSwipeable>
     </View>

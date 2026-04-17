@@ -1,6 +1,7 @@
+import { Button } from "@/components/ui/Button/index";
 import { useState } from "react";
 import { View, Text, ScrollView } from "react-native";
-import { Button, Card, TextField, Input, Label } from "heroui-native";
+import { Card, TextField, Input, Label } from "heroui-native";
 import { useAppStore } from "@/stores/providers/app-provider";
 import { Stack } from "expo-router";
 import { useAppToast } from "@/hooks/useAppToast";
@@ -70,7 +71,7 @@ export default function TemplateTestScreen() {
             <Text className="text-foreground">App is onboarded?</Text>
             <Button
               size="sm"
-              variant={isOnboarded ? "primary" : "outline"}
+              tone={isOnboarded ? "primary" : "secondary"}
               onPress={() => setIsOnboarded(!isOnboarded)}
             >
               {isOnboarded ? "Yes (Toggle)" : "No (Toggle)"}
@@ -97,11 +98,12 @@ export default function TemplateTestScreen() {
           </TextField>
 
           <Button
+            tone="primary"
             onPress={runAIPipeline}
+            loading={isLoading}
             isDisabled={isLoading}
-            variant="primary"
           >
-            {isLoading ? "Running AI Pipeline..." : "Run Pipeline"}
+            Run Pipeline
           </Button>
 
           {aiResult && (

@@ -1,8 +1,9 @@
+import { Button } from "@/components/ui/Button/index";
 import { useCreateEntry } from "@/features/entry/hooks/useEntries";
 import { useAppToast } from "@/hooks/useAppToast";
 import { orpcClient } from "@/lib/orpc";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Button, InputGroup, TextField, useThemeColor } from "heroui-native";
+import { InputGroup, TextField, useThemeColor } from "heroui-native";
 import { useCallback, useState } from "react";
 import { View } from "react-native";
 
@@ -97,12 +98,12 @@ export function CaptureComposer({
           <InputGroup.Suffix>
             <Button
               size="sm"
-              variant="primary"
+              tone="primary"
               onPress={submit}
+              loading={isBusy}
               isDisabled={isBusy}
-              className="rounded-lg"
             >
-              {isBusy ? "Adding..." : "Add"}
+              Add
             </Button>
           </InputGroup.Suffix>
         </InputGroup>

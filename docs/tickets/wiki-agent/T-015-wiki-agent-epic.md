@@ -78,6 +78,13 @@ User presses "Compile Wiki"
 | [T-015g](./T-015g-compile-lint-ui.md) | Mobile: Compile/Lint UI | feature (mobile) | Mobile |
 | [T-015h](./T-015h-delete-ops-wiki-listing.md) | Mobile: Delete Ops + Wiki Listing | feature (mobile) | Mobile |
 
+### Agent Loop phase (post-MVP)
+
+| ID | Ticket | Type | Phase |
+|----|--------|------|-------|
+| [T-015r](./T-015r-compile-observability.md) | Compile Observability & Cost Telemetry | feature (server + mobile) | Agent Loop |
+| [T-015q](./T-015q-query-agent.md) | Query Agent + Ask-Your-Wiki UI | feature (server + mobile) | Agent Loop |
+
 ### Quality phase
 
 | ID | Ticket | Type | Phase |

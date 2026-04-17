@@ -1,4 +1,7 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
+import { Button } from "@/components/ui/Button/index";
+import { EmptyState } from "@/components/ui/EmptyState/index";
+import { ScreenHeader } from "@/components/ui/ScreenHeader/index";
 import { SpaceListRow } from "@/features/space/components/SpaceListRow";
 import type { SpaceRow } from "@/features/space/components/SpaceListRow";
 import { SpacesSearchField } from "@/features/space/components/SpacesSearchField";
@@ -17,7 +20,7 @@ import { useAppToast } from "@/hooks/useAppToast";
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Button, Input, Label, TextField, useThemeColor } from "heroui-native";
+import { Input, Label, TextField, useThemeColor } from "heroui-native";
 import { memo, useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -419,8 +422,10 @@ export default function SpacesScreen() {
 
   return (
     <ScreenInset className="flex-1 bg-background" edges={["top", "left", "right"]}>
-      <View className="flex-1 px-screen pt-3">
+      <View className="flex-1 pt-3">
+        <ScreenHeader title="Spaces" withSafeArea={false} bordered />
         <FlatList<ListEntry>
+          className="flex-1 px-screen"
           data={listData}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
@@ -439,20 +444,19 @@ export default function SpacesScreen() {
             spacesPending ? (
               <ActivityIndicator className="py-8" />
             ) : listEmptyNoSpaces ? (
-              <View className="py-8 px-2">
-                <Text className="text-foreground text-center text-base font-medium">
-                  No spaces yet
-                </Text>
-                <Text className="text-muted text-center text-sm mt-2">
-                  Approve a suggestion above or tap New space.
-                </Text>
-              </View>
+              <EmptyState
+                fill={false}
+                icon="folder-open"
+                title="No spaces yet"
+                description="Approve a suggestion above or tap New space."
+              />
             ) : filterEmpty ? (
-              <View className="py-8 px-2">
-                <Text className="text-muted text-center text-sm">
-                  {emptyMessage}
-                </Text>
-              </View>
+              <EmptyState
+                fill={false}
+                icon="search-off"
+                title={emptyMessage ?? "No matches"}
+                description="Try a different search term."
+              />
             ) : null
           }
         />
@@ -508,17 +512,22 @@ export default function SpacesScreen() {
               />
             </TextField>
             <View className="flex-row gap-2">
-              <Button variant="ghost" className="flex-1" onPress={closeCreate}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                className="flex-1 rounded-card"
-                onPress={handleCreateSpace}
-                isDisabled={createSpace.isPending}
-              >
-                {createSpace.isPending ? "Creating…" : "Create"}
-              </Button>
+              <View className="flex-1">
+                <Button tone="ghost" fullWidth onPress={closeCreate}>
+                  Cancel
+                </Button>
+              </View>
+              <View className="flex-1">
+                <Button
+                  tone="primary"
+                  fullWidth
+                  onPress={handleCreateSpace}
+                  loading={createSpace.isPending}
+                  isDisabled={createSpace.isPending}
+                >
+                  {createSpace.isPending ? "Creating…" : "Create"}
+                </Button>
+              </View>
             </View>
           </Pressable>
         </Pressable>

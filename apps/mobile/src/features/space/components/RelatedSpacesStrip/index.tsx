@@ -1,4 +1,4 @@
-import { RelatedSpaceCard } from "@/features/space/components/RelatedSpaceCard";
+import { SpaceCard } from "@/components/ui/Card/variants/SpaceCard/index";
 import { useRelatedSpaces } from "@/features/space/hooks/useRelatedSpaces";
 import { router } from "expo-router";
 import type { FC } from "react";
@@ -32,11 +32,26 @@ export const RelatedSpacesStrip: FC<RelatedSpacesStripProps> =
           contentContainerClassName="flex-row items-center gap-2 px-screen"
         >
           {data.map((item) => (
-            <RelatedSpaceCard
-              key={item.space.id}
-              item={item}
-              onPress={onPressCard}
-            />
+            <View key={item.space.id} className="w-72 max-w-[85vw]">
+              <SpaceCard
+                item={{
+                  id: item.space.id,
+                  name: item.space.name,
+                  description: item.space.description ?? undefined,
+                  entryCount: 0,
+                  compilationStatus: item.space.compilationStatus,
+                  lastCompiledAt:
+                    item.space.lastCompiledAt == null
+                      ? null
+                      : typeof item.space.lastCompiledAt === "string"
+                        ? item.space.lastCompiledAt
+                        : item.space.lastCompiledAt.toISOString(),
+                  origin: item.space.origin ?? "user",
+                }}
+                sharedPageCount={item.sharedPageCount}
+                onPress={onPressCard}
+              />
+            </View>
           ))}
         </ScrollView>
       </View>

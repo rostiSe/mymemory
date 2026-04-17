@@ -1,10 +1,11 @@
+import { Button } from "@/components/ui/Button/index";
 import { useAppToast } from "@/hooks/useAppToast";
 import { storage } from "@/lib/mmkv";
 import { useAuthStore } from "@/stores/providers/auth-provider";
 import { useUIStore } from "@/stores/providers/ui-provider";
 import Constants from "expo-constants";
 import { router, Stack } from "expo-router";
-import { Button, Card, Separator } from "heroui-native";
+import { Card, Separator } from "heroui-native";
 import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 
@@ -44,7 +45,7 @@ function CrashButton() {
     throw new Error("Intentional crash from debug screen");
   }
   return (
-    <Button variant="danger" onPress={() => setShouldCrash(true)}>
+    <Button tone="danger" onPress={() => setShouldCrash(true)}>
       Force Crash (Test Error Boundary)
     </Button>
   );
@@ -52,7 +53,7 @@ function CrashButton() {
 
 function TemplateTestButton() {
   return (
-    <Button variant="primary" onPress={() => router.push("/template-test")}>
+    <Button tone="primary" onPress={() => router.push("/template-test")}>
       Template Test
     </Button>
   );
@@ -146,10 +147,10 @@ export default function DebugScreen() {
 
           <Section title="Actions">
             <View className="gap-3">
-              <Button variant="secondary" onPress={handleClearMMKV}>
+              <Button tone="secondary" onPress={handleClearMMKV}>
                 Clear MMKV Storage
               </Button>
-              <Button variant="danger" onPress={handleSignOut}>
+              <Button tone="danger" onPress={handleSignOut}>
                 Sign Out
               </Button>
               <CrashButton />

@@ -1,8 +1,8 @@
+import { Button } from "@/components/ui/Button/index";
 import { useAppToast } from "@/hooks/useAppToast";
 import { useAuthStore } from "@/stores/providers/auth-provider";
 import { Link, router } from "expo-router";
 import {
-  Button,
   Card,
   FieldError,
   Input,
@@ -96,12 +96,13 @@ export default function SignupScreen() {
 
         <Card.Footer className="flex-col gap-3 py-2">
           <Button
-            variant="primary"
-            className="w-full"
+            tone="primary"
+            fullWidth
             onPress={handleSignUp}
+            loading={loading}
             isDisabled={loading}
           >
-            {loading ? "Creating account..." : "Sign Up"}
+            Sign Up
           </Button>
 
           <View className="flex-row items-center justify-center gap-1">

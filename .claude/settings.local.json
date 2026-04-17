@@ -8,7 +8,9 @@
       "Bash(xargs grep:*)",
       "Bash(find /c/Dev/mymemory-expo-sdk55/mymemory/packages/db/src/schema -name \"*.ts\" -exec grep -l \"CREATE TABLE\\\\|pgTable.*user\\\\|export const.*=\" {} \\\\;)",
       "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -30 {}')",
-      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")"
+      "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
+      "Bash(grep -E \"\\\\.\\(ts|sql\\)$\")",
+      "Bash(grep -E \"\\\\.ts$\")"
     ]
   }
 }

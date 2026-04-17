@@ -1,5 +1,7 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
+import { ScreenHeader } from "@/components/ui/ScreenHeader/index";
 import { ProcessingStatus } from "@/features/entry/components/ProcessingStatus";
+import { EntryDeleteConfirmSheet } from "@/features/entry/components/EntryDeleteConfirmSheet";
 import { useEntryById } from "@/features/entry/hooks/useEntries";
 import { useEntryDetailInteractions } from "@/features/entry/hooks/useEntryDetailInteractions";
 import { useEntryDetailTrackRead } from "@/features/entry/hooks/useEntryDetailTrackRead";
@@ -10,12 +12,13 @@ import {
 } from "@/features/entry/utils/buildEntryMetaLine";
 import { resolveEntryHeroImageUri } from "@/features/entry/utils/resolveEntryHeroImageUri";
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
+import { MaterialIcons } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
+import { useThemeColor } from "heroui-native";
 import { useMemo } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { EntryDetailHeader } from "./components/EntryDetailHeader";
 import { EntryDetailHero } from "./components/EntryDetailHero";
 import { EntryDetailSkeleton } from "./components/EntryDetailSkeleton";
 import { EntryKeyPointsSection } from "./components/EntryKeyPointsSection";
@@ -23,7 +26,7 @@ import { EntryMarkdownBody } from "./components/EntryMarkdownBody";
 import { EntryReviewedAction } from "./components/EntryReviewedAction";
 import { EntrySpacesPlaceholder } from "./components/EntrySpacesPlaceholder";
 import { EntrySourceDetailSection } from "./components/EntrySourceDetailSection";
-import { EntrySummaryCard } from "./components/EntrySummaryCard";
+import { EntrySummarySection } from "./components/EntrySummarySection";
 import { EntryTagsSection } from "./components/EntryTagsSection";
 import { EntryTopicsSection } from "./components/EntryTopicsSection";
 
@@ -42,6 +45,9 @@ export default function EntryDetailScreen() {
   } = useEntryDetailInteractions(entry ?? undefined);
   const insets = useSafeAreaInsets();
   const { scrollHandler, heroImageStyle } = useEntryDetailScroll();
+  const mutedColor = useThemeColor("muted");
+  const accentColor = useThemeColor("accent");
+  const dangerColor = useThemeColor("danger");
 
   const imageUri = useMemo(
     () => (entry ? resolveEntryHeroImageUri(entry) : undefined),
@@ -73,7 +79,53 @@ export default function EntryDetailScreen() {
       entry.processedStatus === "processing" ||
       Boolean(entry.summary?.trim()));
 
+  const showFavoritePin = entry?.processedStatus === "done";
+
   const bottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
+
+  const headerTrailing = entry ? (
+    <View className="flex-row items-center gap-2">
+      {showFavoritePin ? (
+        <>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              entry.isFavorited ? "Remove from favorites" : "Add to favorites"
+            }
+            onPress={handleToggleFavorite}
+            hitSlop={8}
+          >
+            <MaterialIcons
+              name={entry.isFavorited ? "favorite" : "favorite-border"}
+              size={22}
+              color={entry.isFavorited ? dangerColor : mutedColor}
+            />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={entry.isPinned ? "Unpin entry" : "Pin entry"}
+            onPress={handleTogglePin}
+            hitSlop={8}
+          >
+            <MaterialIcons
+              name="push-pin"
+              size={22}
+              color={entry.isPinned ? accentColor : mutedColor}
+            />
+          </Pressable>
+        </>
+      ) : null}
+      <EntryDeleteConfirmSheet onConfirmDelete={handleConfirmDelete}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="More actions — delete entry"
+          hitSlop={8}
+        >
+          <MaterialIcons name="more-vert" size={22} color={mutedColor} />
+        </Pressable>
+      </EntryDeleteConfirmSheet>
+    </View>
+  ) : null;
 
   if (isPending) {
     return <EntryDetailSkeleton />;
@@ -116,17 +168,21 @@ export default function EntryDetailScreen() {
       >
         <EntryDetailHero imageUri={imageUri} heroImageStyle={heroImageStyle} />
         <View className="-mt-6 rounded-t-lg bg-background px-(--spacing-screen) pt-6">
-          <EntryDetailHeader
-            title={headerProps.title}
-            subtitle={headerProps.subtitle}
-            metaLine={headerProps.metaLine}
-            isFavorited={entry.isFavorited}
-            isPinned={entry.isPinned}
-            showFavoritePin={entry.processedStatus === "done"}
-            onToggleFavorite={handleToggleFavorite}
-            onTogglePin={handleTogglePin}
-            onConfirmDelete={handleConfirmDelete}
-          />
+          <View className="pb-4">
+            <ScreenHeader
+              variant="large"
+              title={headerProps.title}
+              subtitle={headerProps.subtitle || undefined}
+              metaLine={headerProps.metaLine}
+              rowAlign="start"
+              subtitleSize="base"
+              titleNumberOfLines={3}
+              subtitleNumberOfLines={2}
+              metaLineNumberOfLines={2}
+              withSafeArea={false}
+              trailing={headerTrailing}
+            />
+          </View>
           {entry.processedStatus !== "done" ? (
             <View className="mb-4">
               <ProcessingStatus
@@ -141,7 +197,7 @@ export default function EntryDetailScreen() {
             </View>
           ) : null}
           {showSummaryCard ? (
-            <EntrySummaryCard
+            <EntrySummarySection
               contentKey={entry.id}
               summaryText={summaryText}
               loading={

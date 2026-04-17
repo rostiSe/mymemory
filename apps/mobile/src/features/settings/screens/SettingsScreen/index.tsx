@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/Button/index";
 import { useLintWiki } from "@/features/wiki/hooks/useWikiMutations";
 import { useCompilationStatus } from "@/features/wiki/hooks/useWikiPages";
 import { useAppToast } from "@/hooks/useAppToast";
@@ -6,7 +7,7 @@ import { useUIStore } from "@/stores/providers/ui-provider";
 import type { ThemeMode } from "@/stores/ui.store";
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import { Button, ListGroup } from "heroui-native";
+import { ListGroup } from "heroui-native";
 import { ScrollView, Text, View } from "react-native";
 
 const THEME_OPTIONS: { label: string; value: ThemeMode }[] = [
@@ -150,9 +151,11 @@ export default function SettingsScreen() {
             </ListGroup.Item>
           </ListGroup>
 
-          <Button variant="danger" onPress={handleSignOut} className="mt-2">
-            Sign Out
-          </Button>
+          <View className="mt-2">
+            <Button tone="danger" fullWidth onPress={handleSignOut}>
+              Sign Out
+            </Button>
+          </View>
         </View>
 
         {__DEV__ && (

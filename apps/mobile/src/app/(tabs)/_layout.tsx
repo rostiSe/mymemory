@@ -34,6 +34,7 @@ export default function TabsLayout() {
         name="spaces"
         options={{
           title: "Spaces",
+          headerShown: false,
         }}
       />
       <Tabs.Screen

@@ -6,7 +6,7 @@ type SpaceCompileFields = Pick<
   "compilationStatus" | "lastCompiledAt"
 >;
 
-/** Uniwind class for the compile-status dot (matches `SpaceListRow` / `RelatedSpaceCard`). */
+/** Uniwind class for the compile-status dot (matches `SpaceListRow` / `SpaceCard`). */
 export function compileStatusDotClassName({
   compilationStatus,
   lastCompiledAt,
