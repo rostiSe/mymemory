@@ -8,10 +8,13 @@ import { entryDetailSchema, entrySchema } from "@mymemory/shared/contracts";
 import { ORPCError } from "@orpc/server";
 import { and, desc, eq, getTableColumns, lt, or, sql } from "drizzle-orm";
 import { z } from "zod";
+import { entryRowToApiEntry } from "./entry-row-to-api.js";
 
 type Entry = z.infer<typeof entrySchema>;
 type EntryDetail = z.infer<typeof entryDetailSchema>;
 type EntryRow = typeof entries.$inferSelect;
+
+export type { EntryRow };
 
 /** Cosine similarity from pgvector `1 - (vector <=> query)`; below this is noise. */
 const SEMANTIC_SEARCH_MIN_SIMILARITY = 0.3;
@@ -22,25 +25,6 @@ const cursorPayloadSchema = z.object({
   /** Present for `filter === "all"` (pinned-first ordering). */
   isPinned: z.boolean().optional(),
 });
-
-export function toEntry(row: EntryRow): Entry {
-  return {
-    ...row,
-    title: row.title ?? undefined,
-    summary: row.summary ?? undefined,
-    url: row.url ?? undefined,
-    error: row.error ?? undefined,
-    rawContent: row.rawContent ?? undefined,
-    readableContent: row.readableContent ?? undefined,
-    coverImageUrl: row.coverImageUrl ?? undefined,
-    metadata: row.metadata ?? undefined,
-    keyPoints: row.keyPoints ?? undefined,
-    lastReadAt: row.lastReadAt ?? undefined,
-    sourceApp: row.sourceApp ?? undefined,
-    wordCount: row.wordCount ?? undefined,
-    language: row.language ?? undefined,
-  } as Entry;
-}
 
 function encodeCursor(
   row: { createdAt: Date; id: string; isPinned: boolean },
@@ -179,7 +163,9 @@ export const entryService = {
 
     const hasMore = rows.length > limit;
     const slice = hasMore ? rows.slice(0, limit) : rows;
-    const items = slice.map(toEntry);
+    const items = await Promise.all(
+      slice.map((row) => entryRowToApiEntry(row)),
+    );
 
     const last = slice[slice.length - 1];
     const nextCursor =
@@ -210,7 +196,7 @@ export const entryService = {
 
     if (!row) return null;
 
-    const base = toEntry(row);
+    const base = await entryRowToApiEntry(row);
     const [tagRows, topicRows] = await Promise.all([
       database
         .select({ id: tags.id, name: tags.name })
@@ -267,7 +253,7 @@ export const entryService = {
         processedStatus: "pending",
       })
       .returning();
-    return toEntry(newEntry);
+    return await entryRowToApiEntry(newEntry);
   },
 
   async toggleField(
@@ -295,7 +281,7 @@ export const entryService = {
     if (!row) {
       throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
     }
-    return toEntry(row);
+    return await entryRowToApiEntry(row);
   },
 
   async setReviewStatus(
@@ -318,7 +304,7 @@ export const entryService = {
     if (!row) {
       throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
     }
-    return toEntry(row);
+    return await entryRowToApiEntry(row);
   },
 
   async trackRead(
@@ -339,7 +325,7 @@ export const entryService = {
     if (!row) {
       throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
     }
-    return toEntry(row);
+    return await entryRowToApiEntry(row);
   },
 
   async retryIngest(
@@ -383,6 +369,7 @@ export const entryService = {
           readableContent: null,
           rawContent: null,
           coverImageUrl: null,
+          coverImageStorageKey: null,
           metadata: null,
           wordCount: null,
           language: null,
@@ -400,7 +387,7 @@ export const entryService = {
     if (!row) {
       throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
     }
-    return toEntry(row);
+    return await entryRowToApiEntry(row);
   },
 
   async search(
@@ -434,10 +421,12 @@ export const entryService = {
       .slice(0, limit);
 
     return {
-      items: filtered.map((r) => {
-        const { similarity, ...row } = r;
-        return { ...toEntry(row), similarity };
-      }),
+      items: await Promise.all(
+        filtered.map(async (r) => {
+          const { similarity, ...row } = r;
+          return { ...(await entryRowToApiEntry(row)), similarity };
+        }),
+      ),
     };
   },
 

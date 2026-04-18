@@ -1,0 +1,2 @@
+ALTER TABLE "space_relations" ADD CONSTRAINT "space_relations_child_space_id_uidx" UNIQUE("child_space_id");--> statement-breakpoint
+ALTER TABLE "space_relations" ADD CONSTRAINT "space_relations_parent_ne_child_chk" CHECK ("space_relations"."parent_space_id" <> "space_relations"."child_space_id");

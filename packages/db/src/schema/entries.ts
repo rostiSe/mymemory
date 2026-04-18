@@ -27,7 +27,15 @@ export const entries = pgTable('entries', {
   // Enriched content (pipeline)
   rawContent: text('raw_content'),
   readableContent: text('readable_content'),
+  /**
+   * Legacy: remote hero/cover URL from scrape or AI (https://…). Prefer `coverImageStorageKey` for uploads.
+   */
   coverImageUrl: text('cover_image_url'),
+  /**
+   * Supabase Storage object path within the configured bucket (no public URL).
+   * APIs should expose only signed URLs minted at read time.
+   */
+  coverImageStorageKey: text('cover_image_storage_key'),
   metadata: jsonb('metadata').$type<Record<string, unknown>>(),
   keyPoints: jsonb('key_points').$type<string[]>(),
 
@@ -47,6 +55,13 @@ export const entries = pgTable('entries', {
   // Content metrics
   wordCount: integer('word_count'),
   language: varchar('language', { length: 10 }),
+
+  /** AI-extracted content classification (see analyzeContent schema). */
+  contentType: varchar('content_type', { length: 20 }),
+  /** AI-extracted depth: shallow | medium | deep. */
+  depth: varchar('depth', { length: 10 }),
+  /** Up to 5 author names from bylines / metadata. */
+  authors: jsonb('authors').$type<string[]>(),
 });
 
 // Zod schemas for easy API validation

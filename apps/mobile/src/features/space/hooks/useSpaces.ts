@@ -1,4 +1,4 @@
-import { orpc } from "@/lib/orpc";
+import { orpc, orpcClient } from "@/lib/orpc";
 import type { appContract } from "@mymemory/shared";
 import type { InferContractRouterOutputs } from "@orpc/contract";
 import {
@@ -33,12 +33,25 @@ function spaceRowFromServer(
     ...row,
     description: row.description ?? undefined,
     centroidVector: row.centroidVector ?? undefined,
+    lastCompiledAt: row.lastCompiledAt ?? undefined,
     entryCount,
   };
 }
 
 export function useSpaces() {
-  return useQuery(orpc.spaces.list.queryOptions({ input: undefined }));
+  const options = orpc.spaces.list.queryOptions({ input: undefined });
+  return useQuery({
+    ...options,
+    queryFn: async (ctx) => {
+      const data = await options.queryFn(ctx);
+      if (data === undefined) {
+        throw new Error(
+          "Spaces list returned no data. Check your connection and API URL.",
+        );
+      }
+      return data;
+    },
+  });
 }
 
 export function useSpace(id: string | undefined) {
@@ -51,7 +64,14 @@ export function useSpace(id: string | undefined) {
 }
 
 export function useSpaceSuggestions() {
-  return useQuery(orpc.spaces.listSuggestions.queryOptions({ input: undefined }));
+  const options = orpc.spaces.listSuggestions.queryOptions({ input: undefined });
+  return useQuery({
+    ...options,
+    queryFn: async ({ signal }) => {
+      const data = await orpcClient.spaces.listSuggestions(undefined, { signal });
+      return data ?? [];
+    },
+  });
 }
 
 export function useCreateSpace() {
@@ -72,8 +92,11 @@ export function useCreateSpace() {
         id: optimisticId,
         userId,
         name: input.name,
+        origin: "user",
         description: input.description ?? undefined,
         centroidVector: undefined,
+        compilationStatus: "idle",
+        lastCompiledAt: undefined,
         createdAt: now,
         updatedAt: now,
         entryCount: 0,
@@ -132,31 +155,73 @@ export function useApproveSuggestion() {
         (old) => old?.filter((s) => s.id !== variables.suggestionId) ?? [],
       );
 
-      const userId = previousSpaces?.[0]?.userId;
+      const targetExistingSpaceId =
+        variables.spaceId
+        ?? (variables.spaceName ? undefined : suggestionRow?.suggestedSpaceId ?? undefined);
+
       let optimisticSpaceId: string | undefined;
 
-      if (userId) {
-        optimisticSpaceId = crypto.randomUUID();
-        const now = new Date();
-        const optimisticRow: SpaceListRow = {
-          id: optimisticSpaceId,
-          userId,
-          name: resolvedSpaceName,
-          description: undefined,
-          centroidVector: undefined,
-          createdAt: now,
-          updatedAt: now,
-          entryCount: 1,
-        };
-        queryClient.setQueryData<SpaceListRow[]>(spacesListKey, (old) => [
-          optimisticRow,
-          ...(old ?? []),
-        ]);
+      if (targetExistingSpaceId) {
+        queryClient.setQueryData<SpaceListRow[]>(spacesListKey, (old) =>
+          old?.map((s) =>
+            s.id === targetExistingSpaceId
+              ? { ...s, entryCount: s.entryCount + 1 }
+              : s,
+          ) ?? [],
+        );
+      } else {
+        const userId = previousSpaces?.[0]?.userId;
+        if (userId) {
+          optimisticSpaceId = crypto.randomUUID();
+          const now = new Date();
+          const optimisticRow: SpaceListRow = {
+            id: optimisticSpaceId,
+            userId,
+            name: resolvedSpaceName,
+            origin: "user",
+            description: undefined,
+            centroidVector: undefined,
+            compilationStatus: "idle",
+            lastCompiledAt: undefined,
+            createdAt: now,
+            updatedAt: now,
+            entryCount: 1,
+          };
+          queryClient.setQueryData<SpaceListRow[]>(spacesListKey, (old) => [
+            optimisticRow,
+            ...(old ?? []),
+          ]);
+        }
       }
 
-      return { previousSuggestions, previousSpaces, optimisticSpaceId };
+      return {
+        previousSuggestions,
+        previousSpaces,
+        optimisticSpaceId,
+        targetExistingSpaceId,
+      };
     },
     onSuccess: (newSpace, _variables, context) => {
+      if (context?.targetExistingSpaceId) {
+        // Assigned to existing space — optimistic count bump already applied. Sync server fields.
+        queryClient.setQueryData<SpaceListRow[]>(spacesListKey, (old) =>
+          old?.map((s) =>
+            s.id === newSpace.id
+              ? {
+                  ...s,
+                  name: newSpace.name,
+                  description: newSpace.description ?? undefined,
+                  centroidVector: newSpace.centroidVector ?? undefined,
+                  compilationStatus: newSpace.compilationStatus,
+                  lastCompiledAt: newSpace.lastCompiledAt ?? undefined,
+                  updatedAt: newSpace.updatedAt,
+                }
+              : s,
+          ) ?? [],
+        );
+        return;
+      }
+
       const resolved = spaceRowFromServer(newSpace, 1);
       queryClient.setQueryData<SpaceListRow[]>(spacesListKey, (old) => {
         if (!old?.length) return [resolved];
@@ -219,6 +284,12 @@ export function useDeleteSpace() {
         (old) => old?.filter((s) => s.id !== variables.id) ?? [],
       );
       return { previousSpaces };
+    },
+    onSuccess: (_data, _variables) => {
+      void queryClient.invalidateQueries({
+        predicate: (query) =>
+          JSON.stringify(query.queryKey).includes("relatedSpaces"),
+      });
     },
     onError: (_err, _variables, context) => {
       if (context?.previousSpaces !== undefined) {

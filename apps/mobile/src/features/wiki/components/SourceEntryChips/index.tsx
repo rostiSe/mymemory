@@ -1,6 +1,6 @@
+import { Badge } from "@/components/ui/Badge/index";
 import { isUuid } from "@/features/wiki/types";
 import { useRouter } from "expo-router";
-import { Chip } from "heroui-native";
 import { ScrollView, Text, View } from "react-native";
 
 const MAX_VISIBLE = 5;
@@ -34,29 +34,28 @@ export function SourceEntryChips({ entryIds }: SourceEntryChipsProps) {
             const label = valid ? `Entry · ${id.slice(0, 8)}` : formatEntryLabel(id);
             if (!valid) {
               return (
-                <Chip key={id} variant="soft" size="sm" color="default" disabled>
-                  <Chip.Label className="text-xs">{label}</Chip.Label>
-                </Chip>
+                <Badge key={id} tone="neutral" size="sm" disabled>
+                  {label}
+                </Badge>
               );
             }
             return (
-              <Chip
+              <Badge
                 key={id}
-                variant="soft"
+                tone="neutral"
                 size="sm"
-                color="default"
                 onPress={() => router.push(`/entry/${id}`)}
                 accessibilityRole="link"
                 accessibilityLabel="Open source entry"
               >
-                <Chip.Label className="text-xs">{label}</Chip.Label>
-              </Chip>
+                {label}
+              </Badge>
             );
           })}
           {overflow > 0 ? (
-            <Chip variant="soft" size="sm" color="default" disabled>
-              <Chip.Label className="text-xs">+{overflow} more</Chip.Label>
-            </Chip>
+            <Badge tone="neutral" size="sm" disabled>
+              +{overflow} more
+            </Badge>
           ) : null}
         </View>
       </ScrollView>

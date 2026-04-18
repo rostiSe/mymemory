@@ -72,8 +72,8 @@ export default function BottomSheetComponent({
         <BottomSheet.Trigger asChild>{children}</BottomSheet.Trigger>
       ) : null}
       <BottomSheet.Portal>
-        <BottomSheet.Overlay />
-        <BottomSheet.Content>
+        <BottomSheet.Overlay className="bg-background/60" />
+        <BottomSheet.Content className="mx-1">
           <View className="items-center mb-5">
             <View
               className={`size-20 items-center justify-center rounded-full ${iconWrapClass}`}

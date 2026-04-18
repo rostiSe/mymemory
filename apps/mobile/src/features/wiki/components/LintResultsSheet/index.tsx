@@ -1,9 +1,9 @@
+import { Button } from "@/components/ui/Button/index";
 import { useLintWiki } from "@/features/wiki/hooks/useWikiMutations";
 import type { WikiLintResult } from "@/features/wiki/types";
 import { useAppToast } from "@/hooks/useAppToast";
 import { MaterialIcons } from "@expo/vector-icons";
-import { useThemeColor } from "heroui-native";
-import { Button, Chip } from "heroui-native";
+import { Chip, useThemeColor } from "heroui-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -178,13 +178,11 @@ export function LintResultsSheet({ open, onOpenChange }: LintResultsSheetProps) 
             <Text className="text-muted mt-2 text-xs">Run at {formatRunTime(finishedAt)}</Text>
           ) : null}
 
-          <Button
-            variant="primary"
-            className="mt-4"
-            onPress={() => onOpenChange(false)}
-          >
-            Close
-          </Button>
+          <View className="mt-4">
+            <Button tone="primary" fullWidth onPress={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </View>
         </Pressable>
       </Pressable>
     </Modal>

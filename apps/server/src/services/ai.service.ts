@@ -3,6 +3,7 @@ import { entries } from "@mymemory/db/schema/entries";
 import { entrySchema } from "@mymemory/shared/contracts";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { entryRowToApiEntry } from "./entry-row-to-api.js";
 
 // Tools
 import { processEntry } from "../modules/ai/pipelines/ingest.js";
@@ -37,22 +38,7 @@ export const aiService = {
 
     return {
       success: true,
-      data: {
-        ...updatedEntry,
-        title: updatedEntry.title ?? undefined,
-        summary: updatedEntry.summary ?? undefined,
-        url: updatedEntry.url ?? undefined,
-        error: updatedEntry.error ?? undefined,
-        rawContent: updatedEntry.rawContent ?? undefined,
-        readableContent: updatedEntry.readableContent ?? undefined,
-        coverImageUrl: updatedEntry.coverImageUrl ?? undefined,
-        metadata: updatedEntry.metadata ?? undefined,
-        keyPoints: updatedEntry.keyPoints ?? undefined,
-        lastReadAt: updatedEntry.lastReadAt ?? undefined,
-        sourceApp: updatedEntry.sourceApp ?? undefined,
-        wordCount: updatedEntry.wordCount ?? undefined,
-        language: updatedEntry.language ?? undefined,
-      } as Entry,
+      data: await entryRowToApiEntry(updatedEntry),
     };
   },
 

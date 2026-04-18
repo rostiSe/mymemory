@@ -1,8 +1,9 @@
+import { Button } from "@/components/ui/Button/index";
 import type { EntryRow } from "@/features/entry/types";
 import { MaterialIcons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 import { Text, View } from "react-native";
-import { Button, useThemeColor } from "heroui-native";
+import { useThemeColor } from "heroui-native";
 
 type ProcessingStatusProps = {
   status: EntryRow["processedStatus"];
@@ -66,7 +67,7 @@ export function ProcessingStatus({
         ) : null}
       </View>
       {status === "failed" && onRetry ? (
-        <Button size="sm" variant="secondary" onPress={onRetry}>
+        <Button size="sm" tone="secondary" onPress={onRetry}>
           Retry
         </Button>
       ) : null}

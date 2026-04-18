@@ -5,6 +5,7 @@ import { spaces } from "@mymemory/db/schema/spaces";
 import { generateText, stepCountIs } from "ai";
 import { z } from "zod";
 import { WRITER_MAX_STEPS } from "./agent-step-limits.js";
+import { WRITER_MODEL } from "./config.js";
 import {
   buildWriterSystemPrompt,
   buildWriterUserPrompt,
@@ -94,7 +95,7 @@ export async function runWriter(
   const wrappedTools = wrapTools(toolSet);
 
   const result = await generateText({
-    model: openai("gpt-4o-mini"),
+    model: openai(WRITER_MODEL),
     system: buildWriterSystemPrompt(),
     prompt: buildWriterUserPrompt({
       runId,

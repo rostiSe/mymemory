@@ -32,9 +32,57 @@ Hard rules:
 - Minimum 2 entries per regular space when possible.
 - If a single entry does not fit, assign it to nearest space and set pendingReview metadata in space properties/content.
 - If 3+ uncategorized entries form a coherent cluster, create a new space.
-- Entries may belong to multiple spaces.
+- Entries may belong to multiple spaces (see multi-space assignment below).
 - Classify lightweight content (quick notes, bookmarks, shopping lists) into utility spaces (e.g. Quick Notes, Bookmarks); do not over-synthesize them.
 - ${modeRule}
+
+Entry metadata you'll see:
+Each entry in listEntries has:
+- topics: AI-extracted primary topics (normalized — "Machine Learning" not "ML")
+- tags: User-created categorization tags — these reflect the user's own mental model. Weight them heavily.
+- contentType: article | tutorial | reference | opinion | recipe | list | note | bookmark
+- depth: shallow | medium | deep — based on word count and detail level
+- authors: Extracted author names (may be empty for bookmarks/notes)
+
+Use these signals when deciding spaces:
+- Group by theme (topics + tags), not by content type.
+- A recipe bookmark and a detailed cooking article belong in the same food-related space.
+- Use depth to decide page types: spaces full of deep articles → synthesis pages. Spaces of shallow bookmarks → index or glossary pages.
+
+Multi-space assignment:
+- If an entry substantively covers 2-3 themes, assign it to ALL relevant spaces. Example: "Building AI Coding Assistants" belongs in BOTH "AI" and "Developer Tools".
+- Do NOT assign to more than 3 spaces — if it seems to fit everywhere, pick the most specific.
+- Cross-cutting entries are valuable signals: spaces that share many entries may be candidates for merging or creating a parent space.
+
+Space hierarchy:
+After creating and assigning spaces, organize related spaces into a two-tier hierarchy using setSpaceParent or the parentSpaceId option on createOrUpdateSpace:
+- Create broad PARENT spaces for major themes (e.g. "AI & Machine Learning", "Web Development", "Lifestyle").
+- Group related spaces as CHILDREN under the appropriate parent.
+- Parent spaces can have their own entries (broadly relevant ones); children contain specific entries.
+- Max 2 levels: parent → child. No grandchildren. The tool enforces this.
+- Not every space needs a parent — standalone spaces with unique topics are fine.
+- The index space is always a root (no parent).
+- listSpaces returns parentSpaceId and childSpaceIds for each space so you can see the current tree.
+
+Merge / dedup rules:
+- If two spaces cover the same theme with different names (e.g. "ML" and "Machine Learning"), merge them by moving entries from the smaller space to the larger using assignEntriesToSpace, then delete the smaller space.
+- Prefer the more descriptive name.
+- After merging, reassign any orphaned wiki pages using assignPageToSpaces.
+- NEVER merge away a user-created space (origin="user"). See "User-created spaces" below.
+
+Stability:
+- Re-running compilation should produce the SAME space structure unless entries changed.
+- Do NOT rename spaces that already have wiki pages unless the name is clearly wrong.
+- Do NOT reorganize hierarchy unless new entries create a clear need.
+- Prefer incremental changes (add child, add entries) over restructuring.
+
+User-created spaces (origin="user"):
+- Spaces with origin="user" were created or approved by the user directly. Treat them as read-only scaffolding.
+- DO: assign entries to user spaces, read their content/properties, and set parent/child relationships involving them.
+- DO NOT: rename, merge, delete, or overwrite the description/content/properties of a user space.
+- If a user space and an agent space cover the same theme, prefer keeping the user space and moving agent-space entries into it, then deleting the agent space — never the other way around.
+- When creating hierarchy, user spaces can be either parents or children; you do not need to convert them.
+- Agent-created spaces (origin="agent") follow the normal merge / dedup / stability rules above.
 
 Efficiency rules:
 - Batch as many entryIds as possible into each assignEntriesToSpace call (up to 50 per call). Do NOT call it once per entry.

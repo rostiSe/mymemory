@@ -1,6 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import type { EntryListFilter } from "@mymemory/shared/contracts";
-import { TagGroup, useThemeColor } from "heroui-native";
+import { cn, TagGroup, useThemeColor } from "heroui-native";
 import type { ComponentProps } from "react";
 import { useCallback, useMemo } from "react";
 import { ScrollView, View } from "react-native";
@@ -8,6 +8,7 @@ import { ScrollView, View } from "react-native";
 export type FeedFilterBarProps = {
   active: EntryListFilter;
   onChange: (filter: EntryListFilter) => void;
+  className?: string;
 };
 
 type FilterDef = {
@@ -26,7 +27,11 @@ const FILTERS: FilterDef[] = [
 /**
  * Feed scope filters (server `entries.list`). HeroUI `TagGroup` single selection.
  */
-export function FeedFilterBar({ active, onChange }: FeedFilterBarProps) {
+export function FeedFilterBar({
+  active,
+  onChange,
+  className,
+}: FeedFilterBarProps) {
   const mutedColor = useThemeColor("muted");
   const accentSoftFg = useThemeColor("accent-soft-foreground");
 
@@ -46,7 +51,7 @@ export function FeedFilterBar({ active, onChange }: FeedFilterBarProps) {
   );
 
   return (
-    <View className="pb-2 w-full">
+    <View className={cn("pb-2 w-full", className)}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

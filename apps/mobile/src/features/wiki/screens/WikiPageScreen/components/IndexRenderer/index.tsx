@@ -2,7 +2,8 @@ import { AnimatedPressScale } from "@/features/wiki/components/animation/Animate
 import { AnimatedStaggerItem } from "@/features/wiki/components/animation/AnimatedStaggerItem";
 import type { IndexContent } from "@/features/wiki/types";
 import { useRouter } from "expo-router";
-import { Card, Chip } from "heroui-native";
+import { Badge } from "@/components/ui/Badge/index";
+import { Card } from "heroui-native";
 import { Text, View } from "react-native";
 
 export type IndexRendererProps = {
@@ -74,16 +75,12 @@ export function IndexRenderer({ content }: IndexRendererProps) {
                       </Text>
                     ) : null}
                     <View className="mt-1 flex-row flex-wrap gap-2">
-                      <Chip variant="soft" size="sm" color="default">
-                        <Chip.Label className="text-xs">
-                          {space.pageCount} pages
-                        </Chip.Label>
-                      </Chip>
-                      <Chip variant="soft" size="sm" color="accent">
-                        <Chip.Label className="text-xs">
-                          {space.entryCount} entries
-                        </Chip.Label>
-                      </Chip>
+                      <Badge tone="neutral" size="sm">
+                        {space.pageCount} pages
+                      </Badge>
+                      <Badge tone="accent" size="sm">
+                        {space.entryCount} entries
+                      </Badge>
                     </View>
                   </Card.Body>
                 </Card>

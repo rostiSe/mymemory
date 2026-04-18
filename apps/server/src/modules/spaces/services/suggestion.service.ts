@@ -27,6 +27,8 @@ export const suggestionService = {
       entryId: string;
       entryTitle: string;
       suggestedName: string;
+      suggestedSpaceId: string | null;
+      confidence: number | null;
       reason: string | null;
       createdAt: Date;
     }[]
@@ -38,6 +40,8 @@ export const suggestionService = {
         entryTitle: entries.title,
         entryUrl: entries.url,
         suggestedName: spaceSuggestions.suggestedName,
+        suggestedSpaceId: spaceSuggestions.suggestedSpaceId,
+        confidence: spaceSuggestions.confidence,
         reason: spaceSuggestions.reason,
         createdAt: spaceSuggestions.createdAt,
       })
@@ -59,6 +63,8 @@ export const suggestionService = {
         (r.entryUrl && r.entryUrl.trim()) ||
         "Untitled",
       suggestedName: r.suggestedName,
+      suggestedSpaceId: r.suggestedSpaceId,
+      confidence: r.confidence,
       reason: r.reason,
       createdAt: r.createdAt,
     }));
@@ -67,7 +73,7 @@ export const suggestionService = {
   async approveSuggestion(
     database: typeof db,
     userId: string,
-    input: { suggestionId: string; spaceName?: string },
+    input: { suggestionId: string; spaceName?: string; spaceId?: string },
   ): Promise<Space> {
     return database.transaction(async (tx) => {
       const [suggestion] = await tx
@@ -100,22 +106,69 @@ export const suggestionService = {
         throw new ORPCError("NOT_FOUND", { message: "Entry not found" });
       }
 
-      const rawName =
-        (input.spaceName?.trim() || suggestion.suggestedName).trim() ||
-        "New Space";
+      const customName = input.spaceName?.trim();
+      const targetExistingSpaceId =
+        input.spaceId ??
+        (customName ? undefined : suggestion.suggestedSpaceId ?? undefined);
 
-      const [space] = await tx
-        .insert(spaces)
-        .values({
-          userId,
-          name: rawName,
-        })
-        .returning();
+      let space: typeof spaces.$inferSelect | undefined;
+
+      if (targetExistingSpaceId) {
+        const [existing] = await tx
+          .select()
+          .from(spaces)
+          .where(
+            and(
+              eq(spaces.id, targetExistingSpaceId),
+              eq(spaces.userId, userId),
+            ),
+          )
+          .limit(1);
+
+        if (existing) {
+          space = existing;
+        } else if (input.spaceId) {
+          // User explicitly asked for a space that no longer exists.
+          throw new ORPCError("NOT_FOUND", { message: "Space not found" });
+        }
+      }
 
       if (!space) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-          message: "Failed to create space",
-        });
+        const rawName =
+          (customName || suggestion.suggestedName).trim() || "New Space";
+
+        const [upserted] = await tx
+          .insert(spaces)
+          .values({
+            userId,
+            name: rawName,
+            origin: "user",
+          })
+          .onConflictDoUpdate({
+            target: [spaces.userId, spaces.name],
+            set: {
+              updatedAt: new Date(),
+            },
+          })
+          .returning();
+
+        if (upserted) {
+          space = upserted;
+        } else {
+          const [existing] = await tx
+            .select()
+            .from(spaces)
+            .where(
+              and(eq(spaces.userId, userId), eq(spaces.name, rawName)),
+            )
+            .limit(1);
+          if (!existing) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR", {
+              message: "Failed to resolve space",
+            });
+          }
+          space = existing;
+        }
       }
 
       await tx

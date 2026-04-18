@@ -1,14 +1,15 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
+import { EmptyState } from "@/components/ui/EmptyState/index";
 import { useCompilationStatus } from "@/features/wiki/hooks/useWikiPages";
 import { useWikiPageById } from "@/features/wiki/hooks/useWikiPageById";
+import { WikiPageShell } from "@/features/wiki/screens/WikiPageScreen/components/WikiPageShell";
+import { WikiPageSkeleton } from "@/features/wiki/screens/WikiPageScreen/components/WikiPageSkeleton";
+import { WikiPageTypeBody } from "@/features/wiki/screens/WikiPageScreen/components/WikiPageTypeBody";
 import {
   parseSynthesisContent,
   readMaturityFromProperties,
   readPropertyChips,
 } from "@/features/wiki/types";
-import { WikiPageShell } from "@/features/wiki/screens/WikiPageScreen/components/WikiPageShell";
-import { WikiPageSkeleton } from "@/features/wiki/screens/WikiPageScreen/components/WikiPageSkeleton";
-import { WikiPageTypeBody } from "@/features/wiki/screens/WikiPageScreen/components/WikiPageTypeBody";
 import { useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 
@@ -39,12 +40,19 @@ export default function WikiPageScreen() {
 
   if (isError) {
     return (
-      <ScreenInset className="flex-1 bg-background px-(--spacing-screen)">
-        <View className="mt-4 gap-2 rounded-lg border border-border bg-surface-secondary p-4">
-          <Text className="text-foreground font-semibold">Could not load wiki page</Text>
-          <Text className="text-sm text-muted" selectable>
-            {error instanceof Error ? error.message : "Request failed"}
-          </Text>
+      <ScreenInset
+        className="flex-1 bg-background"
+        edges={["top", "left", "right"]}
+      >
+        <View className="px-screen flex-1">
+          <View className="mt-4 gap-2 rounded-lg border border-border bg-surface-secondary p-card">
+            <Text className="text-foreground font-semibold">
+              Could not load wiki page
+            </Text>
+            <Text className="text-sm text-muted" selectable>
+              {error instanceof Error ? error.message : "Request failed"}
+            </Text>
+          </View>
         </View>
       </ScreenInset>
     );
@@ -52,8 +60,18 @@ export default function WikiPageScreen() {
 
   if (!page) {
     return (
-      <ScreenInset className="flex-1 bg-background px-(--spacing-screen)">
-        <Text className="text-muted mt-4">Wiki page not found.</Text>
+      <ScreenInset
+        className="flex-1 bg-background"
+        edges={["top", "left", "right"]}
+      >
+        <View className="px-screen flex-1 pt-4">
+          <EmptyState
+            fill={false}
+            icon="article"
+            title="Wiki page not found"
+            description="This page may have been removed or the link is invalid."
+          />
+        </View>
       </ScreenInset>
     );
   }

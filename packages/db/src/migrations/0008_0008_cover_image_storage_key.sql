@@ -1,0 +1,1 @@
+ALTER TABLE "entries" ADD COLUMN "cover_image_storage_key" text;

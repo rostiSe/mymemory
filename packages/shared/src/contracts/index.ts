@@ -2,6 +2,7 @@ export * from "./ai.contract.js";
 export * from "./entry.contract.js";
 export * from "./space.contract.js";
 export * from "./wiki.contract.js";
+export * from "./wiki-query.contract.js";
 
 import { oc } from "@orpc/contract";
 import { z } from "zod";

@@ -29,7 +29,7 @@ export type UseFeedOptimisticCreateResult = {
   optimisticRows: FeedRow[];
   /** Show full-screen spinner only when there is no data yet (and no optimistic row). */
   isInitialLoading: boolean;
-  /** Pass to `FeedHeader` → `CaptureComposer` for optimistic create. */
+  /** Pass to the feed chrome (`ScreenHeader` block) → `CaptureComposer` for optimistic create. */
   captureComposerProps: CaptureComposerProps;
 };
 
@@ -42,7 +42,7 @@ export type UseFeedOptimisticCreateResult = {
  * 1. **`optimisticRows`** — server rows plus an optional leading `{ pending: true }` row during create.
  * 2. **`optimisticSubmit`** — prepends the placeholder, runs `createMutation`; `onSuccess` on the
  *    mutation merges the new row into the infinite list cache (no list refetch — avoids pull-to-refresh UI).
- * 3. **`captureComposerProps`** — ready to pass through to `FeedHeader`.
+ * 3. **`captureComposerProps`** — ready to pass through to `CaptureComposer` on the feed screen.
  *
  * @example
  * const { data, isPending, ...rest } = useFeedEntries();

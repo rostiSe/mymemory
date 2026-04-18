@@ -1,21 +1,22 @@
-import { useEffect } from "react";
-import { Stack } from "expo-router";
-import { HeroUINativeProvider, useThemeColor } from "heroui-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { QueryClientProvider } from "@tanstack/react-query";
-import * as SplashScreen from "expo-splash-screen";
-import { useSyncReactQueryAppFocus } from "@/hooks/useSyncReactQueryAppFocus";
+import ErrorBoundary from "@/components/ui/ErrorBoundary";
 import { useEntrySync } from "@/features/entry/hooks/useEntrySync";
+import { useSyncReactQueryAppFocus } from "@/hooks/useSyncReactQueryAppFocus";
 import { queryClient } from "@/lib/query-client";
+import { AppStoreProvider } from "@/stores/providers/app-provider";
 import {
   AuthStoreProvider,
   useAuthStore,
 } from "@/stores/providers/auth-provider";
-import { AppStoreProvider } from "@/stores/providers/app-provider";
 import { UIStoreProvider, useUIStore } from "@/stores/providers/ui-provider";
-import { Uniwind } from "uniwind";
+import { heroUIConfig } from "@/theme/heroui";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
 import * as SystemUI from "expo-system-ui";
-import ErrorBoundary from "@/components/ui/ErrorBoundary";
+import { HeroUINativeProvider, useThemeColor } from "heroui-native";
+import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Uniwind } from "uniwind";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
@@ -68,16 +69,18 @@ function AppShell() {
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="debug" options={{ title: "Debug" }} />
-      <Stack.Screen name="space/[id]" options={{ title: "Space" }} />
+      <Stack.Screen
+        name="space/[id]"
+        options={{
+          headerShown: false,
+          animation: "fade_from_bottom",
+          contentStyle: { backgroundColor },
+        }}
+      />
       <Stack.Screen
         name="entry/[id]"
         options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerTitle: "",
-          headerTintColor: foregroundColor,
-          headerStyle: { backgroundColor: "transparent" },
-          headerShadowVisible: false,
+          headerShown: false,
           animation: "slide_from_right",
           contentStyle: { backgroundColor },
         }}
@@ -85,12 +88,7 @@ function AppShell() {
       <Stack.Screen
         name="wiki/[id]"
         options={{
-          headerShown: true,
-          headerTransparent: true,
-          headerTitle: "",
-          headerTintColor: foregroundColor,
-          headerStyle: { backgroundColor: "transparent" },
-          headerShadowVisible: false,
+          headerShown: false,
           animation: "slide_from_right",
           contentStyle: { backgroundColor },
         }}
@@ -115,7 +113,7 @@ export default function RootLayout() {
         <AuthStoreProvider>
           <UIStoreProvider>
             <QueryClientProvider client={queryClient}>
-              <HeroUINativeProvider>
+              <HeroUINativeProvider config={heroUIConfig}>
                 <ErrorBoundary>
                   <AppShell />
                 </ErrorBoundary>

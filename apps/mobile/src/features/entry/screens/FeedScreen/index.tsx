@@ -1,5 +1,9 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
+import { Button } from "@/components/ui/Button/index";
+import { EmptyState } from "@/components/ui/EmptyState/index";
+import { ScreenHeader } from "@/components/ui/ScreenHeader/index";
 import { SkeletonListItem } from "@/components/ui/SkeletonListItem";
+import { CaptureComposer } from "@/features/entry/components/CaptureComposer";
 import { EntryDeleteConfirmSheet } from "@/features/entry/components/EntryDeleteConfirmSheet";
 import { FeedFilterBar } from "@/features/entry/components/FeedFilterBar";
 import {
@@ -7,7 +11,10 @@ import {
   useFeedEntries,
 } from "@/features/entry/hooks/useEntries";
 import { useDeleteEntry } from "@/features/entry/hooks/useEntryMutations";
-import { useFeedFavoriteToggle } from "@/features/entry/hooks/useFeedFavoriteToggle";
+import {
+  useFeedFavoriteToggle,
+  useFeedPinToggle,
+} from "@/features/entry/hooks/useFeedFavoriteToggle";
 import { useFeedOptimisticCreate } from "@/features/entry/hooks/useFeedOptimisticCreate";
 import { buildFeedCardMetaHint } from "@/features/entry/utils/buildEntryMetaLine";
 import {
@@ -15,28 +22,25 @@ import {
   isPendingFeedRow,
 } from "@/features/entry/utils/feed-rows";
 import { resolveEntryHeroImageUri } from "@/features/entry/utils/resolveEntryHeroImageUri";
+import { useAuthStore } from "@/stores/providers/auth-provider";
 import {
   LAYOUT_FLOATING_TAB_CLEARANCE_PX,
   SPACING_SCREEN_PX,
 } from "@/theme/layout-imperative";
 import type { EntryListFilter } from "@mymemory/shared/contracts";
-import { FlashList } from "@shopify/flash-list";
 import { useFocusEffect } from "@react-navigation/native";
+import { FlashList } from "@shopify/flash-list";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { Button } from "heroui-native";
+import { ScrollShadow } from "heroui-native";
 import { useCallback, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  RefreshControl,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, RefreshControl, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FeedHeader } from "./components/FeedHeader";
 import { FeedListItem } from "./components/FeedListItem";
 
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
+  const email = useAuthStore((s) => s.session?.user?.email);
   const listContentBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX;
   const createMutation = useCreateEntry();
   const [feedFilter, setFeedFilter] = useState<EntryListFilter>("all");
@@ -45,6 +49,7 @@ export default function FeedScreen() {
   >(null);
   const deleteEntry = useDeleteEntry();
   const onToggleFavorite = useFeedFavoriteToggle();
+  const onTogglePin = useFeedPinToggle();
 
   const onDeleteEntry = useCallback(
     (id: string) => {
@@ -143,11 +148,12 @@ export default function FeedScreen() {
           processedStatus={item.processedStatus}
           onPressEntry={onPressEntry}
           onToggleFavorite={onToggleFavorite}
+          onTogglePin={onTogglePin}
           onRequestDelete={onRequestDelete}
         />
       );
     },
-    [onPressEntry, onRequestDelete, onToggleFavorite],
+    [onPressEntry, onRequestDelete, onToggleFavorite, onTogglePin],
   );
 
   const refreshControl = useMemo(
@@ -188,13 +194,12 @@ export default function FeedScreen() {
       );
     }
     return (
-      <View className="items-center mt-10">
-        <Text className="text-muted">Your feed is empty.</Text>
-        <Text className="mt-2 px-(--spacing-screen) text-center text-xs text-muted">
-          Add a URL above. Entries are stored for user scope used by the API
-          (dev template).
-        </Text>
-      </View>
+      <EmptyState
+        fill
+        icon="rss-feed"
+        title="Your feed is empty."
+        description="Add a URL above. Entries are stored for user scope used by the API (dev template)."
+      />
     );
   }, [isInitialLoading]);
 
@@ -209,15 +214,29 @@ export default function FeedScreen() {
     setPendingDeleteEntryId(null);
   }, [onDeleteEntry, pendingDeleteEntryId]);
 
+  const feedChrome = useMemo(
+    () => (
+      <View className="gap-2">
+        <ScreenHeader
+          variant="large"
+          title="Feed"
+          subtitle={email ? `Signed in as ${email}` : undefined}
+          subtitleSize="md"
+          withSafeArea={false}
+        />
+        <View className="px-screen">
+          <CaptureComposer {...captureComposerProps} />
+        </View>
+      </View>
+    ),
+    [captureComposerProps, email],
+  );
+
   if (isError) {
     return (
       <ScreenInset className="flex-1 bg-background">
         <View className="flex-1 px-(--spacing-screen) pt-(--spacing-md)">
-          <FeedHeader
-            captureComposerProps={{
-              mutation: createMutation,
-            }}
-          />
+          {feedChrome}
           <FeedFilterBar active={feedFilter} onChange={setFeedFilter} />
           <View className="gap-3 rounded-lg border border-border bg-surface-secondary p-4">
             <Text className="text-foreground font-semibold">
@@ -230,7 +249,7 @@ export default function FeedScreen() {
               Use the same machine for Expo and the app; on web use `expo start`
               (server mode). Ensure Supabase has the Drizzle migrations applied.
             </Text>
-            <Button variant="secondary" onPress={() => void refetch()}>
+            <Button tone="secondary" onPress={() => void refetch()}>
               Retry
             </Button>
           </View>
@@ -241,13 +260,16 @@ export default function FeedScreen() {
 
   return (
     <ScreenInset edges={["top"]} className="flex-1 bg-background">
-      <FeedHeader captureComposerProps={captureComposerProps} />
+      {feedChrome}
       <FeedFilterBar active={feedFilter} onChange={setFeedFilter} />
       {/*
         Plain View: ScrollShadow + FlashList stressed native layout on some devices
         when switching tabs / rapid refresh (see T-013).
       */}
-      <View className="flex-1 bg-background">
+      <ScrollShadow
+        LinearGradientComponent={LinearGradient}
+        className="flex-1 bg-background"
+      >
         <FlashList<FeedRow>
           data={optimisticRows}
           extraData={listExtraData}
@@ -264,7 +286,7 @@ export default function FeedScreen() {
           maintainVisibleContentPosition={{ disabled: true }}
           style={{ flex: 1 }}
         />
-      </View>
+      </ScrollShadow>
       <EntryDeleteConfirmSheet
         isOpen={pendingDeleteEntryId != null}
         onOpenChange={handleDeleteSheetOpenChange}

@@ -13,6 +13,9 @@ export const reviewStatusEnum = pgEnum('review_status', [
 /** Agent compilation lifecycle on a space (T-015a). */
 export const compilationStatusEnum = pgEnum('compilation_status', ['idle', 'compiling', 'failed']);
 
+/** Whether a space was created by the user vs the wiki agent (T-015n). */
+export const spaceOriginEnum = pgEnum('space_origin', ['user', 'agent']);
+
 /** Wiki page layout / role (T-015a). */
 export const wikiPageTypeEnum = pgEnum('wiki_page_type', [
   'synthesis',

@@ -1,9 +1,11 @@
+import { ScreenInset } from "@/components/layout/ScreenInset";
 import { Card, SkeletonGroup } from "heroui-native";
 import { View } from "react-native";
 
 export function WikiPageSkeleton() {
   return (
-    <View className="flex-1 bg-background px-(--spacing-screen) pt-4">
+    <ScreenInset className="flex-1 bg-background" edges={["top", "left", "right"]}>
+      <View className="px-screen flex-1 pt-4">
       <SkeletonGroup isLoading variant="shimmer">
         <View className="mb-3 flex-row gap-2">
           <SkeletonGroup.Item className="h-7 w-20 rounded-full" />
@@ -34,6 +36,7 @@ export function WikiPageSkeleton() {
           </Card.Body>
         </Card>
       </SkeletonGroup>
-    </View>
+      </View>
+    </ScreenInset>
   );
 }

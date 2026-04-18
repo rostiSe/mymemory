@@ -1,11 +1,13 @@
 import { ScreenInset } from "@/components/layout/ScreenInset";
-import { SearchResultCard } from "@/features/search/components/SearchResultCard";
+import { Button } from "@/components/ui/Button/index";
+import { EmptyState } from "@/components/ui/EmptyState/index";
+import { EntryCard } from "@/components/ui/Card/variants/EntryCard/index";
 import { useSemanticSearch } from "@/features/search/hooks/useSemanticSearch";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Button, InputGroup, TextField, useThemeColor } from "heroui-native";
+import { InputGroup, TextField, useThemeColor } from "heroui-native";
 import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
@@ -44,12 +46,12 @@ export default function SearchScreen() {
   }, []);
 
   const listEmpty = showSearch ? (
-    <View className="items-center px-screen pt-10">
-      <Text className="text-muted">No matches found.</Text>
-      <Text className="mt-2 px-4 text-center text-xs text-muted">
-        Try different wording or a shorter phrase.
-      </Text>
-    </View>
+    <EmptyState
+      fill
+      icon="search-off"
+      title="No matches found."
+      description="Try different wording or a shorter phrase."
+    />
   ) : null;
 
   return (
@@ -86,26 +88,20 @@ export default function SearchScreen() {
       </View>
 
       {!showSearch ? (
-        <View className="flex-1 items-center justify-center px-screen">
-          <MaterialIcons name="psychology" size={48} color={mutedColor} />
-          <Text className="mt-4 text-center text-foreground">
-            Search by meaning
-          </Text>
-          <Text className="mt-2 text-center text-sm text-muted">
-            Describe what you are looking for — we match by meaning, not exact
-            keywords.
-          </Text>
-        </View>
+        <EmptyState
+          fill
+          icon="psychology"
+          title="Search by meaning"
+          description="Describe what you are looking for — we match by meaning, not exact keywords."
+        />
       ) : isError ? (
         <View className="flex-1 px-screen pt-6">
           <View className="gap-3 rounded-lg border border-border bg-surface-secondary p-4">
-            <Text className="font-semibold text-foreground">
-              Search failed
-            </Text>
+            <Text className="font-semibold text-foreground">Search failed</Text>
             <Text className="text-sm text-muted">
               {error instanceof Error ? error.message : "Request failed"}
             </Text>
-            <Button variant="secondary" onPress={() => void refetch()}>
+            <Button tone="secondary" onPress={() => void refetch()}>
               Retry
             </Button>
           </View>
@@ -121,16 +117,21 @@ export default function SearchScreen() {
           keyExtractor={(item) => item.id}
           keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
-            <SearchResultCard
-              title={item.title ?? item.url ?? "Untitled"}
-              summary={item.summary}
-              type={item.type}
-              similarity={item.similarity}
-              date={formatResultDate(item.createdAt)}
-              isFavorited={item.isFavorited}
-              isPinned={item.isPinned}
-              onPress={() => onPressResult(item.id)}
-            />
+            <View className="mb-3">
+              <EntryCard
+                item={{
+                  id: item.id,
+                  title: item.title ?? item.url ?? "Untitled",
+                  summary: item.summary ?? "",
+                  type: item.type,
+                  similarity: item.similarity,
+                  date: formatResultDate(item.createdAt),
+                  isFavorited: item.isFavorited,
+                  isPinned: item.isPinned,
+                }}
+                onPress={() => onPressResult(item.id)}
+              />
+            </View>
           )}
           ListEmptyComponent={listEmpty}
           contentContainerStyle={{

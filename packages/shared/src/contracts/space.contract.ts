@@ -4,18 +4,25 @@ import { entryListOutputSchema } from "./entry.contract.js";
 
 const dateSchema = z.string().or(z.date());
 
+export const spaceCompilationStatusSchema = z.enum(['idle', 'compiling', 'failed']);
+
 export const spaceSchema = z.object({
   id: z.uuid(),
   userId: z.uuid(),
   name: z.string(),
+  origin: z.enum(['user', 'agent']).optional(),
   description: z.string().nullable().optional(),
   centroidVector: z.array(z.number()).nullable().optional(),
+  compilationStatus: spaceCompilationStatusSchema.optional(),
+  lastCompiledAt: dateSchema.nullable().optional(),
   createdAt: dateSchema,
   updatedAt: dateSchema,
 });
 
 export const spaceWithCountSchema = spaceSchema.extend({
   entryCount: z.number().int(),
+  parentSpaceId: z.uuid().nullable().optional(),
+  childSpaceIds: z.array(z.uuid()).optional(),
 });
 
 export const spaceSuggestionSchema = z.object({
@@ -23,6 +30,8 @@ export const spaceSuggestionSchema = z.object({
   entryId: z.uuid(),
   entryTitle: z.string(),
   suggestedName: z.string(),
+  suggestedSpaceId: z.uuid().nullable().optional(),
+  confidence: z.number().nullable().optional(),
   reason: z.string().nullable().optional(),
   createdAt: dateSchema,
 });
@@ -35,9 +44,23 @@ export const spaceListEntriesInputSchema = z.object({
 
 export const spaceMutationOkSchema = z.object({ success: z.literal(true) });
 
+export const relatedSpaceSchema = z.object({
+  space: spaceSchema,
+  sharedPageCount: z.number().int().positive(),
+});
+export type RelatedSpace = z.infer<typeof relatedSpaceSchema>;
+
+export const relatedSpacesInputSchema = z.object({
+  spaceId: z.uuid(),
+  limit: z.number().int().min(1).max(20).default(5).optional(),
+});
+
 export const spaceContract = oc.router({
   list: oc.output(z.array(spaceWithCountSchema)),
   getById: oc.input(z.object({ id: z.uuid() })).output(spaceSchema.nullable()),
+  relatedSpaces: oc
+    .input(relatedSpacesInputSchema)
+    .output(z.array(relatedSpaceSchema)),
   create: oc
     .input(
       z.object({
@@ -52,6 +75,7 @@ export const spaceContract = oc.router({
       z.object({
         suggestionId: z.uuid(),
         spaceName: z.string().optional(),
+        spaceId: z.uuid().optional(),
       }),
     )
     .output(spaceSchema),

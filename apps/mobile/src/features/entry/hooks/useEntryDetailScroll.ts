@@ -48,5 +48,6 @@ export function useEntryDetailScroll() {
   return {
     scrollHandler,
     heroImageStyle,
+    scrollY,
   };
 }

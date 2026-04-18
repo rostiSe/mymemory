@@ -1,6 +1,9 @@
 /**
  * Imperative color mirrors for APIs that cannot use CSS (StatusBar, charts, etc.).
  *
+ * Values mirror the current `@layer theme` block in `global.css`.
+ * When `global.css` changes, update these values too.
+ *
  * Spacing, typography, radii, and layout live in `global.css` (@theme inline).
  * Numeric mirrors for StyleSheet-only APIs: `@/theme/layout-imperative`.
  *
@@ -28,9 +31,9 @@ export const colors = {
     surface: "#495057",
     surfaceSecondary: "#343A40",
     surfaceTertiary: "#6C757D",
-    accent: "#90A4AE",
+    accent: "#9BA7AF",
     accentForeground: "#212529",
     border: "#6C757D",
-    danger: "#CF6679",
+    danger: "#D43C2D",
   },
 } as const;

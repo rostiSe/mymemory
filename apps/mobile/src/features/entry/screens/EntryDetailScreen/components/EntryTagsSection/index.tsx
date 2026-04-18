@@ -1,5 +1,5 @@
+import { Badge } from "@/components/ui/Badge/index";
 import type { EntryDetailRow } from "@/features/entry/types";
-import { Chip } from "heroui-native";
 import { Text, View } from "react-native";
 
 type EntryTagsSectionProps = {
@@ -14,9 +14,9 @@ export function EntryTagsSection({ tags }: EntryTagsSectionProps) {
       <Text className="text-foreground text-sm font-semibold">Tags</Text>
       <View className="flex-row flex-wrap gap-2">
         {tags.map((t) => (
-          <Chip key={t.id} size="sm" variant="soft" color="accent">
-            {t.name}
-          </Chip>
+          <Badge key={t.id} tone="tag" size="md">
+            {`#${t.name}`}
+          </Badge>
         ))}
       </View>
     </View>

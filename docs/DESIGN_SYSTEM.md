@@ -18,19 +18,28 @@ Colors are defined as CSS variables in `src/global.css` using `@layer theme` wit
 
 ### Semantic Color Tokens
 
+Hex values are the current mirrors in `apps/mobile/src/theme/tokens.ts`; the canonical oklch definitions live in `apps/mobile/src/global.css`.
+
 | Token | Light | Dark | Usage |
 |-------|-------|------|-------|
-| `background` | `#F9F9F9` | `#121212` | Page/screen background |
-| `foreground` | `#1A1C1C` | `#F3F3F3` | Primary text |
-| `muted` | `#73787B` | `#9E9E9E` | Secondary/hint text, icons |
-| `surface` | `#FFFFFF` | `#1E1E1E` | Cards, elevated containers |
-| `surface-secondary` | `#F3F3F3` | `#1A1A1A` | Slightly tinted surface |
-| `surface-tertiary` | `#EEEEEE` | `#252525` | More tinted surface |
-| `accent` | `#334550` | `#90A4AE` | Brand/interactive color |
-| `accent-foreground` | `#FFFFFF` | `#121212` | Text on accent |
-| `default` | `#E2E2E2` | dark neutral | Neutral chips/badges |
-| `border` | `#C3C7CB` | `#2E2E2E` | Dividers, borders |
-| `danger` | `#BA1A1A` | `#CF6679` | Destructive actions |
+| `background` | `#F9F9F9` | `#212529` | Page/screen background |
+| `foreground` | `#1A1C1C` | `#F8F9FA` | Primary text |
+| `muted` | `#73787B` | `#ADB5BD` | Secondary/hint text, icons |
+| `surface` | `#FFFFFF` | `#495057` | Cards, elevated containers |
+| `surface-secondary` | `#F3F3F3` | `#343A40` | Slightly tinted surface |
+| `surface-tertiary` | `#EEEEEE` | `#6C757D` | More tinted surface |
+| `accent` | `#334550` | `#9BA7AF` | Brand/interactive color |
+| `accent-foreground` | `#FFFFFF` | `#212529` | Text on accent |
+| `default` | `#E2E2E2` | `#343A40` | Neutral chips/badges |
+| `default-foreground` | `#1A1C1C` | `#F8F9FA` | Text on default |
+| `border` | `#C3C7CB` | `#6C757D` | Dividers, borders |
+| `field-background` | `#FFFFFF` | `#343A40` | Input background |
+| `field-foreground` | `#1A1C1C` | `#F8F9FA` | Input text |
+| `field-placeholder` | `#73787B` | `#ADB5BD` | Input placeholder |
+| `field-border` | `#C3C7CB` | `#495057` | Input border |
+| `overlay` | `#FFFFFF` | `#343A40` | Dialog / popover background |
+| `danger` | `#BA1A1A` | `#D43C2D` | Destructive actions |
+| `danger-foreground` | `#FFFFFF` | `#F8F9FA` | Text on danger |
 | `success` | green | green | Success feedback |
 | `warning` | amber | amber | Warning feedback |
 
@@ -102,21 +111,69 @@ Then use: `<View className="bg-my-custom" />`
 - Avoid raw numbers in components; use **semantic CSS variables** or Tailwind utilities mapped from `@theme`.
 - For **`StyleSheet` / `contentContainerStyle`** (FlatList, etc.) where `className` is not enough, use **`apps/mobile/src/theme/layout-imperative.ts`** — numeric mirrors **must stay in sync** with the matching variables in `global.css` (documented in that file).
 
-### Examples of variables (`@theme inline`)
+### Spacing scale
 
-| Variable | Role |
-|----------|------|
-| `--spacing-xs` … `--spacing-2xl` | Base spacing scale |
-| `--spacing-screen`, `--spacing-screen-y` | Default horizontal / vertical padding for screen content |
-| `--spacing-tab-clearance` | Extra scroll bottom padding above the floating tab bar + home indicator |
-| `--layout-floating-tab-bar-height` | Target height for the floating pill |
-| `--layout-floating-tab-bottom-offset` | Bottom layout reference |
-| `--layout-floating-tab-horizontal-margin` | Side inset for the floating bar |
-| `--layout-scroll-fade-size` | HeroUI `ScrollShadow` gradient height |
-| `--font-size-xs` … `--font-size-3xl` | Typography scale |
-| `--line-height-tight` / `normal` / `relaxed` | Line height multipliers |
-| `--radius-sm` … `--radius-full` | Corner radii |
-| `--icon-size-tab` | Tab bar icon size |
+All values in pixels. Use via Uniwind utilities like `p-md`, `gap-lg`, `px-screen`, `pb-tab-clearance`.
+
+| Token | Value | Uniwind examples | Usage |
+|-------|-------|------------------|-------|
+| `--spacing-xs` | `4px` | `p-xs`, `gap-xs` | Hairline gaps between related micro-content |
+| `--spacing-sm` | `8px` | `p-sm`, `gap-sm` | Inline/chip gaps |
+| `--spacing-md` | `16px` | `p-md`, `gap-md` | Default element padding |
+| `--spacing-lg` | `24px` | `p-lg`, `gap-lg` | Section spacing |
+| `--spacing-xl` | `32px` | `p-xl` | Large vertical rhythm |
+| `--spacing-2xl` | `48px` | `p-2xl` | Screen-level breathing room |
+| `--spacing-card` | `16px` | `p-card`, `px-card`, `py-card` | Card body padding |
+| `--spacing-screen` | `16px` | `px-screen` | Horizontal screen content padding |
+| `--spacing-screen-y` | `16px` | `py-screen-y` | Vertical screen content padding (reserved) |
+| `--spacing-tab-clearance` | `100px` | `pb-tab-clearance` | Bottom scroll inset above the floating tab pill |
+| `--spacing-compile-card-padding` | `16px` | `p-(--spacing-compile-card-padding)` | Wiki compile status card |
+| `--spacing-wiki-toc-height` | `44px` | — (imperative via `WIKI_TOC_HEIGHT_PX`) | Wiki TOC header height |
+| `--spacing-timeline-rail-width` | `2px` | — (imperative) | Wiki timeline rail |
+| `--spacing-timeline-dot-size` | `12px` | — (imperative) | Wiki timeline dot |
+
+### Layout scale (floating tab bar, scroll fades, icons)
+
+These variables double as numeric constants in `theme/layout-imperative.ts` for StyleSheet-only APIs.
+
+| Token | Value | Imperative mirror |
+|-------|-------|-------------------|
+| `--layout-floating-tab-bar-height` | `56px` | `LAYOUT_FLOATING_TAB_BAR_HEIGHT_PX` |
+| `--layout-floating-tab-bottom-offset` | `24px` | `LAYOUT_FLOATING_TAB_BOTTOM_OFFSET_PX` |
+| `--layout-floating-tab-horizontal-margin` | `20px` | `LAYOUT_FLOATING_TAB_HORIZONTAL_MARGIN_PX` |
+| `--layout-scroll-fade-size` | `50px` | `LAYOUT_SCROLL_FADE_SIZE_PX` |
+| `--icon-size-tab` | `24px` | `ICON_SIZE_TAB_PX` |
+
+### Typography scale
+
+Font sizes map to Uniwind `text-*` utilities. Line heights come from Tailwind's `leading-*` defaults.
+
+| Token | Value | Uniwind |
+|-------|-------|---------|
+| `--font-size-xs` | `12px` | `text-xs` |
+| `--font-size-sm` | `14px` | `text-sm` |
+| `--font-size-md` | `16px` | `text-md` |
+| `--font-size-lg` | `18px` | `text-lg` |
+| `--font-size-xl` | `20px` | `text-xl` |
+| `--font-size-2xl` | `24px` | `text-2xl` |
+| `--font-size-3xl` | `30px` | `text-3xl` |
+
+Use `leading-tight` (1.25), `leading-normal` (1.5), or `leading-relaxed` (1.625) for vertical rhythm.
+
+### Radii
+
+| Token | Value | Uniwind | Usage |
+|-------|-------|---------|-------|
+| `--radius-card` | `2px` | `rounded-card`, `rounded-t-card` | Spaces list rows, search field, sheets (see T-015l) |
+| `--radius-sm` | `4px` | `rounded-sm` | Small elements (badges) |
+| `--radius-md` | `8px` | `rounded-md` | Default radius |
+| `--radius-lg` | `12px` | `rounded-lg` | Cards, panels |
+| `--radius-xl` | `16px` | `rounded-xl` | Large containers |
+| `--radius-full` | `9999px` | `rounded-full` | Pills, dots, avatars |
+
+### Space list surfaces (T-015l)
+
+**Spaces** uses a slightly **squarer** look than default cards: prefer **`rounded-card`** (backed by `--radius-card`) on space rows, the search field shell, and the create-space sheet so hierarchy reads through typography and dividers rather than large corner radii. **`rounded-full`** is reserved for small status dots (compile / origin), not row chrome. Other screens can adopt the same token over time for consistency.
 
 ### Runtime safe area
 
@@ -171,6 +228,240 @@ setTheme("dark"); // also calls Uniwind.setTheme() internally
 import { useUniwind } from "uniwind";
 const { theme, hasAdaptiveThemes } = useUniwind();
 ```
+
+---
+
+## HeroUI Native theming layer
+
+HeroUI Native is already theme-driven by the CSS variables in `global.css` — overriding `--accent`, `--surface`, `--radius-*`, etc. cascades into every HeroUI primitive (`<Button>`, `<Card>`, `<TextField>`, `<Chip>`, `<Input>`) without per-call `className` overrides.
+
+The runtime slice of that layer lives in **`apps/mobile/src/theme/heroui.ts`** and is passed to `<HeroUINativeProvider config={heroUIConfig}>` in `src/app/_layout.tsx`:
+
+| Export | Purpose |
+|--------|---------|
+| `heroUIConfig: HeroUINativeConfig` | Text-scaling cap (`maxFontSizeMultiplier: 1.3`) to keep HeroUI labels from overflowing on aggressive Dynamic Type, plus `devInfo.stylingPrinciples: false` to silence the HMR console banner. |
+| `SEMANTIC_COLORS: readonly ThemeColor[]` | Typed allow-list of HeroUI colour keys we resolve imperatively via `useThemeColor()` — keeps typos compile-time checked and makes the token footprint greppable. |
+| `SemanticColor` | Type alias of the allow-list entries. |
+
+Light ↔ dark switching stays driven by the **Uniwind** theme setter in `AppShell` (`Uniwind.setTheme(theme)`) — no parallel mechanism. HeroUI's own palette follows because its variables are the same `--background` / `--surface` / `--accent` / etc. that our `@layer theme` block defines for each variant.
+
+### Adding a new semantic colour to HeroUI
+
+1. Define the variable in `global.css` under both `@variant light` and `@variant dark`.
+2. If the colour needs to be reachable imperatively, add its HeroUI key to `SEMANTIC_COLORS` in `theme/heroui.ts`.
+3. If the colour should also be usable from the StatusBar / native APIs, mirror its hex in `theme/tokens.ts`.
+
+---
+
+## Primitives
+
+Primitives live in `apps/mobile/src/components/ui/<Name>/` and follow the `index.tsx` + `index.styles.ts` split from `CLAUDE.md`. The design-system epic (T-016) standardises the six primitives below; **T-016b** ships the implementations, **T-016c** migrates feature screens to consume them.
+
+> Import paths are concrete (no barrels). Always import from the named module file: `@/components/ui/Card/index`, `@/components/ui/Card/variants/EntryCard/index`, etc.
+
+### `Card`
+
+Compound API exposed as a namespace. `Card.Root` is the entry; `Cover` / `Header` / `Body` / `Footer` are sub-parts attached as static properties.
+
+#### `Card.Root` variants
+
+| Prop | Values | Default | Purpose |
+|------|--------|---------|---------|
+| `tone` | `neutral` \| `accent-soft` \| `surface-secondary` | `neutral` | Background + border palette |
+| `radius` | `sm` \| `md` \| `lg` | `lg` | Maps to `--radius-*` |
+| `interactive` | `boolean` | `false` | Wraps in `PressableFeedback` and enables `onPress` |
+
+#### `Card.Header` / `Card.Body` / `Card.Footer`
+
+| Sub-part | Notable props | Notes |
+|----------|---------------|-------|
+| `Card.Header` | `title`, `eyebrow?`, `trailing?`, `density` (`compact` \| `comfortable`) | Eyebrow renders above title in muted small caps. |
+| `Card.Body` | `density` (`compact` \| `comfortable`) | Default content slot (`gap-2`). |
+| `Card.Footer` | `density`, `justify` (`start` \| `between` \| `end`) | Flex row, defaults to start-aligned. |
+| `Card.Cover` | `source`, `aspect` (`16/9` \| `4/3` \| `1/1`), `fallback?` | Fixed aspect ratio so list rows don't reflow on image load. |
+
+#### Pre-built variants
+
+| Variant | Replaces | Data shape |
+|---------|----------|------------|
+| `EntryCard` | `FeedListItem` → feed rows; `SearchScreen` result rows; optional `similarity` for semantic search score. | `EntryCardData` (includes `similarity?` for search layout). |
+| `SpaceCard` | `RelatedSpacesStrip` horizontal list; `SpaceListRow` remains feature-local until a wider list migration. | `SpaceCardData` + optional `sharedPageCount`. |
+| `StatusCard` | `CompileStatusCard` (wiki compile panel on Spaces). | `tone`, optional `title`, `description` (`string` or rich `ReactNode`), `action`, `meta`. |
+
+#### Example
+
+```tsx
+import { Card } from "@/components/ui/Card/index";
+import { EntryCard } from "@/components/ui/Card/variants/EntryCard/index";
+
+// Compound — uncommon layouts
+<Card.Root tone="accent-soft" radius="md" interactive onPress={open}>
+  <Card.Cover source={uri} aspect="16/9" />
+  <Card.Header title="Hello" eyebrow="NOTE" trailing={<Chip>Tag</Chip>} />
+  <Card.Body>{children}</Card.Body>
+  <Card.Footer justify="between"><Text>Meta</Text></Card.Footer>
+</Card.Root>
+
+// Variant — the default for any list of entries
+<EntryCard item={entry} onPress={() => router.push(`/entry/${entry.id}`)} />
+```
+
+### `Button`
+
+App wrapper around HeroUI `Button`. Locks the prop surface — no `className` escape hatch at the call site. Extend `index.styles.ts` if a new shape is needed; raw HeroUI `Button` imports outside `components/ui/Button` will be flagged during T-016c migration.
+
+| Prop | Values | Default | Notes |
+|------|--------|---------|-------|
+| `tone` | `primary` \| `secondary` \| `danger` \| `ghost` | `primary` | Maps to HeroUI `variant`. |
+| `size` | `sm` \| `md` \| `lg` | `md` | |
+| `leading` / `trailing` | `ReactNode` | – | Icon slots; rendered around the label. |
+| `loading` | `boolean` | `false` | Replaces label with a `Spinner`; suppresses `onPress`. |
+| `isDisabled` | `boolean` | `false` | Forwarded to HeroUI. |
+| `fullWidth` | `boolean` | `false` | `self-stretch` vs `self-start`. |
+| `onPress` | `() => void` | – | |
+| `accessibilityLabel` | `string` | – | |
+| `children` | `string \| ReactNode` | – | Strings auto-wrap in `Button.Label`. |
+
+`BaseButtonProps` lives in `index.types.ts` so future specializations (e.g. `AnchorButton` over `expo-router` `<Link>`) can extend it without re-introducing HeroUI primitives.
+
+```tsx
+import { Button } from "@/components/ui/Button/index";
+
+<Button tone="primary" onPress={save}>Save</Button>
+<Button tone="danger" loading={mutation.isPending} onPress={remove}>Delete</Button>
+<Button tone="ghost" leading={<MaterialIcons name="add" size={18} />}>New</Button>
+```
+
+### `EmptyState`
+
+Centered zero-state for screens. Single source for Feed, Search, and Spaces empty UI (migrated in T-016c).
+
+| Prop | Values | Default | Notes |
+|------|--------|---------|-------|
+| `icon` | `MaterialIcons` name | – | Required; rendered inside a `bg-surface-secondary` chip. |
+| `title` | `string` | – | |
+| `description` | `string` | – | Optional supporting line. |
+| `action` | `{ label, onPress }` | – | Renders a `Button tone="secondary" size="sm"`. |
+| `fill` | `boolean` | `true` | When true, the root takes `flex-1` (use inside list `ListEmptyComponent`). Set `false` for inline contexts. |
+
+```tsx
+<EmptyState
+  icon="search-off"
+  title="No memories yet"
+  description="Save a link or write a note to get started."
+  action={{ label: "Add memory", onPress: openComposer }}
+/>
+```
+
+### `ScreenHeader`
+
+Top-of-screen header with optional safe-area inset. Absorbs the bespoke header rows previously inlined across Feed, EntryDetail, and Spaces.
+
+| Prop | Values | Default | Notes |
+|------|--------|---------|-------|
+| `title` | `string` | – | |
+| `subtitle` | `string` | – | Optional second line. |
+| `leading` | `ReactNode` | – | Typically a back button. |
+| `trailing` | `ReactNode` | – | Right-side actions (icons, ghost buttons). |
+| `variant` | `default` \| `large` | `default` | `large` is the title-prominent home variant. |
+| `bordered` | `boolean` | `false` | Adds a `border-b` separator. |
+| `withSafeArea` | `boolean` | `true` | Wraps in `ScreenInset edges=["top"]`. Disable when the parent already insets. |
+
+```tsx
+<ScreenHeader
+  title="Feed"
+  variant="large"
+  trailing={<Pressable onPress={openSearch}><MaterialIcons name="search" /></Pressable>}
+/>
+```
+
+### `ListRow`
+
+Generic list row — `leading` / `title` (+ `subtitle` / `meta`) / `trailing`. Separator handled by the parent list.
+
+| Prop | Values | Default | Notes |
+|------|--------|---------|-------|
+| `leading` / `trailing` | `ReactNode` | – | Optional slots. |
+| `title` | `string` | – | Required, `numberOfLines={1}`. |
+| `subtitle` | `string` | – | |
+| `meta` | `string` | – | Inline right-aligned meta on the title row (e.g. "5h ago"). |
+| `indent` | `none` \| `child` | `none` | `child` indents the row for hierarchy (matches the previous `SpaceListRow` `child` variant). |
+| `density` | `compact` \| `comfortable` | `comfortable` | |
+| `onPress` | `() => void` | – | When set, the whole row becomes `PressableFeedback`. |
+| `accessibilityLabel` | `string` | `title` | |
+
+```tsx
+<ListRow
+  leading={<Avatar name={space.name} />}
+  title={space.name}
+  subtitle={`${space.entryCount} entries`}
+  trailing={<MaterialIcons name="chevron-right" size={20} />}
+  onPress={() => router.push(`/space/${space.id}`)}
+/>
+```
+
+### `Sheet`
+
+`Sheet` is a namespace — currently only `Sheet.Form` ships. The icon-headed confirmation sheet (`components/ui/BottomSheet`) stays separate; both compose HeroUI's `BottomSheet` and co-exist by design.
+
+#### `Sheet.Form`
+
+Bottom sheet shaped like a form: header (`title` + `description`), arbitrary form `children`, and one or two action buttons.
+
+| Prop | Type | Notes |
+|------|------|-------|
+| `isOpen` | `boolean` | Controlled. |
+| `onOpenChange` | `(open) => void` | Always wired so swipe-to-dismiss / overlay press fire. |
+| `title` | `string` | |
+| `description` | `string?` | |
+| `children` | `ReactNode?` | Form body. |
+| `primaryAction` | `{ label, onPress, tone?, loading?, isDisabled? }` | Required; defaults to `tone="primary"`. |
+| `secondaryAction` | same shape | Optional; defaults to `tone="ghost"`. Always closes the sheet on press. |
+| `trigger` | `ReactNode?` | Wraps in `BottomSheet.Trigger` for uncontrolled open. |
+
+```tsx
+<Sheet.Form
+  isOpen={open}
+  onOpenChange={setOpen}
+  title="Rename space"
+  description="Choose a new display name for this space."
+  primaryAction={{ label: "Save", onPress: save, loading: rename.isPending }}
+  secondaryAction={{ label: "Cancel", onPress: () => {} }}
+>
+  <TextInput value={name} onChangeText={setName} placeholder="Space name" />
+</Sheet.Form>
+```
+
+---
+
+## Do / Don't
+
+Derived from the hard rules in `CLAUDE.md`.
+
+### Do
+
+- Define colours in `global.css` under `@layer theme` (`@variant light` / `@variant dark`); keep light/dark pairs side by side.
+- Define spacing, typography, radii, and layout in `global.css` under `@theme inline`.
+- Consume tokens through `className` + Uniwind utilities (`bg-surface`, `text-foreground`, `p-md`, `rounded-lg`).
+- For StyleSheet-only APIs, import numeric mirrors from `@/theme/layout-imperative`.
+- For StatusBar / charts / other native APIs that need a static hex, import `colors` from `@/theme/tokens` **or** resolve reactively via `useThemeColor(key)` from `heroui-native`.
+- Put all `tv(...)` definitions in `index.styles.ts`.
+- Extend HeroUI primitives through our `components/ui/<Name>` wrappers — `Button`, `Card`, `EmptyState`, `ScreenHeader`, `ListRow`, `Sheet`.
+- Reach for a pre-built `Card` variant (`EntryCard`, `SpaceCard`, `StatusCard`) before assembling `Card.Root` + sub-parts; only drop to the compound API for genuinely uncommon layouts.
+- Compose `Sheet.Form` (form shape) and the existing `BottomSheet` (icon + 2 buttons confirmation shape) — both are intentionally separate.
+
+### Don't
+
+- Don't write raw hex or rgb literals (`#1A1C1C`, `rgba(0,0,0,.5)`) in components.
+- Don't use arbitrary pixel utilities (`p-[13px]`, `rounded-[7px]`) — add a token or re-use the existing scale.
+- Don't define `tv()` variants inside `index.tsx` — always in the sibling `index.styles.ts`.
+- Don't create barrel `index.ts` files that only re-export siblings. Compound namespaces (`Card.*`, `Sheet.*`) are an explicit exception — they ship from a single module that owns the root component.
+- Don't duplicate a component for styling-only variation — extend its `tv()` instead.
+- Don't bypass `<HeroUINativeProvider>` by instantiating a second one anywhere — it's mounted once in `_layout.tsx`.
+- Don't add spacing or typography entries to `theme/tokens.ts`; that file is **colours only**.
+- Don't change token *values* without a corresponding PRD / ticket note — renames are cheaper and safer.
+- Don't import HeroUI `Button` outside `components/ui/Button` — go through the wrapper so `tone` / `size` defaults stay consistent.
+- Don't pass `className` through our primitives' public surface — extend variants in `index.styles.ts` instead.
 
 ---
 

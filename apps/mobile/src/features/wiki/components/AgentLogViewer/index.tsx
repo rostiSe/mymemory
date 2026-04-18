@@ -1,6 +1,7 @@
+import { Button } from "@/components/ui/Button/index";
 import type { WikiAgentLog } from "@/features/wiki/types";
 import { useWikiLogs } from "@/features/wiki/hooks/useWikiPages";
-import { Button, Chip } from "heroui-native";
+import { Chip } from "heroui-native";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
@@ -116,13 +117,14 @@ export function AgentLogViewer({ runId }: AgentLogViewerProps) {
       )}
 
       {limit < 500 ? (
-        <Button
-          variant="ghost"
-          className="mt-2"
-          onPress={() => setLimit((n) => Math.min(n + 100, 500))}
-        >
-          Load more (up to 500)
-        </Button>
+        <View className="mt-2">
+          <Button
+            tone="ghost"
+            onPress={() => setLimit((n) => Math.min(n + 100, 500))}
+          >
+            Load more (up to 500)
+          </Button>
+        </View>
       ) : null}
     </View>
   );

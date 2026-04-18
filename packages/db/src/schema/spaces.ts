@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   customType,
   integer,
   jsonb,
@@ -8,12 +9,13 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { compilationStatusEnum } from './enums.js';
+import { compilationStatusEnum, spaceOriginEnum } from './enums.js';
 import { entries } from './entries.js';
 
 const vector = customType<{ data: number[]; driverData: string }>({
@@ -34,6 +36,7 @@ export const spaces = pgTable(
     id: uuid('id').defaultRandom().primaryKey(),
     userId: uuid('user_id').notNull(),
     name: varchar('name', { length: 255 }).notNull(),
+    origin: spaceOriginEnum('origin').notNull().default('user'),
     description: text('description'),
     centroidVector: vector('centroid_vector'),
     isIndex: boolean('is_index').notNull().default(false),
@@ -67,6 +70,12 @@ export const spaceRelations = pgTable('space_relations', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   primaryKey({ columns: [table.parentSpaceId, table.childSpaceId] }),
+  /** At most one parent per child (tree depth ≤ 2). */
+  unique('space_relations_child_space_id_uidx').on(table.childSpaceId),
+  check(
+    'space_relations_parent_ne_child_chk',
+    sql`${table.parentSpaceId} <> ${table.childSpaceId}`,
+  ),
 ]);
 
 export const insertSpaceSchema = createInsertSchema(spaces);

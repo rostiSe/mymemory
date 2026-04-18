@@ -22,6 +22,7 @@ export const entrySchema = z.object({
   // Enriched content
   rawContent: z.string().nullable().optional(),
   readableContent: z.string().nullable().optional(),
+  /** Resolved cover for clients: signed URL when stored as a bucket path server-side; legacy remote https URL unchanged. */
   coverImageUrl: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   keyPoints: z.array(z.string()).nullable().optional(),

@@ -1,14 +1,15 @@
+import { EntryCard } from "@/components/ui/Card/variants/EntryCard/index";
+import { EntryHeaderActions } from "@/features/entry/components/EntryHeaderActions";
 import type { EntryRow } from "@/features/entry/types";
 import {
   FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
   FEED_CARD_SWIPE_FRICTION,
 } from "@/theme/layout-imperative";
-import type { FC } from "react";
-import { memo, useCallback, useRef } from "react";
-import { View } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useThemeColor } from "heroui-native";
-import EntryCard from "../EntryCard";
+import type { FC } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
+import { View } from "react-native";
 import ReanimatedSwipeable, {
   SwipeDirection,
   type SwipeableMethods,
@@ -29,6 +30,7 @@ export type FeedListItemProps = {
   processedStatus?: EntryRow["processedStatus"];
   onPressEntry: (id: string) => void;
   onToggleFavorite: (id: string, currentlyFavorited: boolean) => void;
+  onTogglePin: (id: string, currentlyPinned: boolean) => void;
   /** Opens feed-level delete confirmation (single BottomSheet — avoids N portals with FlashList). */
   onRequestDelete: (id: string) => void;
 };
@@ -47,12 +49,19 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
   processedStatus,
   onPressEntry,
   onToggleFavorite,
+  onTogglePin,
   onRequestDelete,
 }) {
   const dangerFg = useThemeColor("danger-foreground");
   const accentSoftFg = useThemeColor("accent-soft-foreground");
   const dangerColor = useThemeColor("danger");
   const swipeableRef = useRef<SwipeableMethods | null>(null);
+
+  // FlashList recycles row instances: close any in-flight swipe when the underlying
+  // entry changes so the gesture native state can't dispatch against a stale row.
+  useEffect(() => {
+    swipeableRef.current?.close();
+  }, [entryId]);
 
   const displayDate = new Date(createdAt).toLocaleDateString("de-DE", {
     day: "numeric",
@@ -108,6 +117,10 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
     [entryId, isFavorited, onRequestDelete, onToggleFavorite],
   );
 
+  const handlePress = useCallback(() => {
+    onPressEntry(entryId);
+  }, [entryId, onPressEntry]);
+
   return (
     <View className="mb-4">
       <ReanimatedSwipeable
@@ -122,17 +135,35 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
         dragOffsetFromRightEdge={FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX}
       >
         <EntryCard
-          title={title}
-          summary={summary}
+          item={{
+            id: entryId,
+            title,
+            summary,
+            type,
+            date: displayDate,
+            metaHint,
+            heroImageUri,
+            isFavorited,
+            isPinned,
+            processedStatus,
+          }}
           summaryLoading={summaryLoading}
-          type={type}
-          date={displayDate}
-          metaHint={metaHint}
-          heroImageUri={heroImageUri}
-          isFavorited={isFavorited}
-          isPinned={isPinned}
-          processedStatus={processedStatus}
-          onPress={() => onPressEntry(entryId)}
+          onPress={handlePress}
+          coverOverlay={
+            heroImageUri && processedStatus === "done" ? (
+              <EntryHeaderActions
+                density="compact"
+                surface="overlay"
+                isFavorited={isFavorited}
+                isPinned={isPinned ?? false}
+                processedStatus={processedStatus}
+                onToggleFavorite={() =>
+                  onToggleFavorite(entryId, isFavorited)
+                }
+                onTogglePin={() => onTogglePin(entryId, isPinned ?? false)}
+              />
+            ) : undefined
+          }
         />
       </ReanimatedSwipeable>
     </View>

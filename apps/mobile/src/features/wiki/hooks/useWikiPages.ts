@@ -1,6 +1,11 @@
 import { isUuid } from "@/features/wiki/types";
-import { orpc } from "@/lib/orpc";
+import { orpc, orpcClient } from "@/lib/orpc";
 import { useQuery } from "@tanstack/react-query";
+
+const wikiStatusIdle = {
+  status: "idle" as const,
+  lastCompiledAt: null,
+};
 
 export function useWikiPages(spaceId?: string) {
   return useQuery(
@@ -22,8 +27,13 @@ export function useWikiPageVersions(pageId: string | undefined, limit = 50) {
 }
 
 export function useCompilationStatus() {
+  const options = orpc.wiki.status.queryOptions({ input: undefined });
   return useQuery({
-    ...orpc.wiki.status.queryOptions({ input: undefined }),
+    ...options,
+    queryFn: async ({ signal }) => {
+      const data = await orpcClient.wiki.status(undefined, { signal });
+      return data ?? wikiStatusIdle;
+    },
     refetchInterval: (query) =>
       query.state.data?.status === "compiling" ? 3000 : false,
   });
