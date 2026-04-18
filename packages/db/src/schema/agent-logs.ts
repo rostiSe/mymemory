@@ -13,6 +13,7 @@ export const agentLogs = pgTable(
     message: text('message').notNull(),
     toolName: varchar('tool_name', { length: 100 }),
     toolInput: jsonb('tool_input').$type<Record<string, unknown>>(),
+    /** Avoid persisting long-lived public storage URLs; prefer ids / paths / summaries. */
     toolOutput: jsonb('tool_output').$type<Record<string, unknown>>(),
     durationMs: integer('duration_ms'),
     createdAt: timestamp('created_at').defaultNow().notNull(),

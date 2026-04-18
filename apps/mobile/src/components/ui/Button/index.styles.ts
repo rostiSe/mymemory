@@ -12,6 +12,11 @@ export const buttonRootVariants = tv({
   defaultVariants: { fullWidth: false },
 });
 
+/** Screen-reader-only label while loading (spinner visible). Matches classic sr-only clipping. */
+export const buttonLoadingHiddenLabelVariants = tv({
+  base: "absolute h-px w-px overflow-hidden border-0 p-0 m-[-1px] whitespace-nowrap",
+});
+
 export type ButtonRootVariants = VariantProps<typeof buttonRootVariants>;
 
 /**

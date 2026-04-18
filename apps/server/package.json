@@ -22,6 +22,7 @@
     "@mymemory/db": "workspace:*",
     "@mymemory/shared": "workspace:*",
     "@orpc/server": "^1.13.13",
+    "@supabase/supabase-js": "^2.49.1",
     "@trigger.dev/sdk": "4.4.4",
     "ai": "^6.0.146",
     "dotenv": "^16.4.5",

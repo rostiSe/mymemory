@@ -4,14 +4,19 @@
       "Bash(node scripts/get_theme.mjs)",
       "Bash(find /c/Dev/mymemory-expo-sdk55/mymemory/node_modules/@react-navigation/bottom-tabs -name *.d.ts)",
       "Bash(curl -sL \"https://heroui.com/docs/native/getting-started/theming.mdx\")",
-      "Bash(python3:*)",
-      "Bash(xargs grep:*)",
       "Bash(find /c/Dev/mymemory-expo-sdk55/mymemory/packages/db/src/schema -name \"*.ts\" -exec grep -l \"CREATE TABLE\\\\|pgTable.*user\\\\|export const.*=\" {} \\\\;)",
-      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -30 {}')",
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
       "Bash(grep -E \"\\\\.\\(ts|sql\\)$\")",
       "Bash(grep -E \"\\\\.ts$\")",
-      "Bash(pnpm exec *)"
+      "Bash(pnpm exec drizzle-kit *)",
+      "Bash(pnpm exec eslint *)",
+      "Bash(pnpm exec expo *)",
+      "Bash(pnpm exec hono *)",
+      "Bash(pnpm exec prettier *)",
+      "Bash(pnpm exec tsc *)",
+      "Bash(pnpm exec tsx *)",
+      "Bash(pnpm exec turbo *)",
+      "Bash(pnpm exec vitest *)"
     ]
   }
 }

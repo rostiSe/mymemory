@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   boolean,
+  check,
   customType,
   integer,
   jsonb,
@@ -8,6 +9,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  unique,
   uniqueIndex,
   uuid,
   varchar,
@@ -68,6 +70,12 @@ export const spaceRelations = pgTable('space_relations', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => [
   primaryKey({ columns: [table.parentSpaceId, table.childSpaceId] }),
+  /** At most one parent per child (tree depth ≤ 2). */
+  unique('space_relations_child_space_id_uidx').on(table.childSpaceId),
+  check(
+    'space_relations_parent_ne_child_chk',
+    sql`${table.parentSpaceId} <> ${table.childSpaceId}`,
+  ),
 ]);
 
 export const insertSpaceSchema = createInsertSchema(spaces);

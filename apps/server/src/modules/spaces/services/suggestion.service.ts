@@ -137,21 +137,38 @@ export const suggestionService = {
         const rawName =
           (customName || suggestion.suggestedName).trim() || "New Space";
 
-        const [inserted] = await tx
+        const [upserted] = await tx
           .insert(spaces)
           .values({
             userId,
             name: rawName,
             origin: "user",
           })
+          .onConflictDoUpdate({
+            target: [spaces.userId, spaces.name],
+            set: {
+              updatedAt: new Date(),
+            },
+          })
           .returning();
 
-        if (!inserted) {
-          throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: "Failed to create space",
-          });
+        if (upserted) {
+          space = upserted;
+        } else {
+          const [existing] = await tx
+            .select()
+            .from(spaces)
+            .where(
+              and(eq(spaces.userId, userId), eq(spaces.name, rawName)),
+            )
+            .limit(1);
+          if (!existing) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR", {
+              message: "Failed to resolve space",
+            });
+          }
+          space = existing;
         }
-        space = inserted;
       }
 
       await tx

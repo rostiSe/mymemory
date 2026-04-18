@@ -82,7 +82,7 @@ export const wikiQueryMessages = pgTable('wiki_query_messages', {
   sessionId: uuid('session_id').notNull().references(() => wikiQuerySessions.id, { onDelete: 'cascade' }),
   role: text('role', { enum: ['user', 'assistant'] }).notNull(),
   content: text('content').notNull(),
-  citations: jsonb('citations').$type<Citation[]>().default([]),  // [{ pageId, sectionId, quote }]
+  citations: jsonb('citations').$type<WikiQueryCitation[]>().default([]),  // discriminated union: page | entry (see §5)
   runId: uuid('run_id'),                        // links to Trigger.dev run / agent_logs
   tokens: integer('tokens'),
   latencyMs: integer('latency_ms'),
@@ -126,14 +126,14 @@ Uses `streamText()` (not `generateText`) so text + tool events can be forwarded.
 **System prompt key rules** (full text lives in `wiki-prompts.ts`):
 - You answer questions about the user's **wiki**, which is a synthesized knowledge base built from their saved entries.
 - Always search first (`searchWikiPages`) before answering. If the top results look off-topic, refine the query or list spaces.
-- Quote or paraphrase **only** content you retrieved via tools. Attach a citation — `{ pageId, sectionId, quote }` — for every factual claim.
+- Quote or paraphrase **only** content you retrieved via tools. Attach a **citation** for every factual claim: use `type: 'page'` when the source is a wiki page (`readWikiPage` / `searchWikiPages`); use `type: 'entry'` when the source is raw saved content from `readEntryContent` (include `entryId`, optional `title`, `url`, and span hints if helpful).
 - Prefer wiki pages. Fall back to `readEntryContent` only when (a) wiki coverage is empty, or (b) the user explicitly asks "what did I originally save about X".
 - If the wiki has nothing relevant, say so plainly: "Your wiki doesn't cover this yet." Do **not** fabricate.
 - Second person: "Your notes on X say...". Short paragraphs, bullet lists when comparing.
 - Respect follow-ups: treat the conversation history as context; the user may say "go deeper" or "show me the source entry".
 - Never call any tool that writes. If you can't find a tool to do what's asked, explain the limitation.
 
-**Returns:** `{ answer: string, citations: Citation[], steps: number, tokens: number, toolCalls: ToolCallSummary[] }`.
+**Returns:** `{ answer: string, citations: WikiQueryCitation[], steps: number, tokens: number, toolCalls: ToolCallSummary[] }` — same citation shape as the streaming `done` event (see §5).
 
 ### 4. Orchestrator wiring + Trigger.dev task
 
@@ -145,23 +145,48 @@ File: `apps/server/src/modules/ai/agents/wiki-orchestrator.ts` (extend) + `apps/
 
 ### 5. oRPC contract + streaming router
 
-File: `packages/shared/src/contracts/wiki-query.contract.ts` (new) + `apps/server/src/modules/ai/routers/wiki-query.router.ts` (new).
+File: `packages/shared/src/contracts/wiki-query.contract.ts` (Zod: `wikiQueryCitationSchema`, `queryStreamEventSchema`, exported types; **router** in `apps/server/src/modules/ai/routers/wiki-query.router.ts` still to be wired into `appContract`).
 
-Endpoints:
+**Endpoints:**
 - `wiki.query.listSessions` → `{ id, title, updatedAt }[]`
 - `wiki.query.getSession({ sessionId })` → session + messages
 - `wiki.query.createSession()` → `{ sessionId }`
 - `wiki.query.deleteSession({ sessionId })`
-- `wiki.query.ask({ sessionId, question })` — **streaming** (oRPC `.handler` with `yield`); emits events:
+- `wiki.query.ask({ sessionId, question })` — **streaming** (oRPC `.handler` with `yield`); see `QueryStreamEvent` below
+- `wiki.query.feedback({ messageId, feedback: 'up' | 'down', note? })`
+
+**Citation (`WikiQueryCitation`)** — discriminated union, persisted on `wiki_query_messages.citations`, emitted on stream `done`, and returned from `runQueryTurn`. Ensures `readEntryContent` fallbacks carry a stable `entryId` (and optional span / `url`) alongside wiki `page` citations:
+
+  ```ts
+  type WikiQueryCitation =
+    | {
+        type: 'page';
+        pageId: string;
+        sectionId?: string;
+        quote?: string;
+        title?: string;
+      }
+    | {
+        type: 'entry';
+        entryId: string;
+        title?: string;
+        sectionId?: string;
+        startOffset?: number;
+        endOffset?: number;
+        url?: string;
+      };
+  ```
+
+**Stream events (`QueryStreamEvent`)** — same file (`queryStreamEventSchema`); `done.citations` is `WikiQueryCitation[]`:
+
   ```ts
   type QueryStreamEvent =
     | { type: 'tool-call'; name: string; args: unknown }
     | { type: 'tool-result'; name: string; durationMs: number }
     | { type: 'text-delta'; delta: string }
-    | { type: 'done'; messageId: string; citations: Citation[]; tokens: number; latencyMs: number }
+    | { type: 'done'; messageId: string; citations: WikiQueryCitation[]; tokens: number; latencyMs: number }
     | { type: 'error'; message: string };
   ```
-- `wiki.query.feedback({ messageId, feedback: 'up' | 'down', note? })`
 
 ### 6. Mobile — `AskYourWikiScreen`
 
@@ -170,7 +195,7 @@ File: `apps/mobile/src/features/wiki-query/screens/AskYourWikiScreen/index.tsx` 
 Composition:
 - Header: session title (editable inline), session switcher, "New conversation" action.
 - Message list (`FlatList`, inverted): user bubbles + assistant bubbles.
-  - Assistant bubble = `AssistantMessage` component: step chips (tool calls) during streaming, then answer body with inline **citation chips**. Tap a citation → navigate to `WikiPageDetailScreen` with `scrollToSectionId` param (T-015f already supports section rendering; confirm or add anchor scroll).
+  - Assistant bubble = `AssistantMessage` component: step chips (tool calls) during streaming, then answer body with inline **citation chips**. Tap a citation → **`type === 'page'`**: `WikiPageDetailScreen` with `pageId` + `scrollToSectionId` (T-015f); **`type === 'entry'`**: entry detail (or feed) with `entryId` (and optional highlight via offsets / `url`).
   - 👍 / 👎 row on each assistant message (calls `wiki.query.feedback`).
 - Composer: multiline `TextField`, send button, streaming state (disable send, show `StopButton` → aborts the oRPC stream).
 - Empty state: suggestion chips sourced from recent spaces ("What's in #Transformers?", "Summarize your Reading notes").
@@ -203,7 +228,7 @@ Small entry point from `SpacesScreen` or wiki home: "Ask your wiki" FAB/card. Se
 | `apps/server/src/modules/ai/agents/wiki-prompts.ts` | **Modify** — add Query system prompt builder |
 | `apps/server/src/modules/ai/agents/wiki-orchestrator.ts` | **Modify** — add `runWikiQuery` + session persistence |
 | `apps/server/src/trigger/wiki-query.ts` | **Create** — Trigger.dev task |
-| `packages/shared/src/contracts/wiki-query.contract.ts` | **Create** — oRPC contract incl. streaming `ask` |
+| `packages/shared/src/contracts/wiki-query.contract.ts` | **Partial** — `WikiQueryCitation` + `QueryStreamEvent` Zod schemas (router + `appContract` wiring TBD) |
 | `apps/server/src/modules/ai/routers/wiki-query.router.ts` | **Create** — router impl |
 | `apps/mobile/src/features/wiki-query/screens/AskYourWikiScreen/index.tsx` | **Create** — chat surface |
 | `apps/mobile/src/features/wiki-query/screens/AskYourWikiSessionsScreen/index.tsx` | **Create** — history list |
@@ -222,9 +247,10 @@ Small entry point from `SpacesScreen` or wiki home: "Ask your wiki" FAB/card. Se
 - **Empty wiki** → agent returns "Your wiki doesn't cover this yet. Try compiling first." with a deep-link to CompileStatusCard.
 - **Very long answer** → stream continues past `maxSteps` safeguards; if capped, append "(truncated — ask me to continue)".
 - **Citation points to a page the user later deletes** → `readWikiPage` returns 404; message row keeps the stale citation but the chip renders disabled with a tooltip "Page removed".
+- **Citation points to an entry the user later deletes** → same pattern for `type: 'entry'` (chip disabled: "Entry removed").
 - **Network drop mid-stream** → client flushes partial text to the cache, marks message as `incomplete`; Retry button re-issues the turn with the same `sessionId`.
 - **Follow-up with no new question** ("more?") → agent uses history; don't treat empty tool search as failure.
-- **User asks about raw entry** ("what did I save on 2026-02-01") → agent is allowed to call `readEntryContent` directly; still cites entries, not wiki.
+- **User asks about raw entry** ("what did I save on 2026-02-01") → agent is allowed to call `readEntryContent` directly; citations use `type: 'entry'` with `entryId` (and optional `url` / offsets), not wiki page ids.
 - **Feedback on a message that's mid-stream** → ignore until `done`.
 
 ---

@@ -57,6 +57,20 @@
       "when": 1776371788429,
       "tag": "0007_t015n_space_origin",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776519439379,
+      "tag": "0008_0008_cover_image_storage_key",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776519654313,
+      "tag": "0009_0009_space_relations_constraints",
+      "breakpoints": true
     }
   ]
 }

@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/Button/index";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useThemeColor } from "heroui-native";
+import type { ComponentProps } from "react";
 import { Text, View } from "react-native";
 import { emptyStateVariants, type EmptyStateVariants } from "./index.styles";
 
-type MaterialIconName = React.ComponentProps<typeof MaterialIcons>["name"];
+type MaterialIconName = ComponentProps<typeof MaterialIcons>["name"];
 
 export type EmptyStateProps = EmptyStateVariants & {
   icon: MaterialIconName;

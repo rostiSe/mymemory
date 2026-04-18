@@ -8,7 +8,7 @@ import {
   type spaceSchema,
   type spaceWithCountSchema,
 } from "@mymemory/shared/contracts";
-import { toEntry } from "../../../services/entry.service.js";
+import { entryRowToApiEntry } from "../../../services/entry-row-to-api.js";
 import { ORPCError } from "@orpc/server";
 import { and, desc, eq, lt, ne, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
@@ -282,7 +282,9 @@ export const spaceService = {
 
     const hasMore = rows.length > limit;
     const slice = hasMore ? rows.slice(0, limit) : rows;
-    const items = slice.map((r) => toEntry(r.entry));
+    const items = await Promise.all(
+      slice.map((r) => entryRowToApiEntry(r.entry)),
+    );
 
     const last = slice[slice.length - 1];
     const nextCursor =

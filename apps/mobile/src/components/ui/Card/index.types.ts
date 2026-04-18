@@ -57,7 +57,7 @@ export type StatusCardProps = {
   /** Omit when the headline is entirely custom `description` content (e.g. spinner row). */
   title?: string;
   /** Plain string or rich content (paragraphs, `AnimatedExpandSection`, etc.). */
-  description?: React.ReactNode;
+  description?: ReactNode;
   /** Right-side action (typically a `<Button>`). */
   action?: ReactNode;
   /** Optional row of meta chips below the description. */

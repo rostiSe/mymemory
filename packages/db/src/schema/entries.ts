@@ -27,7 +27,15 @@ export const entries = pgTable('entries', {
   // Enriched content (pipeline)
   rawContent: text('raw_content'),
   readableContent: text('readable_content'),
+  /**
+   * Legacy: remote hero/cover URL from scrape or AI (https://…). Prefer `coverImageStorageKey` for uploads.
+   */
   coverImageUrl: text('cover_image_url'),
+  /**
+   * Supabase Storage object path within the configured bucket (no public URL).
+   * APIs should expose only signed URLs minted at read time.
+   */
+  coverImageStorageKey: text('cover_image_storage_key'),
   metadata: jsonb('metadata').$type<Record<string, unknown>>(),
   keyPoints: jsonb('key_points').$type<string[]>(),
 

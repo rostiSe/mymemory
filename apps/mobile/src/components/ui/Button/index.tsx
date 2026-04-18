@@ -1,6 +1,8 @@
 import { Button as HeroButton, Spinner, useThemeColor } from "heroui-native";
-import { isValidElement } from "react";
+import { isValidElement, type ReactNode } from "react";
+import { View } from "react-native";
 import {
+  buttonLoadingHiddenLabelVariants,
   buttonRootVariants,
   TONE_TO_HEROUI_VARIANT,
   TONE_TO_SPINNER_COLOR,
@@ -8,6 +10,14 @@ import {
 import type { BaseButtonProps } from "./index.types";
 
 export type ButtonProps = BaseButtonProps;
+
+function getPlainLabelString(children: ReactNode): string | undefined {
+  if (children == null) return undefined;
+  if (typeof children === "string" || typeof children === "number") {
+    return String(children);
+  }
+  return undefined;
+}
 
 /**
  * App-wrapped button. Locks the prop surface to `tone` / `size` / `leading` /
@@ -32,6 +42,14 @@ export function Button({
 }: ButtonProps) {
   const spinnerColor = useThemeColor(TONE_TO_SPINNER_COLOR[tone]);
 
+  const plainLabel = getPlainLabelString(children);
+  const resolvedLoadingAccessibilityLabel =
+    accessibilityLabel ?? (plainLabel !== undefined ? plainLabel : undefined);
+  const showVisuallyHiddenLabelWhileLoading =
+    loading &&
+    children != null &&
+    resolvedLoadingAccessibilityLabel === undefined;
+
   const renderLabel = () => {
     if (children == null) return null;
     if (typeof children === "string" || typeof children === "number") {
@@ -47,11 +65,32 @@ export function Button({
       size={size}
       isDisabled={isDisabled || loading}
       onPress={loading ? undefined : onPress}
-      accessibilityLabel={accessibilityLabel}
+      accessibilityLabel={
+        loading
+          ? showVisuallyHiddenLabelWhileLoading
+            ? undefined
+            : resolvedLoadingAccessibilityLabel
+          : accessibilityLabel
+      }
       className={buttonRootVariants({ fullWidth })}
     >
       {loading ? (
-        <Spinner size="sm" color={spinnerColor} />
+        <>
+          {leading}
+          <Spinner
+            size="sm"
+            color={spinnerColor}
+            accessibilityElementsHidden
+            aria-hidden={true}
+            importantForAccessibility="no"
+          />
+          {showVisuallyHiddenLabelWhileLoading ? (
+            <View className={buttonLoadingHiddenLabelVariants()}>
+              {renderLabel()}
+            </View>
+          ) : null}
+          {trailing}
+        </>
       ) : (
         <>
           {leading}

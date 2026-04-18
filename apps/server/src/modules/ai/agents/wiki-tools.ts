@@ -576,7 +576,17 @@ function createTools(db: Database, userId: string, runId: string) {
       }
 
       if (input.parentSpaceId) {
-        await setSpaceParentInternal(db, userId, upserted.id, input.parentSpaceId);
+        const parentResult = await setSpaceParentInternal(
+          db,
+          userId,
+          upserted.id,
+          input.parentSpaceId,
+        );
+        if (!parentResult.success) {
+          throw new Error(
+            parentResult.error ?? 'Failed to attach parent space.',
+          );
+        }
       }
 
       return {
