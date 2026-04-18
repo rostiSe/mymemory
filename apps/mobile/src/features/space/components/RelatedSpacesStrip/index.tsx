@@ -34,6 +34,7 @@ export const RelatedSpacesStrip: FC<RelatedSpacesStripProps> =
           {data.map((item) => (
             <View key={item.space.id} className="w-72 max-w-[85vw]">
               <SpaceCard
+                withBottomGap={false}
                 item={{
                   id: item.space.id,
                   name: item.space.name,

@@ -2,7 +2,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 
 export const screenHeaderVariants = tv({
   slots: {
-    root: "px-screen bg-background",
+    root: "bg-background",
     row: "flex-row gap-2",
     leading: "shrink-0",
     titleColumn: "flex-1 min-w-0",
@@ -12,6 +12,10 @@ export const screenHeaderVariants = tv({
     trailing: "shrink-0 flex-row items-center gap-2",
   },
   variants: {
+    horizontalPadding: {
+      screen: { root: "px-screen" },
+      none: { root: "" },
+    },
     rowAlign: {
       center: { row: "items-center" },
       start: { row: "items-start" },
@@ -41,6 +45,7 @@ export const screenHeaderVariants = tv({
     bordered: false,
     rowAlign: "center",
     subtitleSize: "sm",
+    horizontalPadding: "screen",
   },
 });
 

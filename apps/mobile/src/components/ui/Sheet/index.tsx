@@ -21,6 +21,12 @@ export type SheetFormProps = {
   description?: string;
   /** Form body — inputs, controls, summary text. */
   children?: ReactNode;
+  /**
+   * When `true` (default), the sheet dismisses after `primaryAction.onPress`.
+   * Set `false` for async work that closes via `onOpenChange` from the parent
+   * (e.g. create / save mutations).
+   */
+  closeOnPrimaryPress?: boolean;
   /** Required main action (`Save`, `Confirm`). */
   primaryAction: SheetFormAction;
   /**
@@ -50,6 +56,7 @@ function SheetForm({
   title,
   description,
   children,
+  closeOnPrimaryPress = true,
   primaryAction,
   secondaryAction,
   trigger,
@@ -58,7 +65,9 @@ function SheetForm({
 
   const handlePrimary = () => {
     primaryAction.onPress();
-    onOpenChange(false);
+    if (closeOnPrimaryPress) {
+      onOpenChange(false);
+    }
   };
 
   const handleSecondary = () => {
@@ -88,15 +97,6 @@ function SheetForm({
             <View className={styles.body()}>{children}</View>
           ) : null}
           <View className={styles.actions()}>
-            <Button
-              tone={primaryAction.tone ?? "primary"}
-              loading={primaryAction.loading}
-              isDisabled={primaryAction.isDisabled}
-              fullWidth
-              onPress={handlePrimary}
-            >
-              {primaryAction.label}
-            </Button>
             {secondaryAction ? (
               <Button
                 tone={secondaryAction.tone ?? "ghost"}
@@ -107,6 +107,15 @@ function SheetForm({
                 {secondaryAction.label}
               </Button>
             ) : null}
+            <Button
+              tone={primaryAction.tone ?? "primary"}
+              loading={primaryAction.loading}
+              isDisabled={primaryAction.isDisabled}
+              fullWidth
+              onPress={handlePrimary}
+            >
+              {primaryAction.label}
+            </Button>
           </View>
         </BottomSheet.Content>
       </BottomSheet.Portal>

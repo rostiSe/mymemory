@@ -10,7 +10,8 @@
       "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -30 {}')",
       "Bash(grep -E \"\\\\.\\(ts|tsx\\)$\")",
       "Bash(grep -E \"\\\\.\\(ts|sql\\)$\")",
-      "Bash(grep -E \"\\\\.ts$\")"
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(pnpm exec *)"
     ]
   }
 }

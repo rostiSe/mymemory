@@ -4,6 +4,7 @@ import { agentLogs } from "@mymemory/db/schema/agent-logs";
 import { generateText, stepCountIs } from "ai";
 import { z } from "zod";
 import { CURATOR_MAX_STEPS } from "./agent-step-limits.js";
+import { CURATOR_MODEL } from "./config.js";
 import {
   buildCuratorSystemPrompt,
   buildCuratorUserPrompt,
@@ -75,7 +76,7 @@ export async function runCurator(
   const wrappedTools = wrapTools(toolSet);
 
   const result = await generateText({
-    model: openai("gpt-4o-mini"),
+    model: openai(CURATOR_MODEL),
     system: buildCuratorSystemPrompt(mode),
     prompt: buildCuratorUserPrompt({ runId, userId, mode }),
     stopWhen: stepCountIs(CURATOR_MAX_STEPS),

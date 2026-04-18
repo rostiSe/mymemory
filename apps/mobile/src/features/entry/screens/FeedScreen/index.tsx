@@ -11,7 +11,10 @@ import {
   useFeedEntries,
 } from "@/features/entry/hooks/useEntries";
 import { useDeleteEntry } from "@/features/entry/hooks/useEntryMutations";
-import { useFeedFavoriteToggle } from "@/features/entry/hooks/useFeedFavoriteToggle";
+import {
+  useFeedFavoriteToggle,
+  useFeedPinToggle,
+} from "@/features/entry/hooks/useFeedFavoriteToggle";
 import { useFeedOptimisticCreate } from "@/features/entry/hooks/useFeedOptimisticCreate";
 import { buildFeedCardMetaHint } from "@/features/entry/utils/buildEntryMetaLine";
 import {
@@ -46,6 +49,7 @@ export default function FeedScreen() {
   >(null);
   const deleteEntry = useDeleteEntry();
   const onToggleFavorite = useFeedFavoriteToggle();
+  const onTogglePin = useFeedPinToggle();
 
   const onDeleteEntry = useCallback(
     (id: string) => {
@@ -144,11 +148,12 @@ export default function FeedScreen() {
           processedStatus={item.processedStatus}
           onPressEntry={onPressEntry}
           onToggleFavorite={onToggleFavorite}
+          onTogglePin={onTogglePin}
           onRequestDelete={onRequestDelete}
         />
       );
     },
-    [onPressEntry, onRequestDelete, onToggleFavorite],
+    [onPressEntry, onRequestDelete, onToggleFavorite, onTogglePin],
   );
 
   const refreshControl = useMemo(

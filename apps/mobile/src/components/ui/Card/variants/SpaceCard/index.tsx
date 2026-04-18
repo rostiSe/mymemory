@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/Card/index";
 import type { SpaceCardData } from "@/components/ui/Card/index.types";
+import { compileStatusDotClassName } from "./compileStatusDotClassName";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Chip, useThemeColor } from "heroui-native";
+import { Chip, cn, useThemeColor } from "heroui-native";
 import { useMemo } from "react";
 import { Text, View } from "react-native";
 import { spaceCardVariants } from "./index.styles";
@@ -24,21 +25,14 @@ function formatCompiledAgo(iso: string | Date | null | undefined): string | null
   return `${Math.floor(secAgo / 604800)}w ago`;
 }
 
-function compileDotClassName(item: SpaceCardData): string {
-  if (item.compilationStatus === "compiling") return "bg-warning";
-  if (item.compilationStatus === "failed") return "bg-danger";
-  if (item.compilationStatus === "idle" && item.lastCompiledAt) {
-    return "bg-success";
-  }
-  return "bg-muted";
-}
-
 export type SpaceCardProps = {
   item: SpaceCardData;
   /** Optional shared-page count surfaced as a chip (used by RelatedSpaceCard). */
   sharedPageCount?: number;
-  /** Indent for hierarchical lists (matches `SpaceListRow` `child` variant). */
+  /** Indent for hierarchical lists (left rail). */
   indent?: boolean;
+  /** `mb-2` between stacked list rows; disable for horizontal strips. */
+  withBottomGap?: boolean;
   onPress?: (id: string) => void;
 };
 
@@ -51,6 +45,7 @@ export function SpaceCard({
   item,
   sharedPageCount,
   indent = false,
+  withBottomGap = true,
   onPress,
 }: SpaceCardProps) {
   const styles = spaceCardVariants();
@@ -64,7 +59,10 @@ export function SpaceCard({
     [item.lastCompiledAt],
   );
 
-  const dotClass = compileDotClassName(item);
+  const dotClass = compileStatusDotClassName({
+    compilationStatus: item.compilationStatus,
+    lastCompiledAt: item.lastCompiledAt,
+  });
 
   const sharedLabel =
     sharedPageCount === undefined
@@ -76,9 +74,9 @@ export function SpaceCard({
   const entriesLabel =
     item.entryCount === 1 ? "1 entry" : `${item.entryCount} entries`;
 
-  return (
+  const card = (
     <Card.Root
-      tone="surface-secondary"
+      tone="accent-soft"
       radius="md"
       interactive={onPress != null}
       onPress={onPress != null ? () => onPress(item.id) : undefined}
@@ -105,7 +103,7 @@ export function SpaceCard({
             </Chip.Label>
           </Chip>
           <View
-            className={`${styles.chipDot()} ${dotClass}`}
+            className={cn(styles.chipDot(), dotClass)}
             accessibilityLabel={`Compile status ${item.compilationStatus ?? "idle"}`}
           />
           <View
@@ -126,5 +124,16 @@ export function SpaceCard({
         ) : null}
       </Card.Body>
     </Card.Root>
+  );
+
+  return (
+    <View
+      className={cn(
+        indent && "ml-3 border-l-2 border-l-border/60",
+        withBottomGap && "mb-2",
+      )}
+    >
+      {card}
+    </View>
   );
 }

@@ -22,3 +22,24 @@ export function useFeedFavoriteToggle(): (
     [toggleField],
   );
 }
+
+/**
+ * Stable handler for feed row pin toggle; same `entries.toggleField` path as detail.
+ */
+export function useFeedPinToggle(): (
+  entryId: string,
+  currentlyPinned: boolean,
+) => void {
+  const toggleField = useToggleEntryField();
+
+  return useCallback(
+    (entryId: string, currentlyPinned: boolean) => {
+      toggleField.mutate({
+        id: entryId,
+        field: "isPinned",
+        value: !currentlyPinned,
+      });
+    },
+    [toggleField],
+  );
+}

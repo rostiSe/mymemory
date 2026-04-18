@@ -1,16 +1,15 @@
-import type { spaceSchema } from "@mymemory/shared/contracts";
-import type { z } from "zod";
+import type { SpaceCardData } from "@/components/ui/Card/index.types";
 
-type SpaceCompileFields = Pick<
-  z.infer<typeof spaceSchema>,
+type CompileFields = Pick<
+  SpaceCardData,
   "compilationStatus" | "lastCompiledAt"
 >;
 
-/** Uniwind class for the compile-status dot (matches `SpaceListRow` / `SpaceCard`). */
+/** Uniwind classes for the compile-status dot on space cards. */
 export function compileStatusDotClassName({
   compilationStatus,
   lastCompiledAt,
-}: SpaceCompileFields): string {
+}: CompileFields): string {
   if (compilationStatus === "compiling") return "bg-warning";
   if (compilationStatus === "failed") return "bg-danger";
   if (compilationStatus === "idle" && lastCompiledAt) return "bg-success";

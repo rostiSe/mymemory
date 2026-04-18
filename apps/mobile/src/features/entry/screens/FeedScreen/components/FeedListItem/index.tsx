@@ -1,4 +1,5 @@
 import { EntryCard } from "@/components/ui/Card/variants/EntryCard/index";
+import { EntryHeaderActions } from "@/features/entry/components/EntryHeaderActions";
 import type { EntryRow } from "@/features/entry/types";
 import {
   FEED_CARD_SWIPE_ACTIVE_OFFSET_X_PX,
@@ -29,6 +30,7 @@ export type FeedListItemProps = {
   processedStatus?: EntryRow["processedStatus"];
   onPressEntry: (id: string) => void;
   onToggleFavorite: (id: string, currentlyFavorited: boolean) => void;
+  onTogglePin: (id: string, currentlyPinned: boolean) => void;
   /** Opens feed-level delete confirmation (single BottomSheet — avoids N portals with FlashList). */
   onRequestDelete: (id: string) => void;
 };
@@ -47,6 +49,7 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
   processedStatus,
   onPressEntry,
   onToggleFavorite,
+  onTogglePin,
   onRequestDelete,
 }) {
   const dangerFg = useThemeColor("danger-foreground");
@@ -146,6 +149,21 @@ const FeedListItemInner: FC<FeedListItemProps> = function FeedListItemInner({
           }}
           summaryLoading={summaryLoading}
           onPress={handlePress}
+          coverOverlay={
+            heroImageUri && processedStatus === "done" ? (
+              <EntryHeaderActions
+                density="compact"
+                surface="overlay"
+                isFavorited={isFavorited}
+                isPinned={isPinned ?? false}
+                processedStatus={processedStatus}
+                onToggleFavorite={() =>
+                  onToggleFavorite(entryId, isFavorited)
+                }
+                onTogglePin={() => onTogglePin(entryId, isPinned ?? false)}
+              />
+            ) : undefined
+          }
         />
       </ReanimatedSwipeable>
     </View>

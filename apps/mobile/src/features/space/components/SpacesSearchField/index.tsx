@@ -28,12 +28,9 @@ export function SpacesSearchField({
       className={className}
       accessibilityLabel="Search spaces"
     >
-      <SearchField.Group className="rounded-card border border-border bg-surface">
+      <SearchField.Group className="rounded-lg border border-border bg-surface">
         <SearchField.SearchIcon />
-        <SearchField.Input
-          placeholder="Search spaces"
-          className="rounded-card"
-        />
+        <SearchField.Input placeholder="Search spaces" className="rounded-lg" />
         <SearchField.ClearButton />
       </SearchField.Group>
     </SearchField>

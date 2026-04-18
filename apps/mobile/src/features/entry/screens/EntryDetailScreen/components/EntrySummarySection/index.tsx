@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/Card/index";
 import { CollapsibleClamp } from "@/components/ui/CollapsibleClamp";
 import { MarkdownRenderer } from "@/components/ui/MarkdownRenderer";
-import { SkeletonGroup } from "heroui-native";
+import { SkeletonGroup, useThemeColor } from "heroui-native";
 import { View } from "react-native";
 
 type EntrySummarySectionProps = {
@@ -21,6 +21,7 @@ export function EntrySummarySection({
   loading = false,
   contentKey,
 }: EntrySummarySectionProps) {
+  const themeColor = useThemeColor("surface-secondary");
   return (
     <View className="mb-4">
       <Card.Root tone="accent-soft" radius="lg">
@@ -35,7 +36,11 @@ export function EntrySummarySection({
               </View>
             </SkeletonGroup>
           ) : (
-            <CollapsibleClamp contentKey={contentKey} expandHint={summaryText}>
+            <CollapsibleClamp
+              fadeGradientEndColor={themeColor}
+              contentKey={contentKey}
+              expandHint={summaryText}
+            >
               <MarkdownRenderer
                 variant="excerpt"
                 markdown={summaryText}

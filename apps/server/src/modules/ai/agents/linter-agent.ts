@@ -1,21 +1,18 @@
-import { generateText, stepCountIs } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { db as defaultDb } from '@mymemory/db';
-import { agentLogs } from '@mymemory/db/schema/agent-logs';
-import { z } from 'zod';
-import { LINTER_MAX_STEPS } from './agent-step-limits.js';
-import {
-  buildLinterTools,
-  type Database,
-  wrapTools,
-} from './wiki-tools.js';
+import { openai } from "@ai-sdk/openai";
+import { db as defaultDb } from "@mymemory/db";
+import { agentLogs } from "@mymemory/db/schema/agent-logs";
+import { generateText, stepCountIs } from "ai";
+import { z } from "zod";
+import { LINTER_MAX_STEPS } from "./agent-step-limits.js";
+import { LINTER_MODEL } from "./config.js";
 import {
   buildLinterSystemPrompt,
   buildLinterUserPrompt,
-} from './wiki-prompts.js';
+} from "./wiki-prompts.js";
+import { buildLinterTools, type Database, wrapTools } from "./wiki-tools.js";
 
 const issueSchema = z.object({
-  severity: z.enum(['info', 'warn', 'error']),
+  severity: z.enum(["info", "warn", "error"]),
   category: z.string(),
   message: z.string(),
   suggestedFix: z.string().optional(),
@@ -52,15 +49,19 @@ function safeParseLinterResult(text: string): LinterModelResult {
   }
 }
 
-function getTotalTokens(usage: {
-  totalTokens?: number;
-  inputTokens?: number;
-  outputTokens?: number;
-  promptTokens?: number;
-  completionTokens?: number;
-} | undefined): number {
+function getTotalTokens(
+  usage:
+    | {
+        totalTokens?: number;
+        inputTokens?: number;
+        outputTokens?: number;
+        promptTokens?: number;
+        completionTokens?: number;
+      }
+    | undefined,
+): number {
   if (!usage) return 0;
-  if (typeof usage.totalTokens === 'number') return usage.totalTokens;
+  if (typeof usage.totalTokens === "number") return usage.totalTokens;
   const input = usage.inputTokens ?? usage.promptTokens ?? 0;
   const output = usage.outputTokens ?? usage.completionTokens ?? 0;
   return input + output;
@@ -75,7 +76,7 @@ export async function runLinter(
   const wrappedTools = wrapTools(toolSet);
 
   const result = await generateText({
-    model: openai('gpt-4o-mini'),
+    model: openai(LINTER_MODEL),
     system: buildLinterSystemPrompt(),
     prompt: buildLinterUserPrompt({ runId, userId }),
     tools: wrappedTools,
@@ -89,11 +90,13 @@ export async function runLinter(
         await db.insert(agentLogs).values({
           userId,
           runId,
-          level: 'action',
+          level: "action",
           message: `Linter called ${call.toolName}`,
           toolName: call.toolName,
           toolInput: call.input as Record<string, unknown>,
-          toolOutput: (matchingResult?.output as Record<string, unknown> | undefined) ?? null,
+          toolOutput:
+            (matchingResult?.output as Record<string, unknown> | undefined) ??
+            null,
         });
       }
     },
@@ -105,9 +108,9 @@ export async function runLinter(
   await db.insert(agentLogs).values({
     userId,
     runId,
-    level: 'info',
-    message: 'Linter finished',
-    toolName: 'runLinter',
+    level: "info",
+    message: "Linter finished",
+    toolName: "runLinter",
     toolOutput: {
       issues: parsed.issues.length,
       steps: result.steps.length,

@@ -8,7 +8,7 @@ import {
 } from "@/theme/layout-imperative";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Chip, SkeletonGroup, useThemeColor } from "heroui-native";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { entryCardVariants } from "./index.styles";
 
@@ -21,6 +21,12 @@ export type EntryCardProps = {
   /** When true, summary lines render as shimmer placeholders. */
   summaryLoading?: boolean;
   onPress?: () => void;
+  /**
+   * Optional overlay over the hero strip (e.g. quick actions from the feature
+   * layer). With a hero and `processedStatus === "done"`, duplicate pin/favorite
+   * glyphs in the title row are hidden.
+   */
+  coverOverlay?: ReactNode;
 };
 
 /**
@@ -34,6 +40,7 @@ export function EntryCard({
   item,
   summaryLoading = false,
   onPress,
+  coverOverlay,
 }: EntryCardProps) {
   const styles = entryCardVariants();
   const mutedColor = useThemeColor("muted");
@@ -54,6 +61,15 @@ export function EntryCard({
   const searchLayout = sim != null && !Number.isNaN(sim);
   const pct = searchLayout ? similarityPercent(sim) : null;
 
+  const showCoverOverlaySlot =
+    Boolean(item.heroImageUri) &&
+    item.processedStatus === "done" &&
+    coverOverlay != null;
+
+  const showTitleStatusGlyphs =
+    !showCoverOverlaySlot &&
+    (Boolean(item.isPinned) || Boolean(item.isFavorited));
+
   return (
     <Card.Root
       tone="accent-soft"
@@ -63,11 +79,21 @@ export function EntryCard({
       accessibilityLabel={item.title ?? "Untitled memory"}
     >
       {item.heroImageUri ? (
-        <Card.Cover
-          aspect="fill"
-          style={{ height: FEED_ENTRY_CARD_COVER_HEIGHT_PX }}
-          source={item.heroImageUri}
-        />
+        <View className="relative w-full">
+          <Card.Cover
+            aspect="fill"
+            style={{ height: FEED_ENTRY_CARD_COVER_HEIGHT_PX }}
+            source={item.heroImageUri}
+          />
+          {showCoverOverlaySlot ? (
+            <View
+              className="absolute right-2 top-2 z-10"
+              pointerEvents="box-none"
+            >
+              {coverOverlay}
+            </View>
+          ) : null}
+        </View>
       ) : null}
       <Card.Body className="max-h-[200px]">
         <View className={styles.titleRow()}>
@@ -77,11 +103,15 @@ export function EntryCard({
               size={20}
               color={mutedColor}
             />
-            {item.isPinned ? (
-              <MaterialIcons name="push-pin" size={14} color={accentColor} />
-            ) : null}
-            {item.isFavorited ? (
-              <MaterialIcons name="favorite" size={14} color={dangerColor} />
+            {showTitleStatusGlyphs ? (
+              <>
+                {item.isPinned ? (
+                  <MaterialIcons name="push-pin" size={14} color={accentColor} />
+                ) : null}
+                {item.isFavorited ? (
+                  <MaterialIcons name="favorite" size={14} color={dangerColor} />
+                ) : null}
+              </>
             ) : null}
             <Text className={styles.title()} numberOfLines={2}>
               {item.title || "Untitled Memory"}

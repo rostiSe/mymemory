@@ -11,6 +11,8 @@ export type ScreenHeaderProps = ScreenHeaderVariants & {
   subtitle?: string;
   /** Third line — compact meta (e.g. entry detail `metaLine`). */
   metaLine?: string;
+  /** Renders below the title, before subtitle (e.g. wiki badge row). */
+  titleBelow?: ReactNode;
   /** Left slot — typically a back button or icon. */
   leading?: ReactNode;
   /** Right slot — actions (icons, ghost buttons). */
@@ -34,12 +36,14 @@ export function ScreenHeader({
   title,
   subtitle,
   metaLine,
+  titleBelow,
   leading,
   trailing,
   variant,
   bordered,
   rowAlign,
   subtitleSize,
+  horizontalPadding,
   titleNumberOfLines = 1,
   subtitleNumberOfLines = 1,
   metaLineNumberOfLines = 2,
@@ -50,6 +54,7 @@ export function ScreenHeader({
     bordered,
     rowAlign,
     subtitleSize,
+    horizontalPadding,
   });
 
   const inner = (
@@ -61,6 +66,7 @@ export function ScreenHeader({
         <Text className={styles.title()} numberOfLines={titleNumberOfLines}>
           {title}
         </Text>
+        {titleBelow != null ? <View className="mt-2">{titleBelow}</View> : null}
         {subtitle ? (
           <Text
             className={styles.subtitle()}

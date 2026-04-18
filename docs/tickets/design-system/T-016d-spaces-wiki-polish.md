@@ -1,6 +1,6 @@
 # T-016d: Polish — Spaces + Wiki Page alignment with primitives
 
-**Status:** todo
+**Status:** done
 **Phase:** Migration (mobile, second pass)
 **Type:** migration (mobile)
 **Epic:** [T-016 Design System](./T-016-design-system-epic.md)
@@ -69,16 +69,16 @@ For each hit that isn't a semantic class (`px-screen`, `px-card`, etc.), either 
 
 ## Acceptance criteria
 
-- [ ] `SpaceListRow` renders through `Card.variants.SpaceCard` (or compound `Card.*`); its local `tv` file is deleted.
-- [ ] No `rounded-card` applied to a dot-sized element in `SpaceListRow`.
-- [ ] `SpacesScreen` "New space" modal replaced by `Sheet.Form`.
-- [ ] `SpacesScreen` FAB uses `@/components/ui/Button`; no inline `Pressable` with `bg-accent px-3 py-2.5`.
-- [ ] `SpacesScreen` `FlatList` padding uses `contentContainerStyle.paddingHorizontal: SPACING_SCREEN_PX` (matching Feed); no `className="px-screen"` on the `FlatList` itself.
-- [ ] `WikiPageScreen` success path is wrapped in `ScreenInset`; all three branches (success / error / not-found) use `px-screen` (no `px-(--spacing-screen)`).
-- [ ] `WikiPageScreen` "not found" branch uses `EmptyState`.
-- [ ] `WikiPageShell` title block replaced by `ScreenHeader` (extending `ScreenHeader` with a badges slot if required).
-- [ ] `rg "px-\\d|py-\\d|p-\\d|px-\\[|py-\\["` in `features/space` and `features/wiki` returns only annotated one-offs or zero hits.
-- [ ] `pnpm --filter mymemory exec tsc --noEmit` passes.
+- [x] `SpaceListRow` renders through `Card.variants.SpaceCard` (or compound `Card.*`); its local `tv` file is deleted.
+- [x] No `rounded-card` applied to a dot-sized element in `SpaceListRow` / `SpaceCard` (status dot uses `rounded-full`).
+- [x] `SpacesScreen` "New space" modal replaced by `Sheet.Form`.
+- [x] `SpacesScreen` FAB uses `@/components/ui/Button`; no inline `Pressable` with `bg-accent px-3 py-2.5`.
+- [x] `SpacesScreen` `FlatList` padding uses `contentContainerStyle.paddingHorizontal: SPACING_SCREEN_PX` (matching Feed); no `className="px-screen"` on the `FlatList` itself.
+- [x] `WikiPageScreen` success path is wrapped in `ScreenInset`; all three branches (success / error / not-found) use `px-screen` (no `px-(--spacing-screen)`).
+- [x] `WikiPageScreen` "not found" branch uses `EmptyState`.
+- [x] `WikiPageShell` title block replaced by `ScreenHeader` (`trailing` = badge row; `leading` = back; `wiki/[id]` stack header hidden to avoid double chrome).
+- [ ] `rg "px-\\d|py-\\d|p-\\d|px-\\[|py-\\["` in `features/space` and `features/wiki` returns only annotated one-offs or zero hits. *(Deferred: many hits remain in files explicitly out of scope for this ticket — e.g. `SpaceSuggestionsInbox`, `SpaceTree`, `AgentLogViewer`, renderers.)*
+- [x] `pnpm --filter mymemory exec tsc --noEmit` passes.
 - [ ] Manual smoke (owner) — Spaces screen rows, Spaces "New space" flow, Wiki page top chrome, and wiki error/not-found states render with the same padding rhythm and card shape as Feed / Search / EntryDetail.
 
 ---

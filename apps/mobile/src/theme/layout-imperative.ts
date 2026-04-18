@@ -91,6 +91,23 @@ export const MARKDOWN_INLINE_IMAGE_SIZE_PX = 48;
 export const COLLAPSIBLE_CLAMP_FADE_HEIGHT_PX = 48;
 export const COLLAPSIBLE_CLAMP_EXPANDED_MAX_HEIGHT_PX = 8192;
 
+/**
+ * Fixed top nav: button row height below the status bar (matches typical touch target).
+ */
+export const SCREEN_TOP_NAV_ROW_HEIGHT_PX = 30;
+
+/**
+ * Fade from `background` → transparent under the nav row (same height as `CollapsibleClamp`).
+ */
+export const SCREEN_TOP_NAV_FADE_HEIGHT_PX = COLLAPSIBLE_CLAMP_FADE_HEIGHT_PX;
+
+/** Top `contentContainerStyle.paddingTop` when using fixed `ScreenTopNavChrome`. */
+export function screenTopNavContentPaddingTop(topInset: number): number {
+  return (
+    topInset + SCREEN_TOP_NAV_ROW_HEIGHT_PX + SCREEN_TOP_NAV_FADE_HEIGHT_PX
+  );
+}
+
 /** Matches `CollapsibleClamp` dimmed collapsed opacity — feed `MaxLinesFadeClamp` uses the same value. */
 export const EXCERPT_CLAMP_DIM_OPACITY = 0.55;
 

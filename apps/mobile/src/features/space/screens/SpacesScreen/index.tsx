@@ -2,8 +2,8 @@ import { ScreenInset } from "@/components/layout/ScreenInset";
 import { Button } from "@/components/ui/Button/index";
 import { EmptyState } from "@/components/ui/EmptyState/index";
 import { ScreenHeader } from "@/components/ui/ScreenHeader/index";
+import { Sheet } from "@/components/ui/Sheet/index";
 import { SpaceListRow } from "@/features/space/components/SpaceListRow";
-import type { SpaceRow } from "@/features/space/components/SpaceListRow";
 import { SpacesSearchField } from "@/features/space/components/SpacesSearchField";
 import {
   SpaceSuggestionsInbox,
@@ -16,8 +16,13 @@ import {
   useSpaceSuggestions,
   useSpaces,
 } from "@/features/space/hooks/useSpaces";
+import type { SpaceRow } from "@/features/space/utils/toSpaceCardData";
+import { CompileStatusCard } from "@/features/wiki/components/CompileStatusCard";
 import { useAppToast } from "@/hooks/useAppToast";
-import { LAYOUT_FLOATING_TAB_CLEARANCE_PX } from "@/theme/layout-imperative";
+import {
+  LAYOUT_FLOATING_TAB_CLEARANCE_PX,
+  SPACING_SCREEN_PX,
+} from "@/theme/layout-imperative";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Input, Label, TextField, useThemeColor } from "heroui-native";
@@ -25,14 +30,11 @@ import { memo, useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Modal,
-  Pressable,
   RefreshControl,
   Text,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { CompileStatusCard } from "@/features/wiki/components/CompileStatusCard";
 
 type ListEntry =
   | { kind: "header"; key: string; title: string }
@@ -168,10 +170,7 @@ const ListHeader = memo(function ListHeader({
         Approve quick suggestions below or use the New space action.
       </Text>
 
-      <SpacesSearchField
-        onQueryChange={onQueryChange}
-        className="mb-3"
-      />
+      <SpacesSearchField onQueryChange={onQueryChange} className="mb-3" />
 
       {spacesError ? (
         <Text className="text-danger text-sm mb-3">{spacesErrMessage}</Text>
@@ -203,7 +202,6 @@ export default function SpacesScreen() {
   const insets = useSafeAreaInsets();
   const listBottomPad = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX + 56;
   const toast = useAppToast();
-  const mutedColor = useThemeColor("muted");
   const accentForeground = useThemeColor("accent-foreground");
 
   const {
@@ -289,10 +287,7 @@ export default function SpacesScreen() {
   }, [refetchSpaces, refetchSuggestions]);
 
   const handleApprove = useCallback(
-    (
-      suggestionId: string,
-      input: { spaceName?: string; spaceId?: string },
-    ) => {
+    (suggestionId: string, input: { spaceName?: string; spaceId?: string }) => {
       setBusySuggestionId(suggestionId);
       approveSuggestion.mutate(
         { suggestionId, ...input },
@@ -358,27 +353,30 @@ export default function SpacesScreen() {
           item={item.space}
           rowVariant={item.rowVariant}
           onPressSpace={onPressSpace}
-          mutedColor={mutedColor}
         />
       );
     },
-    [mutedColor, onPressSpace],
+    [onPressSpace],
   );
 
   const totalSpaces = spaceRows.length;
   const listEmptyNoSpaces = !spacesPending && totalSpaces === 0;
   const searchActive = debouncedQuery.trim().length > 0;
   const filterEmpty =
-    !spacesPending &&
-    totalSpaces > 0 &&
-    listData.length === 0 &&
-    searchActive;
+    !spacesPending && totalSpaces > 0 && listData.length === 0 && searchActive;
 
   const refreshControl = useMemo(
-    () => (
-      <RefreshControl refreshing={pullRefreshing} onRefresh={onRefresh} />
-    ),
+    () => <RefreshControl refreshing={pullRefreshing} onRefresh={onRefresh} />,
     [onRefresh, pullRefreshing],
+  );
+
+  const listContentContainerStyle = useMemo(
+    () => ({
+      flexGrow: 1,
+      paddingHorizontal: SPACING_SCREEN_PX,
+      paddingBottom: listBottomPad,
+    }),
+    [listBottomPad],
   );
 
   const spacesErrMessage =
@@ -421,11 +419,14 @@ export default function SpacesScreen() {
   const fabBottom = insets.bottom + LAYOUT_FLOATING_TAB_CLEARANCE_PX - 8;
 
   return (
-    <ScreenInset className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <ScreenInset
+      className="flex-1 bg-background"
+      edges={["top", "left", "right"]}
+    >
       <View className="flex-1 pt-3">
-        <ScreenHeader title="Spaces" withSafeArea={false} bordered />
+        <ScreenHeader title="Spaces" withSafeArea={false} />
         <FlatList<ListEntry>
-          className="flex-1 px-screen"
+          className="flex-1"
           data={listData}
           keyExtractor={keyExtractor}
           renderItem={renderItem}
@@ -434,10 +435,7 @@ export default function SpacesScreen() {
           refreshControl={refreshControl}
           nestedScrollEnabled
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            flexGrow: 1,
-            paddingBottom: listBottomPad,
-          }}
+          contentContainerStyle={listContentContainerStyle}
           initialNumToRender={8}
           windowSize={7}
           ListEmptyComponent={
@@ -461,77 +459,62 @@ export default function SpacesScreen() {
           }
         />
 
-        <Pressable
-          onPress={() => setCreateOpen(true)}
-          accessibilityRole="button"
-          accessibilityLabel="New space"
-          className="absolute rounded-card bg-accent px-3 py-2.5 flex-row items-center gap-1.5 shadow-sm"
-          style={{ right: 16, bottom: fabBottom }}
+        <View
+          className="absolute"
+          style={{ right: SPACING_SCREEN_PX, bottom: fabBottom }}
         >
-          <MaterialIcons name="add" size={22} color={accentForeground} />
-          <Text className="text-background text-sm font-semibold">New space</Text>
-        </Pressable>
+          <Button
+            tone="primary"
+            size="sm"
+            leading={
+              <MaterialIcons name="add" size={22} color={accentForeground} />
+            }
+            onPress={() => setCreateOpen(true)}
+            accessibilityLabel="New space"
+          >
+            New space
+          </Button>
+        </View>
       </View>
 
-      <Modal
-        visible={createOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={closeCreate}
+      <Sheet.Form
+        isOpen={createOpen}
+        onOpenChange={(open) => {
+          if (!open) closeCreate();
+        }}
+        title="New space"
+        closeOnPrimaryPress={false}
+        secondaryAction={{
+          label: "Cancel",
+          onPress: closeCreate,
+        }}
+        primaryAction={{
+          label: "Create",
+          onPress: handleCreateSpace,
+          loading: createSpace.isPending,
+          isDisabled: createSpace.isPending,
+        }}
       >
-        <Pressable
-          className="flex-1 justify-end bg-black/50"
-          onPress={closeCreate}
-          accessibilityRole="button"
-          accessibilityLabel="Dismiss"
-        >
-          <Pressable
-            className="rounded-t-card bg-surface px-screen pt-4 pb-8 border-t border-border"
-            onPress={(e) => e.stopPropagation()}
-          >
-            <Text className="text-foreground text-lg font-semibold mb-3">
-              New space
-            </Text>
-            <TextField className="mb-3">
-              <Label>Name</Label>
-              <Input
-                value={newName}
-                onChangeText={setNewName}
-                placeholder="e.g. Reading, Work"
-                autoFocus
-                className="rounded-card"
-              />
-            </TextField>
-            <TextField className="mb-4">
-              <Label>Description (optional)</Label>
-              <Input
-                value={newDescription}
-                onChangeText={setNewDescription}
-                placeholder="Short note"
-                className="rounded-card"
-              />
-            </TextField>
-            <View className="flex-row gap-2">
-              <View className="flex-1">
-                <Button tone="ghost" fullWidth onPress={closeCreate}>
-                  Cancel
-                </Button>
-              </View>
-              <View className="flex-1">
-                <Button
-                  tone="primary"
-                  fullWidth
-                  onPress={handleCreateSpace}
-                  loading={createSpace.isPending}
-                  isDisabled={createSpace.isPending}
-                >
-                  {createSpace.isPending ? "Creating…" : "Create"}
-                </Button>
-              </View>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+        <TextField className="mb-3">
+          <Label>Name</Label>
+          <Input
+            value={newName}
+            onChangeText={setNewName}
+            placeholder="e.g. Reading, Work"
+            autoFocus
+            className="rounded-card"
+          />
+        </TextField>
+        <TextField>
+          <Label>Description (optional)</Label>
+          <Input
+            value={newDescription}
+            onChangeText={setNewDescription}
+            placeholder="Short note"
+            className="rounded-card"
+          />
+        </TextField>
+      </Sheet.Form>
     </ScreenInset>
   );
 }
